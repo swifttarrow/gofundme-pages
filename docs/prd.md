@@ -1,4 +1,4 @@
-# CauseMesh
+# GoWithMe
 *Building socially-intelligent fundraising surfaces with deterministic graph methodology*
 
 ## Before You Start: Pre-Search ([time: 1-2 hours])

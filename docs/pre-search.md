@@ -1,4 +1,4 @@
-# Pre-Search Checklist: CauseMesh
+# Pre-Search Checklist: GoWithMe
 
 Complete this before writing code. This artifact is required for submission and should be updated when architecture assumptions change.
 
