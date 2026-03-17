@@ -7,7 +7,7 @@ Ship fundraiser UX from Pencil design with publishing, story controls, and graph
 - [ ] Milestone 2: Graph/Event Data Model and Read APIs
 
 ## Changes Required
-Implement fundraiser page layout parity across breakpoints, build Quick AI and Form mode creation/edit workflows, support media constraints and fallback behavior, and render fundraiser graph modules with explanation and privacy-safe language.
+Implement fundraiser page layout parity across breakpoints, build Quick (including voice dictation) and Form mode creation/edit workflows, add an advice button that returns 1-2 recommendations, support media constraints and fallback behavior, and render fundraiser graph modules with explanation and privacy-safe language.
 
 Source section: `docs/plans/implementation-plan.md` (Phase 3)
 
@@ -18,7 +18,9 @@ Source section: `docs/plans/implementation-plan.md` (Phase 3)
 - [ ] `pnpm test:e2e --grep fundraiser`
 
 ### Manual Verification
-- [ ] Quick mode generates editable content and publishes successfully.
+- [ ] Quick mode and Form mode publish successfully with manual edits.
+- [ ] Quick mode supports voice dictation with editable transcript before publish.
+- [ ] Advice button returns 1-2 recommendations and does not block publish when unavailable.
 - [ ] Form mode create/edit works on mobile and desktop.
 - [ ] Graph modules render explanations and safe fallbacks.
 

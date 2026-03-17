@@ -5,7 +5,7 @@ Instrument golden signals and key funnels, then document operational response pa
 
 ## Deliverables
 - [ ] `packages/observability` includes logs, metrics, and traces for graph modules, badge interactions, and key user funnels.
-- [ ] `docs/runbooks` includes AI outage, graph lag, and elevated error rate runbooks.
+- [ ] `docs/runbooks` includes advice service outage, graph lag, and elevated error rate runbooks.
 - [ ] Alert thresholds and service ownership references are documented.
 
 ## Notes

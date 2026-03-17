@@ -6,13 +6,13 @@
 This spec defines an improved Fundraiser Page experience optimized for:
 - **High engagement within 30 seconds**
 - **Mobile-first storytelling**
-- **AI-assisted creation**
+- **Guided manual creation with optional advice**
 - **Audio/visual-first consumption**
 
 The experience introduces:
-1. Dual creation flows (**Form vs Quick AI**)
-2. AI-enhanced storytelling (beautify + hook generation)
-3. Lightweight media animation (photo → short video)
+1. Dual creation flows (**Form vs Quick**)
+2. User-triggered advice (1-2 recommendations) to improve content quality
+3. Lightweight media animation (photo -> short video)
 4. Condensed, expandable UI for fast donor scanning
 
 ---
@@ -25,7 +25,7 @@ The experience introduces:
 - Improve **story clarity + emotional impact**
 
 ### Success Metrics
-- % of fundraisers created via Quick flow
+- % of fundraisers created via Quick/Form flows
 - Conversion rate within first 30 seconds
 - Avg. time to first donation
 - Expand-click rate on story content
@@ -43,26 +43,23 @@ The experience introduces:
 
 ### Two Creation Modes
 
-#### A. Quick Mode (AI-first, mobile optimized)
+#### A. Quick Mode (mobile optimized)
 - User inputs:
   - Freeform text prompt (voice or text)
     - Example: “I need help covering my dog’s surgery after an accident”
-- System auto-generates:
-  - Title
-  - Hook (1-line summary)
-  - Body
-  - Suggested donation goal
-  - Suggested fund allocation breakdown
-  - Suggested media prompts (optional)
+- System provides:
+  - A lightweight starter template
+  - Suggested field ordering for faster completion
+  - Optional advice button for 1-2 improvement recommendations
 
 - User can:
-  - Accept all
+  - Continue with starter template
   - Edit inline
   - Switch to Form Mode
 
 ---
 
-#### B. Form Mode (Manual + AI assist)
+#### B. Form Mode (Manual)
 
 ##### Fields
 - Title (editable)
@@ -86,17 +83,16 @@ The experience introduces:
 
 ---
 
-### AI Features
+### Advice Features
 
-#### 1. Beautify Button (Body Editor)
-- One-click transformation:
-  - Improves clarity + emotional appeal
-  - Generates:
-    - Strong opening hook (1 sentence)
-    - Structured body (collapsed by default)
+#### 1. Advice Button (Body Editor)
+- User-triggered recommendation pass:
+  - Returns 1-2 concise suggestions to improve clarity/trust
+  - Never auto-rewrites content
+  - Keeps all final edits fully user-controlled
 - Includes:
-  - Confidence indicator
-  - Undo option
+  - Optional refresh action
+  - Clear fallback copy when advice is unavailable
 
 ---
 
@@ -140,7 +136,7 @@ Users spend **≤ 30 seconds**
 - Shows:
   - Hook only
 - “Read more” expands:
-  - Full AI-enhanced body
+  - Full body
 
 ---
 
@@ -178,20 +174,20 @@ Users spend **≤ 30 seconds**
 
 ## 4. Key Features (Deep Dive)
 
-### 4.1 AI Quick Creation
+### 4.1 Advice for Fundraiser Content
 
 #### Endpoint
-`POST /api/ai/generate-fundraiser`
+`POST /api/advice/fundraiser`
 
 #### Input
 ```
 
 {
-"prompt": string,
-"optional_context": {
-"location": string,
-"category": string
-}
+"title": string,
+"hook": string,
+"body": string,
+"goal_amount": number,
+"allocation": [{category, percentage}]
 }
 
 ```
@@ -200,39 +196,20 @@ Users spend **≤ 30 seconds**
 ```
 
 {
-"title": string,
-"hook": string,
-"body": string,
-"goal_amount": number,
-"allocation": [{category, percentage}],
-"confidence": float
+"recommendations": [
+  { "text": string }
+],
+"count": number
 }
 
 ```
 
 ---
 
-### 4.2 Beautify Feature
+### 4.2 Media Animation
 
 #### Endpoint
-`POST /api/ai/beautify-fundraiser`
-
-#### Behavior
-- Rewrites content for:
-  - Clarity
-  - Emotional resonance
-  - Conciseness
-
-#### Constraints
-- Hook ≤ 120 characters
-- Body optimized for scanability
-
----
-
-### 4.3 Media Animation
-
-#### Endpoint
-`POST /api/ai/animate-image`
+`POST /api/media/animate-image`
 
 #### Input
 - Image file
@@ -267,7 +244,7 @@ Users spend **≤ 30 seconds**
 
 ### Included
 - Dual creation flow (Quick + Form)
-- AI beautify + generation
+- Advice button with 1-2 recommendations
 - Media animation (image → video)
 - Mobile preview (desktop)
 - Collapsible story UI
@@ -287,17 +264,17 @@ Users spend **≤ 30 seconds**
 
 | Risk | Mitigation |
 |------|-----------|
-| AI hallucination | Confidence score + editability |
-| Over-automation | Easy fallback to Form mode |
+| Advice quality is too generic | Keep 1-2 concrete, actionable recommendations only |
+| Over-automation | Advice never auto-rewrites; user remains final editor |
 | Slow media processing | Async + placeholder UI |
-| Low trust in AI content | Clear “AI assisted” labeling |
+| Low trust in advice output | Label as optional "Advice", not generated copy |
 
 ---
 
 ## 8. Open Questions
 
 - Should animated media autoplay by default?
-- How aggressive should AI rewriting be?
+- How strict should advice wording be for tone and specificity?
 - Should fund allocation affect donor trust scoring?
 - What is the ideal default donation suggestion?
 
@@ -306,7 +283,7 @@ Users spend **≤ 30 seconds**
 ## 9. Future Extensions
 
 - Personalized donor messaging (“why this matters to you”)
-- AI-generated update summaries
+- Advice summaries for fundraiser updates
 - Before/after progress visualization tied to funding %
 - Voice-based storytelling playback
 

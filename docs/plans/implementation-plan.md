@@ -22,7 +22,7 @@ This plan defines one complete end state and uses phased checkpoints to reach it
 ## Desired End State
 A publicly accessible app that:
 - ships all three pages aligned to Pencil hierarchy across desktop and mobile;
-- supports fundraiser creation/editing in Quick AI and Form modes;
+- supports fundraiser creation/editing in Quick (with voice dictation) and Form modes plus an AI Advice button on each page that returns 1-2 improvement recommendations;
 - persists graph nodes/edges and idempotent events, then serves cached or precomputed summaries;
 - renders at least four graph modules with explanation labels and privacy-safe text;
 - computes badges without duplicate awards on replayed events;
@@ -32,7 +32,7 @@ A publicly accessible app that:
 Verification of the end state:
 - Functional: all PRD checklist scenarios pass (creation, edit, graph updates, fallbacks, badges, observability).
 - Performance: p95 page APIs < 350 ms and graph summary p95 < 500 ms for demo dataset.
-- Reliability: fallback payloads prevent page crashes on AI or graph dependency failures.
+- Reliability: fallback payloads prevent page crashes on advice-service or graph dependency failures.
 - Readiness: deployment, docs, runbooks, and demo flow are complete.
 
 ## What We're NOT Doing
@@ -59,7 +59,7 @@ Create the monorepo application skeleton, runtime infrastructure, and first vert
 **Changes**: Initialize Next.js app with routes `/f/[slug]`, `/communities/[slug]`, `/u/[handle]`, shared navigation, and responsive layout primitives for mobile/tablet/desktop.
 
 **File**: `packages/config/*`  
-**Changes**: Add runtime env schema with Zod for web, API, worker, DB, cache, and external AI/media providers.
+**Changes**: Add runtime env schema with Zod for web, API, worker, DB, cache, and external advice/media providers.
 
 **File**: `packages/db/schema/*`  
 **Changes**: Create core entities (`users`, `fundraisers`, `communities`, `charities`, `badges`) and baseline node/edge tables.
@@ -138,7 +138,7 @@ Ship fundraiser UX from Pencil design with publishing, story controls, and graph
 **Changes**: Implement browser/mobile layout parity with frames `fMG5i` and `9aXpX`, including hero, trust layer, progress, organizer, donation CTA, and collapsible story.
 
 **File**: `apps/web/src/features/fundraiser/create/*`  
-**Changes**: Implement Quick AI and Form mode workflows with editable generated content and mode switching.
+**Changes**: Implement Quick and Form mode workflows, including voice dictation for Quick-mode draft capture, plus a fundraiser advice action that returns 1-2 content-improvement recommendations before publish.
 
 **File**: `apps/web/src/features/fundraiser/media/*`  
 **Changes**: Support up to 3 media items and image-to-video fallback behavior.
@@ -152,7 +152,9 @@ Ship fundraiser UX from Pencil design with publishing, story controls, and graph
 - [ ] `pnpm test:e2e --grep fundraiser`
 
 #### Manual Verification:
-- [ ] Quick mode generates editable content and publishes successfully.
+- [ ] Quick mode and Form mode both publish successfully with manual edits.
+- [ ] Quick mode supports voice dictation input with transcript editing before publish.
+- [ ] Advice action returns 1-2 recommendations and keeps publish flow stable when unavailable.
 - [ ] Form mode create/edit works on mobile and desktop.
 - [ ] Graph modules render explanations and safe fallbacks.
 
@@ -166,10 +168,10 @@ Implement the remaining two page surfaces and complete the minimum four graph mo
 
 ### Changes Required
 **File**: `apps/web/src/app/communities/[slug]/page.tsx`  
-**Changes**: Implement mission dashboard, progress, CTAs, structured activity feed, and participation layer following frames `mmCkm` and `PMwPm`.
+**Changes**: Implement mission dashboard, progress, CTAs, structured activity feed, participation layer, and page advice action following frames `mmCkm` and `PMwPm`.
 
 **File**: `apps/web/src/app/u/[handle]/page.tsx`  
-**Changes**: Implement profile header, cause footprint, connected communities, badges strip, and recommendation modules following frames `7LTsR` and `G095N`.
+**Changes**: Implement profile header, cause footprint, connected communities, badges strip, recommendation modules, and page advice action following frames `7LTsR` and `G095N`.
 
 **File**: `apps/web/src/features/graph/modules/profile/*`  
 **Changes**: Implement communities-around-you and similar-users modules with deterministic scoring.
@@ -189,6 +191,7 @@ Implement the remaining two page surfaces and complete the minimum four graph mo
 #### Manual Verification:
 - [ ] Community and profile pages match Pencil hierarchy across breakpoints.
 - [ ] At least 4 required graph modules are visible and explainable.
+- [ ] Community and profile advice actions return 1-2 recommendations with safe fallback copy.
 - [ ] Empty states render correctly with sparse seed data.
 
 **Note**: Pause for human confirmation after this phase before proceeding.
@@ -213,7 +216,7 @@ Add badge and charity workflows, then harden observability and failure behavior.
 **Changes**: Add logs, traces, and metrics for golden signals and funnel events; include graph module and badge interactions.
 
 **File**: `docs/runbooks/*.md`  
-**Changes**: Add runbooks for AI outage, graph lag, and elevated error rate.
+**Changes**: Add runbooks for advice service outage, graph lag, and elevated error rate.
 
 ### Success Criteria
 #### Automated Verification:
@@ -224,7 +227,7 @@ Add badge and charity workflows, then harden observability and failure behavior.
 #### Manual Verification:
 - [ ] Duplicate events do not duplicate badge awards.
 - [ ] Charity-fundraiser linkage is persisted and queryable.
-- [ ] Graph/AI dependency failures return safe, non-crashing UI fallbacks.
+- [ ] Graph/advice dependency failures return safe, non-crashing UI fallbacks.
 
 **Note**: Pause for human confirmation after this phase before proceeding.
 
@@ -263,7 +266,7 @@ Validate against PRD rubric, finalize docs, and ensure end-to-end demonstration 
 - **Graph complexity risk:** keep deterministic formulas and precompute summaries rather than runtime traversal.
 - **Checkpoint risk:** enforce Phase 1 strict scope and defer non-critical polish.
 - **Privacy leakage risk:** centralize visibility policy templates and add regression tests.
-- **Cost risk for AI/media:** enforce timeouts, caching, and static fallback paths.
+- **Cost risk for advice/media dependencies:** enforce timeouts, caching, and static fallback paths.
 - **Sparse data UX risk:** ship empty states and seeded overlap fixtures early.
 
 ## Rollout Strategy

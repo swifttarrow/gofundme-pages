@@ -21,7 +21,7 @@ Source section: `docs/plans/implementation-plan.md` (Phase 5)
 ### Manual Verification
 - [ ] Duplicate events do not duplicate badge awards.
 - [ ] Charity-fundraiser linkage is persisted and queryable.
-- [ ] Graph/AI dependency failures return safe, non-crashing UI fallbacks.
+- [ ] Graph/advice dependency failures return safe, non-crashing UI fallbacks.
 
 ## Tasks
 - [001-implement-badge-worker-idempotency](./001-implement-badge-worker-idempotency.md)

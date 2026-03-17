@@ -249,6 +249,18 @@ Expand beyond money-only leaderboard:
 
 ---
 
+## 4. Page Advice Action (New)
+
+### Requirement
+- Community page includes a "Get advice" button that returns 1-2 recommendations for improving campaign/community content.
+
+### Interaction Rules
+- Advice is user-triggered only.
+- Advice does not auto-edit any content.
+- If advice is unavailable, show non-blocking fallback messaging.
+
+---
+
 # Existing Features (MVP Retained)
 
 ### Community Header

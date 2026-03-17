@@ -75,13 +75,13 @@ Entry Points:
 
    * Name of charity
    * Category (health, disaster relief, education, etc.)
-   * AI-assisted mission statement
+   * Guided mission statement tips
 
 2. **Story + Impact**
 
    * Long-form description
    * “Who does this help?”
-   * AI-generated summary (donor-friendly)
+   * Advice-assisted summary suggestions (donor-friendly)
 
 3. **Structure**
 
@@ -104,7 +104,7 @@ Entry Points:
 6. **Visual Identity**
 
    * Cover image
-   * AI-generated branding (optional logo + theme)
+   * Template branding (optional logo + theme presets)
 
 7. **Review + Launch**
 
@@ -126,19 +126,19 @@ Persistent page distinct from a single fundraiser.
 
 ---
 
-### 5.3 AI Assistance Layer (Core Differentiator)
+### 5.3 Advice Layer
 
 Used throughout creation:
 
-* ✍️ Mission generation
-* 🧾 Fund usage structuring
-* 📊 Impact projections (basic)
-* 🏷️ Category + tagging
-* 🧠 “Is this clear/trustworthy?” scoring
+* ✍️ Mission clarity recommendations
+* 🧾 Fund usage organization tips
+* 📊 Impact communication recommendations (basic)
+* 🏷️ Category + tagging suggestions
+* 🧠 Optional trust/readability advice
 
 **Example:**
 
-> “This sounds vague — want help making it more specific for donors?”
+> "This sounds vague - want advice to make it more specific for donors?"
 
 ---
 
@@ -217,11 +217,11 @@ GET /api/charities/{charityId}
 POST /api/charities/{charityId}/fundraisers
 ```
 
-### AI Assist
+### Advice Assist
 
 ```
-POST /api/ai/generate-charity-content
-POST /api/ai/score-trustworthiness
+POST /api/advice/charity-content
+POST /api/advice/charity-trust-check
 ```
 
 ---
@@ -258,7 +258,7 @@ POST /api/ai/score-trustworthiness
 
 * Mitigation:
 
-  * AI trust scoring
+  * Advice-based trust checklist
   * Soft moderation
   * Visibility gating (low trust → limited reach)
 
@@ -286,11 +286,11 @@ For a demo, this should feel magical:
 2. Types:
 
    > “Help families affected by wildfires”
-3. AI instantly:
+3. Advice instantly returns:
 
-   * Generates mission
+   * Suggests mission improvements
    * Suggests milestones
-   * Creates a clean page
+   * Suggests page clarity improvements
 4. User clicks “Launch”
 5. Immediately:
 

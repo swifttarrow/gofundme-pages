@@ -7,7 +7,7 @@ Implement the remaining two page surfaces and complete the minimum four graph mo
 - [ ] Milestone 3: Fundraiser Page and Creation Flows
 
 ## Changes Required
-Build community and profile pages from Pencil hierarchy across breakpoints, add profile/community graph modules with deterministic scoring, and implement composition services that merge graph, badge, and charity context into page-ready payloads.
+Build community and profile pages from Pencil hierarchy across breakpoints, add profile/community graph modules with deterministic scoring, add page advice actions that return 1-2 recommendations, and implement composition services that merge graph, badge, charity, and advice context into page-ready payloads.
 
 Source section: `docs/plans/implementation-plan.md` (Phase 4)
 
@@ -21,6 +21,7 @@ Source section: `docs/plans/implementation-plan.md` (Phase 4)
 ### Manual Verification
 - [ ] Community and profile pages match Pencil hierarchy across breakpoints.
 - [ ] At least 4 required graph modules are visible and explainable.
+- [ ] Community and profile advice actions return 1-2 recommendations with non-blocking fallback behavior.
 - [ ] Empty states render correctly with sparse seed data.
 
 ## Tasks

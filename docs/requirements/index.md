@@ -32,6 +32,9 @@ A social graph connects users with other entities on the platform. Please refer 
 ### Fundraiser Page
 A fundraiser page is created by an author/owner to secure donations from donors. Please refer to `docs/requirements/fundraiser-page.md`.
 
+### Cross-Page Advice
+Each core page (`fundraiser`, `community`, `profile`) includes an advice button that, when clicked, returns 1-2 actionable recommendations for improving page content. Advice is optional, user-triggered, and must degrade gracefully when unavailable.
+
 ### Profile Page
 The profile page captures a user's profile, their achievements, and their connected entities. Please refer to `docs/requirements/profile-page.md`.
 

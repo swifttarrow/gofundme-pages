@@ -282,7 +282,7 @@ Key question:
 
 ## 11. Future Extensions
 
-* AI-generated “confidence badges” (content quality, clarity)
+* Advice-informed "confidence badges" (content quality, clarity)
 * Personalized badges (“Your network is supporting this”)
 * Dynamic badges tied to donor preferences
 * Badge-based search filters

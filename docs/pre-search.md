@@ -14,18 +14,18 @@ Complete this before writing code. This artifact is required for submission and 
 
 ### 2) Budget and Cost Boundaries
 
-1. What is your hard monthly spend cap for AI APIs, hosting, and observability?
+1. What is your hard monthly spend cap for advice/media/dictation APIs, hosting, and observability?
 2. What cost per active fundraiser creation flow is acceptable?
-3. Which AI features must have low-cost fallbacks if spend exceeds budget?
-4. What percent of requests can use premium models before breaching budget?
+3. Which advice/media/dictation features must have low-cost fallbacks if spend exceeds budget?
+4. What percent of requests can use premium providers before breaching budget?
 5. What is your logging retention target given observability cost constraints?
 
 ### 3) Timeline and Delivery Risk
 
-1. Which subsystem is riskiest: graph ingest, AI flows, or multi-surface UI integration?
+1. Which subsystem is riskiest: graph ingest, advice/dictation flows, or multi-surface UI integration?
 2. What must be complete by the 24-hour checkpoint to avoid schedule collapse?
 3. What can be deferred if charity starter or badge logic slips?
-4. Which dependencies are external and could block progress (AI/media APIs)?
+4. Which dependencies are external and could block progress (advice/media/dictation APIs)?
 5. What explicit no-scope list keeps this within one week?
 
 ### 4) Privacy, Compliance, and Data Sensitivity
@@ -33,7 +33,7 @@ Complete this before writing code. This artifact is required for submission and 
 1. What donor visibility states exist and how do they map to UI output rules?
 2. Which fields are sensitive and must never appear in logs or analytics payloads?
 3. What data retention policy applies to donation and social graph events?
-4. Where must PII be redacted before sending prompts to LLM endpoints?
+4. Where must PII be redacted before sending content to advice/dictation endpoints?
 5. What safeguards prevent private donor identity leakage in recommendation text?
 
 ### 5) Team Capability and Tooling Readiness
@@ -70,13 +70,13 @@ Complete this before writing code. This artifact is required for submission and 
 4. What confidence thresholds suppress weak recommendations?
 5. How will you test ranking outputs for relevance and policy compliance?
 
-### 4) AI-Assisted Content and Media Pipeline
+### 4) Advice, Dictation, and Media Pipeline
 
-1. Which models/providers will power quick generation, beautify, and trust scoring?
-2. What prompt templates enforce output length, structure, and safety constraints?
-3. How will you validate generated donation goals/allocation values for plausibility?
+1. Which provider/services will power advice recommendations and voice dictation?
+2. What response/transcript constraints enforce concise, actionable output and safe rendering?
+3. How will you validate dictation transcript quality before publish?
 4. What is the timeout/fallback path when image animation fails?
-5. How will you cache or reuse AI outputs to reduce cost and latency?
+5. How will you cache or reuse advice responses to reduce cost and latency?
 
 ### 5) Page Integration and Read API Strategy
 
@@ -90,7 +90,7 @@ Complete this before writing code. This artifact is required for submission and 
 
 1. Which golden signals (latency, error, throughput, saturation) will you track per service?
 2. What product funnel events prove graph features increase meaningful engagement?
-3. Which tests are required per subsystem (graph, fundraiser, community, profile, AI)?
+3. Which tests are required per subsystem (graph, fundraiser, community, profile, advice/dictation)?
 4. What synthetic checks verify deployment health and fallback correctness?
 5. What runbook triggers map to automated alerts and operator actions?
 
@@ -98,7 +98,7 @@ Complete this before writing code. This artifact is required for submission and 
 
 ### 1) Security and Failure Modes
 
-1. What are top failure modes for graph cache miss, queue outage, and AI timeout?
+1. What are top failure modes for graph cache miss, queue outage, and advice/dictation timeout?
 2. How will authentication and authorization be enforced on server-side APIs?
 3. What abuse scenarios exist (badge farming, spam charities, event floods)?
 4. Which safeguards throttle or block malicious write patterns?

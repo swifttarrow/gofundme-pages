@@ -9,7 +9,7 @@ Support fundraiser media attachments with defined limits and robust fallback beh
 - [ ] UI communicates fallback state without breaking publish flow.
 
 ## Notes
-Prefer deterministic fallback outputs and timeout-safe handling to control AI/media cost and reliability risk.
+Prefer deterministic fallback outputs and timeout-safe handling to control media cost and reliability risk.
 
 ## Verification
 Test with normal media upload and forced fallback scenario; confirm page rendering remains stable.

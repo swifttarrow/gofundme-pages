@@ -68,7 +68,7 @@ This MVP will **not** attempt to solve:
 
 ### For the demo
 
-* Creates obvious “AI/social intelligence” moments
+* Creates obvious “social intelligence” moments
 * Connects profile, fundraiser, and community pages into one coherent story
 * Enables visually compelling modules with small amounts of seed data
 

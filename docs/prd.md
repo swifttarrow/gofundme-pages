@@ -13,7 +13,7 @@ This week emphasizes a **Research -> Plan -> Implement -> Validate** methodology
 
 Modern fundraising products like GoFundMe, Kickstarter, and DonorsChoose win on emotional clarity, trust signals, and fast UX under high traffic spikes. The strongest products blend content, social context, and confidence-building metadata (progress, organizer credibility, impact framing) while still keeping donation flows fast on mobile and desktop.
 
-You must build an integrated three-page platform (fundraiser, community, profile) with a social graph layer, achievement badges, and a charity starter system. The core technical challenge is orchestrating graph-driven context and AI-assisted features without sacrificing deterministic behavior, observability, privacy safety, or deployment simplicity.
+You must build an integrated three-page platform (fundraiser, community, profile) with a social graph layer, achievement badges, and a charity starter system. The core technical challenge is orchestrating graph-driven context and advice-assisted features without sacrificing deterministic behavior, observability, privacy safety, or deployment simplicity.
 
 ## Gate Statement
 
@@ -40,7 +40,7 @@ Progress gate. All items required for this checkpoint:
 - ☐ Social graph ingestion handles at least 3 events (`donation_created`, `community_joined`, `fundraiser_viewed`) idempotently.
 - ☐ Summary query endpoint exists for at least one page (`/api/graph/user/:userId/summary` or equivalent).
 - ☐ Observability baseline is live: request logs, error logs, latency metric, and one funnel metric.
-- ☐ Graceful fallback is implemented when graph or AI services fail.
+- ☐ Graceful fallback is implemented when graph or advice services fail.
 - ☐ Minimum test suite runs in CI (unit + one integration test for donation or graph edge write).
 - ☐ Application is deployed and publicly accessible.
 
@@ -53,7 +53,8 @@ A simple integrated donor experience with reliable page loads beats a complex in
 | Feature | Requirements |
 |---|---|
 | Fundraiser hero and trust layer | Show title, hook, progress, organizer, trust signals, and visible donation CTA above the fold. |
-| Dual creation flow | Support Quick AI mode and Form mode with editable outputs and mode switching. |
+| Dual creation flow | Support Quick mode (including voice dictation) and Form mode with editable user-authored content and mode switching. |
+| Page advice action | Add an advice button on fundraiser, community, and profile pages that returns 1-2 recommendations. |
 | Media handling | Allow up to 3 media items per fundraiser and support image-to-video animation fallback behavior. |
 | Story compression | Render story collapsed by default with progressive disclosure and scan-friendly content. |
 | Community mission dashboard | Show one active mission, progress bar, and CTAs for donate/start/follow/share. |
@@ -86,14 +87,14 @@ A simple integrated donor experience with reliable page loads beats a complex in
 | Observability | Capture service, API, and user-journey metrics with clear rationale and dashboard mapping. |
 | Test coverage | Include unit, integration, and smoke tests for mission-critical flows. |
 | Documentation | Ship architecture notes, runbook procedures, and implementation rationale. |
-| Runbooks | Provide production incident runbooks for AI outage, graph lag, and elevated error rate. |
+| Runbooks | Provide production incident runbooks for advice service outage, graph lag, and elevated error rate. |
 | Deployment | Provide a publicly accessible deployment with reproducible startup instructions. |
 
 ### Testing Scenarios
 
 We will test:
 
-1. Creating a fundraiser in Quick mode generates editable content and publishes successfully.
+1. Creating a fundraiser in Quick mode (text and voice dictation input) and Form mode publishes successfully with manual edits.
 2. Creating or editing fundraiser content in Form mode works on both mobile and desktop layouts.
 3. A donation event updates progress and graph edge data, then appears in context modules.
 4. Community page mission dashboard, structured feed, and supporter layer render with seeded and organic data.
@@ -203,23 +204,23 @@ POST /api/graph/events/ingest
 | Explanation coverage | 100% graph recommendations include a reason label |
 | Privacy policy compliance | 0 known leaks of private donor identity in tested scenarios |
 
-## AI Cost Analysis (Required)
+## Advice and Media Cost Analysis (Required)
 
 ### Development & Testing Costs
 
 Track:
 
-- LLM API usage for Quick Mode generation, beautify rewrites, and charity content drafting.
-- Prompt and completion token totals by endpoint and environment.
+- Advice API usage for recommendation requests by page and environment.
+- Average advice request volume, fallback rate, and latency by endpoint.
 - Media animation API calls, processing seconds, and retry rates.
-- AI trust-scoring calls for charity starter and content quality checks.
-- Local and CI test invocations that hit paid AI services (or mocks vs real usage split).
+- Advice quality-check calls for charity starter and content clarity checks.
+- Local and CI test invocations that hit paid advice/media services (or mocks vs real usage split).
 
 ### Production Cost Projections
 
 | Cost Category | 100 users | 1K users | 10K users | 100K users |
 |---|---:|---:|---:|---:|
-| LLM text generation (monthly) | $25 | $220 | $2,000 | $18,000 |
+| Advice recommendation calls (monthly) | $25 | $220 | $2,000 | $18,000 |
 | Image-to-video animation (monthly) | $35 | $320 | $3,100 | $29,000 |
 | Observability + logs + traces | $15 | $90 | $600 | $4,500 |
 | Graph compute/cache refresh jobs | $10 | $60 | $450 | $3,800 |
@@ -227,8 +228,8 @@ Track:
 
 Include assumptions:
 
-- AI feature adoption rate for fundraiser creation and editing flows.
-- Average generation volume per active fundraiser and per community.
+- Advice feature adoption rate for fundraiser/community/profile pages.
+- Average advice requests per active fundraiser and per community.
 - Cache hit ratio and refresh interval for graph summary materialization.
 
 ## Technical Stack
@@ -237,7 +238,7 @@ Include assumptions:
 |---|---|
 | Backend | Node.js + TypeScript with Fastify or NestJS; alternatively Go with Fiber |
 | Frontend | Next.js (App Router) or Remix with React and server components where possible |
-| AI / LLM | OpenAI Responses API, Anthropic Messages API, or Google Gemini API |
+| Advice Service | Provider or in-house service for returning 1-2 content recommendations |
 | Database / Storage | PostgreSQL + Prisma/Drizzle, Redis for cache, object storage via S3-compatible service |
 | Framework / Jobs | BullMQ, Temporal, or native queue workers for summary refresh and badge evaluation |
 | Deployment | Railway, Fly.io, Render, or AWS ECS/Fargate with managed Postgres |
@@ -250,11 +251,11 @@ Use whatever stack helps you ship. Complete the Pre-Search process to make infor
 
 1. Implement social graph schema, idempotent event ingestion, and summary materialization first.
 2. Build read APIs for profile/fundraiser/community graph context with explanation metadata.
-3. Implement fundraiser creation/publish flow (Quick AI + Form mode) and basic media support.
+3. Implement fundraiser creation/publish flow (Quick + Form mode with voice dictation), add advice action, and basic media support.
 4. Implement community mission dashboard, structured feed ranking, and supporter actions.
 5. Implement charity starter flow and charity-to-fundraiser linkage aggregation.
 6. Implement badge criteria engine and top-badge selection for surface rendering.
-7. Wire observability, alerting hooks, and fallback/error paths for graph + AI dependencies.
+7. Wire observability, alerting hooks, and fallback/error paths for graph + advice dependencies.
 8. Expand tests, finalize runbooks/docs, and polish responsive UX before submission.
 
 ### Critical Guidance
@@ -289,7 +290,7 @@ Deadline: Sunday 10:59 PM CT
 | Demo Video (3-5 min) | Show end-to-end user flows, graph context, and fallback/error handling |
 | Pre-Search Document | Completed artifact saved at `docs/pre-search.md` |
 | Domain-Specific Docs | Graph model, badge criteria, and charity flow decisions documented |
-| AI Cost Analysis | Development tracking + 100/1K/10K/100K projections with assumptions |
+| Advice and Media Cost Analysis | Development tracking + 100/1K/10K/100K projections with assumptions |
 | Deployed Application | Publicly accessible URL with responsive behavior across all three pages |
 | Social Post | Share your build and tag `@GauntletAI` |
 
@@ -319,7 +320,7 @@ Gate remains: **Project completion + interviews** required for Austin admission.
 
 ## Appendix: Pre-Search Checklist
 
-Complete this before writing code. Save your AI conversation as a reference document at `docs/pre-search.md`.
+Complete this before writing code. Save your pre-search notes as a reference document at `docs/pre-search.md`.
 
 ### Phase 1: Define Your Constraints
 
@@ -333,18 +334,18 @@ Complete this before writing code. Save your AI conversation as a reference docu
 
 #### 2) Budget and Cost Boundaries
 
-- What is your hard monthly spend cap for AI APIs, hosting, and observability?
+- What is your hard monthly spend cap for advice/media APIs, hosting, and observability?
 - What cost per active fundraiser creation flow is acceptable?
-- Which AI features must have low-cost fallbacks if spend exceeds budget?
-- What percent of requests can use premium models before breaching budget?
+- Which advice/media features must have low-cost fallbacks if spend exceeds budget?
+- What percent of requests can use premium advice providers before breaching budget?
 - What is your logging retention target given observability cost constraints?
 
 #### 3) Timeline and Delivery Risk
 
-- Which subsystem is riskiest: graph ingest, AI flows, or multi-surface UI integration?
+- Which subsystem is riskiest: graph ingest, advice flows, or multi-surface UI integration?
 - What must be complete by the 24-hour checkpoint to avoid schedule collapse?
 - What can be deferred if charity starter or badge logic slips?
-- Which dependencies are external and could block progress (AI/media APIs)?
+- Which dependencies are external and could block progress (advice/media APIs)?
 - What explicit no-scope list keeps this within one week?
 
 #### 4) Privacy, Compliance, and Data Sensitivity
@@ -352,7 +353,7 @@ Complete this before writing code. Save your AI conversation as a reference docu
 - What donor visibility states exist and how do they map to UI output rules?
 - Which fields are sensitive and must never appear in logs or analytics payloads?
 - What data retention policy applies to donation and social graph events?
-- Where must PII be redacted before sending prompts to LLM endpoints?
+- Where must PII be redacted before sending content to advice endpoints?
 - What safeguards prevent private donor identity leakage in recommendation text?
 
 #### 5) Team Capability and Tooling Readiness
@@ -362,6 +363,14 @@ Complete this before writing code. Save your AI conversation as a reference docu
 - Which test frameworks and observability tools can you ship fastest with confidence?
 - Who owns architecture decisions, and how will you document unresolved tradeoffs?
 - What coding standards enforce minimal diffs and correctness under time pressure?
+
+#### 6) Input UX Readiness (Quick Dictation)
+
+- How will voice dictation input be captured in Quick mode across desktop and mobile browsers?
+- What browser APIs and permission prompts are required for microphone access?
+- What fallback path is used when microphone permissions are denied or unsupported?
+- How will dictation transcript quality be reviewed before publish?
+- Which accessibility considerations are required for dictation controls and status messaging?
 
 ### Phase 2: Architecture Discovery
 
@@ -389,13 +398,13 @@ Complete this before writing code. Save your AI conversation as a reference docu
 - What confidence thresholds suppress weak recommendations?
 - How will you test ranking outputs for relevance and policy compliance?
 
-#### 4) AI-Assisted Content and Media Pipeline
+#### 4) Advice and Media Pipeline
 
-- Which models/providers will power quick generation, beautify, and trust scoring?
-- What prompt templates enforce output length, structure, and safety constraints?
-- How will you validate generated donation goals/allocation values for plausibility?
+- Which provider/service will power advice recommendations and trust/readability checks?
+- What response templates enforce concise, actionable recommendation output?
+- How will you validate advice relevance and safety before rendering?
 - What is the timeout/fallback path when image animation fails?
-- How will you cache or reuse AI outputs to reduce cost and latency?
+- How will you cache or reuse advice responses to reduce cost and latency?
 
 #### 5) Page Integration and Read API Strategy
 
@@ -405,11 +414,19 @@ Complete this before writing code. Save your AI conversation as a reference docu
 - What empty states are required when graph/badge/charity data is sparse?
 - How will you avoid UI business logic drift across three page surfaces?
 
+#### 6) Quick Dictation Interaction Design
+
+- How does the Quick creation UI expose start/stop dictation controls and transcript preview?
+- How are transcription errors corrected before advice requests or publish actions?
+- What debounce/submit rules prevent duplicate publish actions while dictation is active?
+- How are dictation analytics captured (started, completed, abandoned) for funnel visibility?
+- What deterministic fallback UI appears when dictation fails mid-session?
+
 #### 6) Observability, Testing, and Reliability Architecture
 
 - Which golden signals (latency, error, throughput, saturation) will you track per service?
 - What product funnel events prove graph features increase meaningful engagement?
-- Which tests are required per subsystem (graph, fundraiser, community, profile, AI)?
+- Which tests are required per subsystem (graph, fundraiser, community, profile, advice)?
 - What synthetic checks verify deployment health and fallback correctness?
 - What runbook triggers map to automated alerts and operator actions?
 
@@ -417,7 +434,7 @@ Complete this before writing code. Save your AI conversation as a reference docu
 
 #### 1) Security and Failure Modes
 
-- What are top failure modes for graph cache miss, queue outage, and AI timeout?
+- What are top failure modes for graph cache miss, queue outage, and advice timeout?
 - How will authentication and authorization be enforced on server-side APIs?
 - What abuse scenarios exist (badge farming, spam charities, event floods)?
 - Which safeguards throttle or block malicious write patterns?
@@ -428,6 +445,7 @@ Complete this before writing code. Save your AI conversation as a reference docu
 - Which integration tests validate end-to-end donation -> graph -> UI flows?
 - How will you test mobile responsiveness for all create/edit/view paths?
 - Which regression tests cover privacy-safe rendering and explanation generation?
+- Which tests validate Quick-mode voice dictation (permissions, unsupported browser fallback, transcript edit, publish)?
 
 #### 3) Tooling, CI/CD, and Developer Workflow
 
