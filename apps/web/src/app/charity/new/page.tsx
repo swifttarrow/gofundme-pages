@@ -2,7 +2,7 @@ import { CharityWizard } from "@/components/charity/wizard";
 
 export const metadata = {
   title: "Start a Charity | GoSupportMe",
-  description: "Create a lasting cause impact. Start your charity fundraiser on GoSupportMe.",
+  description: "Create your charity page in minutes and start rallying support on GoSupportMe.",
 };
 
 export default function CharityNewPage() {

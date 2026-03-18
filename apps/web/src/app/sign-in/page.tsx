@@ -53,7 +53,7 @@ export default function SignInPage() {
         <p className="mt-4 text-center text-sm text-text-secondary">
           New to GoSupportMe?{" "}
           <Link href="/charity/new" className="text-primary font-medium hover:underline">
-            Start a fundraiser
+            Start a charity
           </Link>
         </p>
       </div>

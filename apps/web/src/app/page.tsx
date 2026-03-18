@@ -21,13 +21,13 @@ export default function HomePage() {
               href="/charity/new"
               className="btn-primary text-center text-lg px-8 py-4"
             >
-              Start a GoSupportMe
+              Start a Charity
             </Link>
             <Link
               href="/community"
               className="btn-secondary text-center text-lg px-8 py-4"
             >
-              Explore fundraisers
+              View communities
             </Link>
           </div>
         </div>

@@ -67,26 +67,32 @@ export function Navbar() {
         {/* Nav links */}
         <nav className="hidden md:flex items-center gap-4 ml-auto">
           <Link
+            href="/"
+            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+          >
+            Discover
+          </Link>
+          <Link
             href="/community"
             className="text-sm text-text-secondary hover:text-text-primary transition-colors"
           >
-            How It Works
+            Communities
           </Link>
           <Link
             href="/charity/new"
             className="bg-primary text-white text-sm font-semibold px-4 py-2 rounded-md
                        hover:bg-primary-dark transition-colors whitespace-nowrap"
           >
-            Start a GoSupportMe
+            Start a Charity
           </Link>
           <div className="relative" ref={notificationsRef}>
-            <div className="flex items-center">
-              <Link
-                href="/notifications"
-                className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border-light text-text-secondary hover:text-text-primary hover:bg-bg-faint transition-colors"
-                aria-label="Open notifications page"
-                onClick={() => setIsNotificationsOpen(false)}
-              >
+            <button
+              type="button"
+              className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border-light text-text-secondary hover:text-text-primary hover:bg-bg-faint transition-colors"
+              aria-label={isNotificationsOpen ? "Close notification preview" : "Open notification preview"}
+              aria-expanded={isNotificationsOpen}
+              onClick={() => setIsNotificationsOpen((open) => !open)}
+            >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M4 4h16v12H5.17L4 17.17V4z" />
                   <path d="m4 6 8 6 8-6" />
@@ -96,27 +102,7 @@ export function Navbar() {
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
-              </Link>
-              <button
-                type="button"
-                className="inline-flex h-9 w-7 items-center justify-center text-text-secondary hover:text-text-primary"
-                aria-label={isNotificationsOpen ? "Close notification preview" : "Open notification preview"}
-                aria-expanded={isNotificationsOpen}
-                onClick={() => setIsNotificationsOpen((open) => !open)}
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className={`transition-transform ${isNotificationsOpen ? "rotate-180" : ""}`}
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-            </div>
+            </button>
 
             {isNotificationsOpen && (
               <div className="absolute right-0 mt-2 w-80 rounded-lg border border-border-light bg-white shadow-lg p-2 z-50">
