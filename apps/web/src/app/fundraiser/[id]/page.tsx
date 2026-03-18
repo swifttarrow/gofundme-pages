@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { SEED_FUNDRAISERS, SEED_DONATIONS } from "@/lib/seed-data";
 import { FundraiserHero } from "@/components/fundraiser/hero";
 import { Story } from "@/components/fundraiser/story";
@@ -106,6 +107,20 @@ export default async function FundraiserPage({ params }: FundraiserPageProps) {
                 donations={displayedDonations}
                 currentUserId={currentUserId}
               />
+              <div className="mt-4 rounded-lg border border-border-light bg-white p-4 space-y-2">
+                <Link
+                  href="/fundraiser/new?source=post_donation_upsell"
+                  className="block text-sm font-semibold text-primary hover:underline"
+                >
+                  Start one yourself
+                </Link>
+                <Link
+                  href="/charity/new?source=fundraiser_page"
+                  className="block text-sm font-semibold text-primary hover:underline"
+                >
+                  Turn this into a charity
+                </Link>
+              </div>
             </div>
           </div>
         </div>

@@ -27,6 +27,20 @@ export default function CommunityPage() {
           <p className="text-text-secondary mt-2 max-w-3xl">
             Communities you already follow appear first so you can jump back into causes you care about.
           </p>
+          <div className="mt-4 flex gap-2">
+            <Link
+              href="/fundraiser/new?source=community_page"
+              className="px-4 py-2 rounded-md bg-primary text-white text-sm font-semibold"
+            >
+              Start a fundraiser
+            </Link>
+            <Link
+              href="/charity/new?source=community_page"
+              className="px-4 py-2 rounded-md border border-border-medium bg-white text-sm font-semibold text-text-primary"
+            >
+              Create a charity
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

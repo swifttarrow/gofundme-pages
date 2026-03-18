@@ -26,6 +26,23 @@ export type AuthUser = {
   avatarUrl: string | null;
 };
 
+export type VoiceDraft = {
+  title: string;
+  summary: string;
+  story: string;
+  goalAmountCents: number;
+  category: string;
+  breakdown: string[];
+  entities: {
+    person: string | null;
+    cause: string | null;
+    urgency: string | null;
+    amountHintCents: number | null;
+  };
+  confidence: number;
+  lowConfidence: boolean;
+};
+
 // ─── Fundraisers ─────────────────────────────────────────────────────────────
 export function getFundraisers(params?: {
   cursor?: string;
@@ -45,6 +62,59 @@ export function getFundraisers(params?: {
 
 export function getFundraiser(id: string) {
   return apiFetch<Record<string, unknown>>(`/api/fundraisers/${id}`);
+}
+
+export function createVoiceDraft(data: {
+  inputType: "voice" | "typing";
+  transcript: string;
+  recordingSeconds?: number;
+  source?: string;
+}) {
+  return apiFetch<{
+    draftId: string;
+    status: "ready";
+    transcript: { raw: string; normalized: string };
+    draft: VoiceDraft;
+    checks: { moderationSafe: boolean; grounded: boolean; missingEvidence: string[] };
+  }>("/api/fundraisers/voice/draft", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function regenerateVoiceDraft(data: {
+  draftId: string;
+  section: "title" | "summary" | "story" | "breakdown";
+  tone: "emotional" | "direct" | "detailed";
+}) {
+  return apiFetch<{ draftId: string; draft: VoiceDraft }>("/api/fundraisers/voice/regenerate", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function publishFundraiser(data: {
+  organizerId: string;
+  title: string;
+  summary: string;
+  story: string;
+  goalAmountCents: number;
+  category: string;
+  location: string;
+  breakdown: string[];
+  distribution: {
+    shareToCommunity: boolean;
+    notifyFriends: boolean;
+  };
+}) {
+  return apiFetch<{
+    fundraiser: { id: string; title: string; status: string };
+    distribution: { shareToCommunity: boolean; notifyFriends: boolean };
+    shareUrl: string;
+  }>("/api/fundraisers", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
 
 // ─── Donations ───────────────────────────────────────────────────────────────
@@ -201,4 +271,65 @@ export function createCharity(data: {
   milestones: Array<{ amount: number; label: string }>;
 }) {
   return apiFetch("/api/charities", { method: "POST", body: JSON.stringify(data) });
+}
+
+export function getCharityRequestEligibility(userId: string) {
+  const qs = new URLSearchParams({ userId });
+  return apiFetch<{ state: "eligible" | "under_review" | "active_charity" }>(
+    `/api/charities/requests/eligibility?${qs}`
+  );
+}
+
+export function createCharityRequest(data: {
+  userId: string;
+  charityName: string;
+  mission: string;
+  beneficiaries: string;
+  fundUsage: string;
+  location: string;
+  coverImageUrl?: string;
+  idempotencyKey: string;
+}) {
+  return apiFetch<{
+    id: string;
+    status: "under_review" | "approved" | "rejected";
+    decision_reason: string | null;
+    charity_name: string;
+  }>("/api/charities/requests", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function getMyCharityRequest(userId: string) {
+  const qs = new URLSearchParams({ userId });
+  return apiFetch<{
+    id: string;
+    status: "under_review" | "approved" | "rejected";
+    decision_reason: string | null;
+    charity_name: string;
+    mission: string;
+    beneficiaries: string;
+    fund_usage: string;
+    location: string;
+    cover_image_url: string | null;
+  }>(`/api/charities/requests/mine?${qs}`);
+}
+
+export function resubmitCharityRequest(
+  requestId: string,
+  data: {
+    userId: string;
+    charityName: string;
+    mission: string;
+    beneficiaries: string;
+    fundUsage: string;
+    location: string;
+    coverImageUrl?: string;
+  }
+) {
+  return apiFetch(`/api/charities/requests/${requestId}/resubmit`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }

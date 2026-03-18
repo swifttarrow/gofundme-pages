@@ -75,6 +75,30 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
     <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <ProfileHeader user={user} isOwnProfile={isOwnProfile} />
+        {isOwnProfile ? (
+          <div className="mt-4 rounded-lg border border-border-light bg-white p-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-text-primary">Your Charity Request</p>
+              <p className="text-xs text-text-muted">
+                Track review status, decisions, and resubmission details.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Link
+                href="/charity/request"
+                className="px-3 py-2 rounded-md border border-border-medium text-sm font-medium text-text-primary"
+              >
+                View request status
+              </Link>
+              <Link
+                href="/charity/new?source=profile_page"
+                className="px-3 py-2 rounded-md bg-primary text-white text-sm font-semibold"
+              >
+                Start a charity
+              </Link>
+            </div>
+          </div>
+        ) : null}
 
         {/* Tabs */}
         <div className="mt-6 border-b border-border-light">

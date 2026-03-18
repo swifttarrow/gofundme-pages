@@ -1,5 +1,59 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import { randomUUID } from "crypto";
+import { z } from "zod";
 import { db } from "../db/client";
+import {
+  DraftSectionSchema,
+  VoiceDraft,
+  VoiceToneSchema,
+  generateDraftFromTranscript,
+  normalizeTranscript,
+  regenerateSection,
+  runGroundingChecks,
+  runModerationChecks,
+} from "../services/voice-draft";
+
+const CreateVoiceDraftSchema = z.object({
+  inputType: z.enum(["voice", "typing"]),
+  transcript: z.string().trim().min(1, "Please provide input before processing."),
+  recordingSeconds: z.number().int().min(0).max(90).optional(),
+  source: z.string().trim().min(1).max(80).optional(),
+});
+
+const RegenerateDraftSchema = z.object({
+  draftId: z.string().uuid(),
+  section: DraftSectionSchema,
+  tone: VoiceToneSchema,
+});
+
+const PublishFundraiserSchema = z.object({
+  organizerId: z.string().uuid(),
+  title: z.string().trim().min(3).max(80),
+  summary: z.string().trim().min(3).max(1500),
+  story: z.string().trim().min(10).max(12000),
+  goalAmountCents: z.number().int().positive(),
+  category: z.string().trim().min(2).max(80),
+  location: z.string().trim().min(2).max(120),
+  breakdown: z.array(z.string().trim().min(2).max(300)).default([]),
+  distribution: z
+    .object({
+      shareToCommunity: z.boolean(),
+      notifyFriends: z.boolean(),
+    })
+    .default({ shareToCommunity: true, notifyFriends: false }),
+});
+
+type DraftRecord = {
+  id: string;
+  source: string;
+  inputType: "voice" | "typing";
+  transcriptRaw: string;
+  transcriptNormalized: string;
+  draft: VoiceDraft;
+  createdAt: string;
+};
+
+const draftStore = new Map<string, DraftRecord>();
 
 export async function fundraisersRoutes(app: FastifyInstance): Promise<void> {
   /** GET /api/fundraisers?cursor=<iso>&limit=12&category=Medical&sort=trending */
@@ -93,6 +147,166 @@ export async function fundraisersRoutes(app: FastifyInstance): Promise<void> {
       ...fundraiser,
       progressPercent,
       recentDonations: donations,
+    });
+  });
+
+  /** POST /api/fundraisers/voice/draft */
+  app.post("/api/fundraisers/voice/draft", async (request: FastifyRequest, reply: FastifyReply) => {
+    const parse = CreateVoiceDraftSchema.safeParse(request.body);
+    if (!parse.success) {
+      return reply.status(400).send({ error: "Validation failed", details: parse.error.flatten() });
+    }
+
+    const data = parse.data;
+    if (data.inputType === "voice" && data.recordingSeconds && data.recordingSeconds > 90) {
+      return reply.status(400).send({ error: "Recording exceeds 90 second limit" });
+    }
+
+    const transcriptNormalized = normalizeTranscript(data.transcript);
+    if (!transcriptNormalized) {
+      return reply.status(400).send({
+        error: "We could not detect usable input. Please record again or type your story.",
+      });
+    }
+
+    const moderation = runModerationChecks(transcriptNormalized);
+    if (!moderation.safe) {
+      return reply.status(422).send({ error: moderation.reason });
+    }
+
+    const draft = generateDraftFromTranscript(transcriptNormalized);
+    const grounding = runGroundingChecks(transcriptNormalized, draft);
+    if (!grounding.grounded) {
+      draft.lowConfidence = true;
+    }
+
+    const draftId = randomUUID();
+    draftStore.set(draftId, {
+      id: draftId,
+      source: data.source ?? "unknown",
+      inputType: data.inputType,
+      transcriptRaw: data.transcript,
+      transcriptNormalized,
+      draft,
+      createdAt: new Date().toISOString(),
+    });
+
+    return reply.send({
+      draftId,
+      status: "ready",
+      transcript: {
+        raw: data.transcript,
+        normalized: transcriptNormalized,
+      },
+      draft,
+      checks: {
+        moderationSafe: true,
+        grounded: grounding.grounded,
+        missingEvidence: grounding.missingEvidence,
+      },
+    });
+  });
+
+  /** POST /api/fundraisers/voice/regenerate */
+  app.post(
+    "/api/fundraisers/voice/regenerate",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const parse = RegenerateDraftSchema.safeParse(request.body);
+      if (!parse.success) {
+        return reply.status(400).send({ error: "Validation failed", details: parse.error.flatten() });
+      }
+
+      const data = parse.data;
+      const existing = draftStore.get(data.draftId);
+      if (!existing) {
+        return reply.status(404).send({ error: "Draft not found" });
+      }
+
+      const next = regenerateSection({
+        section: data.section,
+        tone: data.tone,
+        currentDraft: existing.draft,
+        normalizedTranscript: existing.transcriptNormalized,
+      });
+
+      existing.draft = next;
+      draftStore.set(existing.id, existing);
+
+      return reply.send({
+        draftId: existing.id,
+        draft: next,
+      });
+    }
+  );
+
+  /** GET /api/fundraisers/voice/draft/:id */
+  app.get("/api/fundraisers/voice/draft/:id", async (request: FastifyRequest, reply: FastifyReply) => {
+    const { id } = request.params as { id: string };
+    const existing = draftStore.get(id);
+    if (!existing) {
+      return reply.status(404).send({ error: "Draft not found" });
+    }
+
+    return reply.send({
+      draftId: existing.id,
+      status: "ready",
+      draft: existing.draft,
+      transcript: {
+        raw: existing.transcriptRaw,
+        normalized: existing.transcriptNormalized,
+      },
+      source: existing.source,
+      inputType: existing.inputType,
+      createdAt: existing.createdAt,
+    });
+  });
+
+  /** POST /api/fundraisers */
+  app.post("/api/fundraisers", async (request: FastifyRequest, reply: FastifyReply) => {
+    const parse = PublishFundraiserSchema.safeParse(request.body);
+    if (!parse.success) {
+      return reply.status(400).send({ error: "Validation failed", details: parse.error.flatten() });
+    }
+
+    const data = parse.data;
+    const insert = await db.query(
+      `INSERT INTO fundraisers (organizer_id, title, story, goal_cents, category, location, status)
+       VALUES ($1, $2, $3, $4, $5, $6, 'active')
+       RETURNING id, title, story, goal_cents, category, location, status, created_at`,
+      [
+        data.organizerId,
+        data.title,
+        `${data.summary}\n\n${data.story}\n\n${data.breakdown.map((item) => `- ${item}`).join("\n")}`.trim(),
+        data.goalAmountCents,
+        data.category,
+        data.location,
+      ]
+    );
+
+    const created = insert.rows[0] as {
+      id: string;
+      title: string;
+      story: string;
+      goal_cents: number;
+      category: string;
+      location: string;
+      status: string;
+      created_at: string;
+    };
+
+    return reply.status(201).send({
+      fundraiser: {
+        id: created.id,
+        title: created.title,
+        story: created.story,
+        goalAmountCents: created.goal_cents,
+        category: created.category,
+        location: created.location,
+        status: created.status,
+        createdAt: created.created_at,
+      },
+      distribution: data.distribution,
+      shareUrl: `/fundraiser/${created.id}`,
     });
   });
 }

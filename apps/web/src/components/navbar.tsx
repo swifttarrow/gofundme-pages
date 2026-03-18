@@ -135,14 +135,14 @@ export function Navbar() {
             {isCreateMenuOpen && (
               <div className="absolute right-0 mt-2 w-56 rounded-lg border border-border-light bg-white shadow-lg p-1.5 z-50">
                 <Link
-                  href="/fundraiser"
+                  href="/fundraiser/new?source=primary_cta"
                   className="block rounded-md px-3 py-2 text-sm text-text-primary hover:bg-bg-faint transition-colors"
                   onClick={() => setIsCreateMenuOpen(false)}
                 >
                   Create fundraiser
                 </Link>
                 <Link
-                  href="/charity/new"
+                  href="/charity/new?source=primary_cta"
                   className="block rounded-md px-3 py-2 text-sm text-text-primary hover:bg-bg-faint transition-colors"
                   onClick={() => setIsCreateMenuOpen(false)}
                 >

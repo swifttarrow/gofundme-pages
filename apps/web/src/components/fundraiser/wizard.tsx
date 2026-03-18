@@ -1,492 +1,557 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  VoiceDraft,
+  createVoiceDraft,
+  ingestEvent,
+  publishFundraiser,
+  regenerateVoiceDraft,
+} from "@/lib/api";
 
-const STEPS = [
-  { id: 1, label: "Cause Details" },
-  { id: 2, label: "Story & Beneficiary" },
-  { id: 3, label: "Fund Usage Plan" },
-  { id: 4, label: "Milestones" },
-  { id: 5, label: "Cover & Media" },
-  { id: 6, label: "Review & Launch" },
-];
+const CURRENT_USER_ID = "a1b2c3d4-0002-0002-0002-000000000002";
+const ROTATING_PROMPTS = ["What happened?", "Who is this for?", "How will funds be used?"];
+const TONES: Array<"emotional" | "direct" | "detailed"> = ["emotional", "direct", "detailed"];
+const DEFAULT_LOCATION = "Atlanta, GA";
 
-interface Milestone {
-  amount: string;
-  label: string;
-}
+type FlowStage =
+  | "entry"
+  | "recording"
+  | "processing"
+  | "review"
+  | "publish"
+  | "success";
 
 export function FundraiserWizard() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [title, setTitle] = useState("Support the Martinez Family After Fire");
-  const [category, setCategory] = useState("Emergency");
-  const [goalAmount, setGoalAmount] = useState("50000");
-  const [location, setLocation] = useState("Atlanta, GA");
-  const [story, setStory] = useState(
-    "Our family lost our home in an unexpected fire and we are rebuilding from scratch. Donations will help us secure housing and replace essentials."
-  );
-  const [beneficiaryName, setBeneficiaryName] = useState("Martinez Family");
-  const [beneficiaryRelationship, setBeneficiaryRelationship] = useState("Family");
-  const [fundAllocation, setFundAllocation] = useState(
-    "60% immediate support, 25% living expenses, 15% recovery costs"
-  );
-  const [milestones, setMilestones] = useState<Milestone[]>([
-    { amount: "5000", label: "Immediate emergency support" },
-    { amount: "20000", label: "Stabilize housing and bills" },
-  ]);
-  const [coverImageUrl, setCoverImageUrl] = useState(
-    "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&auto=format&fit=crop"
-  );
-  const [mediaCaption, setMediaCaption] = useState("Family photo before the fire.");
-  const [launchMessage, setLaunchMessage] = useState("");
+  const [stage, setStage] = useState<FlowStage>("entry");
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [typingMode, setTypingMode] = useState(false);
+  const [typingInput, setTypingInput] = useState("");
+  const [recordingTranscript, setRecordingTranscript] = useState("");
+  const [draft, setDraft] = useState<VoiceDraft | null>(null);
+  const [draftId, setDraftId] = useState<string | null>(null);
+  const [tone, setTone] = useState<"emotional" | "direct" | "detailed">("emotional");
+  const [location, setLocation] = useState(DEFAULT_LOCATION);
+  const [shareToCommunity, setShareToCommunity] = useState(true);
+  const [notifyFriends, setNotifyFriends] = useState(false);
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [publishedId, setPublishedId] = useState<string | null>(null);
 
-  function addMilestone() {
-    setMilestones([...milestones, { amount: "", label: "" }]);
+  const source = useMemo(() => {
+    if (typeof window === "undefined") return "unknown";
+    const url = new URL(window.location.href);
+    return url.searchParams.get("source") ?? "primary_cta";
+  }, []);
+
+  async function track(type: string, payload: Record<string, unknown>) {
+    try {
+      await ingestEvent({
+        eventId: crypto.randomUUID(),
+        type,
+        occurredAt: new Date().toISOString(),
+        payload: {
+          source,
+          stage,
+          ...payload,
+        },
+      });
+    } catch {
+      // Telemetry should never block the flow.
+    }
   }
 
-  function updateMilestone(index: number, field: keyof Milestone, value: string) {
-    const updated = [...milestones];
-    updated[index] = { ...updated[index], [field]: value };
-    setMilestones(updated);
+  function beginRecording() {
+    setError(null);
+    setTypingMode(false);
+    setStage("recording");
+    setRecordingSeconds(0);
+    setRecordingTranscript("");
+    void track("voice.recording.started", {});
   }
 
-  function removeMilestone(index: number) {
-    setMilestones(milestones.filter((_, i) => i !== index));
+  useEffect(() => {
+    if (stage !== "recording" || isPaused) return;
+    const timeout = window.setTimeout(() => {
+      setRecordingSeconds((value) => {
+        const next = value + 1;
+        if (next >= 90) {
+          setIsPaused(true);
+        }
+        return Math.min(next, 90);
+      });
+    }, 1000);
+    return () => window.clearTimeout(timeout);
+  }, [isPaused, stage, recordingSeconds]);
+
+  function pauseOrResume() {
+    setIsPaused((value) => !value);
   }
 
-  function goToPreviousStep() {
-    setCurrentStep(Math.max(1, currentStep - 1));
+  function retryRecording() {
+    setRecordingSeconds(0);
+    setRecordingTranscript("");
+    setIsPaused(false);
+    setError(null);
   }
 
-  function goToNextStep() {
-    if (currentStep === STEPS.length) {
-      setLaunchMessage("Fundraiser launched! You can now share it with donors.");
+  async function moveToProcessing() {
+    setError(null);
+    const transcript =
+      typingMode || recordingTranscript.trim().length > 0
+        ? (typingMode ? typingInput : recordingTranscript).trim()
+        : `I need urgent support for my family and basic expenses. We need around $5000 for short-term recovery.`;
+
+    if (!transcript) {
+      setError("Please record or type a short story before continuing.");
       return;
     }
-    setCurrentStep(Math.min(STEPS.length, currentStep + 1));
+
+    setStage("processing");
+    void track("voice.processing.started", { inputType: typingMode ? "typing" : "voice" });
+    try {
+      const result = await createVoiceDraft({
+        inputType: typingMode ? "typing" : "voice",
+        transcript,
+        recordingSeconds: typingMode ? undefined : recordingSeconds,
+        source,
+      });
+      setDraftId(result.draftId);
+      setDraft(result.draft);
+      setStage("review");
+      void track("voice.processing.completed", {
+        confidence: result.draft.confidence,
+        lowConfidence: result.draft.lowConfidence,
+      });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to process your story right now.");
+      setStage(typingMode ? "entry" : "recording");
+      void track("voice.processing.failed", {});
+    }
   }
 
-  function isCurrentStepValid() {
-    if (currentStep === 1) {
-      return Boolean(title.trim() && category.trim() && goalAmount.trim() && location.trim());
+  async function regenerate(section: "title" | "summary" | "story" | "breakdown") {
+    if (!draftId) return;
+    try {
+      const result = await regenerateVoiceDraft({
+        draftId,
+        section,
+        tone,
+      });
+      setDraft(result.draft);
+      void track("voice.review.regenerated", { section, tone });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not regenerate section.");
     }
-    if (currentStep === 2) {
-      return Boolean(story.trim() && beneficiaryName.trim() && beneficiaryRelationship.trim());
-    }
-    if (currentStep === 3) {
-      return Boolean(fundAllocation.trim());
-    }
-    if (currentStep === 4) {
-      return (
-        milestones.length > 0 &&
-        milestones.every((milestone) => milestone.amount.trim() && milestone.label.trim())
-      );
-    }
-    if (currentStep === 5) {
-      return Boolean(coverImageUrl.trim());
-    }
-    return true;
   }
 
-  function renderStepContent() {
-    if (currentStep === 1) {
-      return (
-        <>
-          <h1 className="text-2xl font-bold text-text-primary mb-2">Cause Details</h1>
-          <p className="text-sm text-text-secondary mb-8 leading-relaxed">
-            Start with the essentials so donors quickly understand your fundraiser at a glance.
-          </p>
+  function startOverWithVoice() {
+    setDraft(null);
+    setDraftId(null);
+    setTypingInput("");
+    setRecordingTranscript("");
+    setTypingMode(false);
+    setIsPaused(false);
+    setRecordingSeconds(0);
+    setStage("entry");
+    setError(null);
+    void track("voice.review.start_over", {});
+  }
 
-          <div className="space-y-5 mb-8">
-            <div>
-              <label className="block text-sm font-semibold text-text-primary mb-2">Fundraiser title</label>
-              <input
-                type="text"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                className="w-full border border-border-medium rounded-md px-3 py-2.5 text-sm
-                           focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
-                placeholder="Give your fundraiser a clear title"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-text-primary mb-2">Category</label>
-                <select
-                  value={category}
-                  onChange={(event) => setCategory(event.target.value)}
-                  className="w-full border border-border-medium rounded-md px-3 py-2.5 text-sm
-                             focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
-                >
-                  <option>Emergency</option>
-                  <option>Medical</option>
-                  <option>Education</option>
-                  <option>Community</option>
-                  <option>Animals</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-text-primary mb-2">Goal amount</label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                  <input
-                    type="number"
-                    value={goalAmount}
-                    onChange={(event) => setGoalAmount(event.target.value)}
-                    className="w-full border border-border-medium rounded-md pl-6 pr-3 py-2.5 text-sm
-                               focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-text-primary mb-2">Location</label>
-              <input
-                type="text"
-                value={location}
-                onChange={(event) => setLocation(event.target.value)}
-                className="w-full border border-border-medium rounded-md px-3 py-2.5 text-sm
-                           focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
-                placeholder="City, State"
-              />
-            </div>
-          </div>
-        </>
-      );
+  async function publish() {
+    if (!draft) return;
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const result = await publishFundraiser({
+        organizerId: CURRENT_USER_ID,
+        title: draft.title,
+        summary: draft.summary,
+        story: draft.story,
+        goalAmountCents: draft.goalAmountCents,
+        category: draft.category,
+        location,
+        breakdown: draft.breakdown,
+        distribution: {
+          shareToCommunity,
+          notifyFriends,
+        },
+      });
+      setShareUrl(result.shareUrl);
+      setPublishedId(result.fundraiser.id);
+      setStage("success");
+      void track("voice.publish.completed", {
+        fundraiserId: result.fundraiser.id,
+        shareToCommunity,
+        notifyFriends,
+      });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Publishing failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
+  }
 
-    if (currentStep === 2) {
-      return (
-        <>
-          <h1 className="text-2xl font-bold text-text-primary mb-2">Story & Beneficiary</h1>
-          <p className="text-sm text-text-secondary mb-8 leading-relaxed">
-            Share what happened, who needs help, and why this support matters right now.
-          </p>
+  async function copyShareLink() {
+    if (!shareUrl) return;
+    await navigator.clipboard.writeText(shareUrl);
+    void track("voice.share.copy_link", { fundraiserId: publishedId });
+  }
 
-          <div className="space-y-5 mb-8">
-            <div>
-              <label className="block text-sm font-semibold text-text-primary mb-2">Fundraiser story</label>
-              <textarea
-                value={story}
-                onChange={(event) => setStory(event.target.value)}
-                rows={6}
-                className="w-full border border-border-medium rounded-md px-3 py-2.5 text-sm
-                           focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20
-                           resize-none text-text-primary bg-white"
-                placeholder="Explain the situation and how support helps"
-              />
-            </div>
+  const prompt = ROTATING_PROMPTS[Math.floor(recordingSeconds / 8) % ROTATING_PROMPTS.length];
+  const softCapReached = recordingSeconds >= 60;
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-text-primary mb-2">Beneficiary name</label>
-                <input
-                  type="text"
-                  value={beneficiaryName}
-                  onChange={(event) => setBeneficiaryName(event.target.value)}
-                  className="w-full border border-border-medium rounded-md px-3 py-2.5 text-sm
-                             focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
-                  placeholder="Who is receiving support?"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-text-primary mb-2">
-                  Your relationship
-                </label>
-                <select
-                  value={beneficiaryRelationship}
-                  onChange={(event) => setBeneficiaryRelationship(event.target.value)}
-                  className="w-full border border-border-medium rounded-md px-3 py-2.5 text-sm
-                             focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
-                >
-                  <option>Family</option>
-                  <option>Friend</option>
-                  <option>Self</option>
-                  <option>Community organizer</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </>
-      );
-    }
-
-    if (currentStep === 3) {
-      return (
-        <>
-          <h1 className="text-2xl font-bold text-text-primary mb-2">Fund Usage Plan</h1>
-          <p className="text-sm text-text-secondary mb-8 leading-relaxed">
-            Show donors how funds support this specific cause. Clear plans build trust and increase giving.
-          </p>
-
-          <div className="mb-8">
-            <label className="block text-sm font-semibold text-text-primary mb-2">
-              How will funds be used?
-            </label>
-            <p className="text-xs text-text-muted mb-3">
-              This breakdown appears on your fundraiser page (for example: medical bills, housing, transportation).
-            </p>
-            <textarea
-              value={fundAllocation}
-              onChange={(event) => setFundAllocation(event.target.value)}
-              rows={3}
-              className="w-full border border-border-medium rounded-md px-3 py-2.5 text-sm
-                         focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20
-                         resize-none text-text-primary bg-white"
-              placeholder="Describe how funds will be allocated..."
-            />
-          </div>
-        </>
-      );
-    }
-
-    if (currentStep === 4) {
-      return (
-        <>
-          <h1 className="text-2xl font-bold text-text-primary mb-2">Milestones</h1>
-          <p className="text-sm text-text-secondary mb-8 leading-relaxed">
-            Add milestone targets so donors can track progress and impact as your fundraiser grows.
-          </p>
-
-          <div className="mb-8">
-            <label className="block text-sm font-semibold text-text-primary mb-3">
-              Set fundraising milestones
-            </label>
-
-            <div className="space-y-3">
-              {milestones.map((milestone, index) => (
-                <div key={index} className="flex gap-3 items-start">
-                  <div className="flex-shrink-0 w-24">
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-                      <input
-                        type="number"
-                        value={milestone.amount}
-                        onChange={(event) => updateMilestone(index, "amount", event.target.value)}
-                        className="w-full pl-6 pr-2 py-2.5 border border-border-medium rounded-md text-sm
-                                   focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={milestone.label}
-                      onChange={(event) => updateMilestone(index, "label", event.target.value)}
-                      className="w-full px-3 py-2.5 border border-border-medium rounded-md text-sm
-                                 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
-                      placeholder="Milestone description..."
-                    />
-                  </div>
-                  <button
-                    onClick={() => removeMilestone(index)}
-                    className="flex-shrink-0 p-2 text-text-muted hover:text-accent-red transition-colors"
-                    disabled={milestones.length === 1}
-                    aria-label="Remove milestone"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="3,6 5,6 21,6" />
-                      <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={addMilestone}
-              className="mt-3 flex items-center gap-1.5 text-sm text-primary font-medium hover:underline"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-              Add another milestone
-            </button>
-          </div>
-
-          <div className="bg-primary-light border border-primary/20 rounded-md p-4 mb-8 flex gap-3">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00B964" strokeWidth="2" className="flex-shrink-0 mt-0.5">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="16" x2="12" y2="12" />
-              <line x1="12" y1="8" x2="12.01" y2="8" />
-            </svg>
-            <div>
-              <p className="text-sm font-semibold text-primary-dark mb-0.5">Advice</p>
-              <p className="text-sm text-primary/80 leading-relaxed">
-                Specific milestones usually improve donor confidence and can increase contributions.
-              </p>
-            </div>
-          </div>
-        </>
-      );
-    }
-
-    if (currentStep === 5) {
-      return (
-        <>
-          <h1 className="text-2xl font-bold text-text-primary mb-2">Cover & Media</h1>
-          <p className="text-sm text-text-secondary mb-8 leading-relaxed">
-            Add a strong image and caption to make your fundraiser easier to trust and share.
-          </p>
-
-          <div className="space-y-5 mb-8">
-            <div>
-              <label className="block text-sm font-semibold text-text-primary mb-2">Cover image URL</label>
-              <input
-                type="url"
-                value={coverImageUrl}
-                onChange={(event) => setCoverImageUrl(event.target.value)}
-                className="w-full border border-border-medium rounded-md px-3 py-2.5 text-sm
-                           focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-white"
-                placeholder="https://"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-text-primary mb-2">Image caption</label>
-              <textarea
-                rows={2}
-                value={mediaCaption}
-                onChange={(event) => setMediaCaption(event.target.value)}
-                className="w-full border border-border-medium rounded-md px-3 py-2.5 text-sm
-                           focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20
-                           resize-none text-text-primary bg-white"
-                placeholder="Add context for the image"
-              />
-            </div>
-            {coverImageUrl ? (
-              <div className="rounded-md overflow-hidden border border-border-light bg-white">
-                <img src={coverImageUrl} alt="Fundraiser cover preview" className="w-full h-56 object-cover" />
-                {mediaCaption ? (
-                  <p className="text-xs text-text-secondary px-3 py-2 border-t border-border-light">
-                    {mediaCaption}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-        </>
-      );
-    }
-
+  if (stage === "processing") {
     return (
-      <>
-        <h1 className="text-2xl font-bold text-text-primary mb-2">Review & Launch</h1>
-        <p className="text-sm text-text-secondary mb-8 leading-relaxed">
-          Confirm your details before publishing. You can still edit your fundraiser after launch.
-        </p>
+      <div className="max-w-xl mx-auto py-16 px-4 text-center">
+        <div className="w-12 h-12 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto mb-4" />
+        <h2 className="text-2xl font-semibold text-text-primary mb-2">
+          Turning your story into a fundraiser...
+        </h2>
+        <p className="text-sm text-text-secondary">Hang tight, this usually takes a few seconds.</p>
+      </div>
+    );
+  }
 
-        {launchMessage ? (
-          <div className="bg-primary-light border border-primary/20 rounded-md p-4 mb-6">
-            <p className="text-sm font-semibold text-primary-dark">{launchMessage}</p>
-          </div>
-        ) : null}
-
-        <div className="space-y-4 mb-8">
-          <div className="bg-white border border-border-light rounded-md p-4">
-            <p className="text-xs uppercase tracking-wide text-text-muted mb-1">Title</p>
-            <p className="text-sm text-text-primary font-medium">{title || "Untitled fundraiser"}</p>
-          </div>
-          <div className="bg-white border border-border-light rounded-md p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-text-muted mb-1">Category</p>
-              <p className="text-sm text-text-primary font-medium">{category}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-text-muted mb-1">Goal</p>
-              <p className="text-sm text-text-primary font-medium">${goalAmount || "0"}</p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-text-muted mb-1">Location</p>
-              <p className="text-sm text-text-primary font-medium">{location}</p>
-            </div>
-          </div>
-          <div className="bg-white border border-border-light rounded-md p-4">
-            <p className="text-xs uppercase tracking-wide text-text-muted mb-1">Story</p>
-            <p className="text-sm text-text-secondary leading-relaxed">{story}</p>
-          </div>
-          <div className="bg-white border border-border-light rounded-md p-4">
-            <p className="text-xs uppercase tracking-wide text-text-muted mb-1">Fund usage</p>
-            <p className="text-sm text-text-secondary leading-relaxed">{fundAllocation}</p>
+  if (stage === "success") {
+    return (
+      <div className="max-w-xl mx-auto py-12 px-4">
+        <div className="rounded-xl border border-primary/20 bg-primary-light p-6">
+          <h2 className="text-2xl font-semibold text-primary-dark mb-2">
+            Your fundraiser is live!
+          </h2>
+          <p className="text-sm text-text-secondary mb-5">
+            Share it now to build momentum in the first few minutes.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={copyShareLink}
+              className="px-4 py-2 rounded-md bg-primary text-white text-sm font-semibold"
+            >
+              Copy link
+            </button>
+            <a
+              href={shareUrl ? `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareUrl)}` : "#"}
+              className="px-4 py-2 rounded-md border border-border-medium bg-white text-sm font-medium"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Share to socials
+            </a>
+            <a
+              href={shareUrl ? `sms:?&body=${encodeURIComponent(`Check this out: ${shareUrl}`)}` : "#"}
+              className="px-4 py-2 rounded-md border border-border-medium bg-white text-sm font-medium"
+            >
+              Message contacts
+            </a>
           </div>
         </div>
-      </>
+      </div>
+    );
+  }
+
+  if (stage === "publish" && draft) {
+    const missingRequired = !draft.title.trim() || !draft.story.trim() || !location.trim();
+    return (
+      <div className="max-w-2xl mx-auto py-8 px-4 space-y-5">
+        <h2 className="text-2xl font-semibold text-text-primary">Preview before publish</h2>
+        <div className="rounded-lg border border-border-light bg-white p-5">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Preview</p>
+          <h3 className="text-xl font-semibold text-text-primary mt-2">{draft.title}</h3>
+          <p className="text-sm text-text-secondary mt-2">{draft.summary}</p>
+          <p className="text-sm text-text-secondary mt-3 whitespace-pre-wrap">{draft.story}</p>
+          <p className="text-sm text-text-muted mt-3">
+            Goal: ${(draft.goalAmountCents / 100).toLocaleString()} · {draft.category}
+          </p>
+        </div>
+        <div className="rounded-lg border border-border-light bg-white p-4 space-y-3">
+          <label className="flex items-center gap-2 text-sm text-text-primary">
+            <input
+              type="checkbox"
+              checked={shareToCommunity}
+              onChange={(event) => setShareToCommunity(event.target.checked)}
+            />
+            Share to community
+          </label>
+          <label className="flex items-center gap-2 text-sm text-text-primary">
+            <input
+              type="checkbox"
+              checked={notifyFriends}
+              onChange={(event) => setNotifyFriends(event.target.checked)}
+            />
+            Notify friends
+          </label>
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-1">Location</label>
+            <input
+              value={location}
+              onChange={(event) => setLocation(event.target.value)}
+              className="w-full border border-border-medium rounded-md px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+        {error ? <p className="text-sm text-accent-red">{error}</p> : null}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            className="px-4 py-2 rounded-md border border-border-medium text-sm"
+            onClick={() => setStage("review")}
+          >
+            Back to edit
+          </button>
+          <button
+            type="button"
+            disabled={missingRequired || isSubmitting}
+            className="px-4 py-2 rounded-md bg-primary text-white text-sm font-semibold disabled:opacity-50"
+            onClick={publish}
+          >
+            {isSubmitting ? "Publishing..." : "Publish fundraiser"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (stage === "review" && draft) {
+    return (
+      <div className="max-w-2xl mx-auto py-8 px-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold text-text-primary">Review and edit</h2>
+          <button type="button" onClick={startOverWithVoice} className="text-sm text-primary hover:underline">
+            Start over with voice
+          </button>
+        </div>
+        {draft.lowConfidence ? (
+          <div className="rounded-md border border-yellow-300 bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+            Low confidence detected. Review and edit before publishing.
+          </div>
+        ) : null}
+        <div className="rounded-lg border border-border-light bg-white p-4 space-y-3">
+          <div>
+            <label className="block text-xs uppercase tracking-wide text-text-muted mb-1">Title</label>
+            <input
+              value={draft.title}
+              onChange={(event) => setDraft({ ...draft, title: event.target.value })}
+              className="w-full border border-border-medium rounded-md px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="block text-xs uppercase tracking-wide text-text-muted mb-1">Summary</label>
+              <button
+                type="button"
+                className="text-xs text-primary"
+                onClick={() => setSummaryExpanded((value) => !value)}
+              >
+                {summaryExpanded ? "Collapse" : "Expand"}
+              </button>
+            </div>
+            {summaryExpanded ? (
+              <textarea
+                value={draft.summary}
+                onChange={(event) => setDraft({ ...draft, summary: event.target.value })}
+                rows={3}
+                className="w-full border border-border-medium rounded-md px-3 py-2 text-sm"
+              />
+            ) : (
+              <p className="text-sm text-text-secondary">{draft.summary}</p>
+            )}
+          </div>
+          <div>
+            <label className="block text-xs uppercase tracking-wide text-text-muted mb-1">Story</label>
+            <textarea
+              value={draft.story}
+              onChange={(event) => setDraft({ ...draft, story: event.target.value })}
+              rows={6}
+              className="w-full border border-border-medium rounded-md px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs uppercase tracking-wide text-text-muted mb-1">Goal amount</label>
+            <input
+              type="number"
+              value={Math.floor(draft.goalAmountCents / 100)}
+              onChange={(event) =>
+                setDraft({
+                  ...draft,
+                  goalAmountCents: Math.max(1, Number(event.target.value || "0")) * 100,
+                })
+              }
+              className="w-full border border-border-medium rounded-md px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs uppercase tracking-wide text-text-muted mb-1">
+              Fund breakdown
+            </label>
+            <textarea
+              value={draft.breakdown.join("\n")}
+              onChange={(event) =>
+                setDraft({
+                  ...draft,
+                  breakdown: event.target.value.split("\n").map((item) => item.trim()).filter(Boolean),
+                })
+              }
+              rows={3}
+              className="w-full border border-border-medium rounded-md px-3 py-2 text-sm"
+            />
+          </div>
+          <div className="rounded-md border border-dashed border-border-medium px-3 py-2 text-sm text-text-muted">
+            Add a photo or video (optional)
+          </div>
+        </div>
+        <div className="rounded-lg border border-border-light bg-white p-4 space-y-3">
+          <p className="text-sm font-medium text-text-primary">Tone</p>
+          <div className="flex gap-2">
+            {TONES.map((option) => (
+              <button
+                key={option}
+                type="button"
+                className={`px-3 py-1.5 rounded-md text-sm border ${
+                  tone === option ? "bg-primary text-white border-primary" : "border-border-medium"
+                }`}
+                onClick={() => setTone(option)}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="text-sm text-primary" onClick={() => regenerate("title")}>
+              Regenerate title
+            </button>
+            <button type="button" className="text-sm text-primary" onClick={() => regenerate("summary")}>
+              Regenerate summary
+            </button>
+            <button type="button" className="text-sm text-primary" onClick={() => regenerate("story")}>
+              Regenerate story
+            </button>
+            <button type="button" className="text-sm text-primary" onClick={() => regenerate("breakdown")}>
+              Regenerate breakdown
+            </button>
+          </div>
+        </div>
+        {error ? <p className="text-sm text-accent-red">{error}</p> : null}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            className="px-4 py-2 rounded-md border border-border-medium text-sm"
+            onClick={() => setStage("entry")}
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            className="px-4 py-2 rounded-md bg-primary text-white text-sm font-semibold"
+            onClick={() => setStage("publish")}
+          >
+            Continue to publish
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen">
-      <div className="w-full md:w-64 bg-white border-r border-border-light p-6 md:min-h-screen">
-        <h2 className="font-bold text-text-primary text-sm mb-1">Start a Fundraiser</h2>
-        <p className="text-xs text-text-muted mb-6 leading-relaxed">
-          Raise support for a specific cause in a few guided steps.
+    <div className="max-w-xl mx-auto py-10 px-4">
+      <div className="rounded-xl border border-border-light bg-white p-6 space-y-4">
+        <h1 className="text-3xl font-semibold text-text-primary">Tell your story</h1>
+        <p className="text-sm text-text-secondary">
+          Tell us what happened, and what you need help with. Just talk and we&apos;ll handle the rest.
         </p>
 
-        <nav className="space-y-1" aria-label="Fundraiser steps">
-          {STEPS.map((step) => (
-            <div
-              key={step.id}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md ${
-                step.id === currentStep
-                  ? "bg-primary-light text-primary"
-                  : step.id < currentStep
-                  ? "text-text-secondary"
-                  : "text-text-muted"
-              }`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  step.id < currentStep
-                    ? "bg-primary"
-                    : step.id === currentStep
-                    ? "border-2 border-primary"
-                    : "border-2 border-border-medium"
-                }`}
-              >
-                {step.id < currentStep ? (
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                ) : (
-                  <span className="text-xs font-bold text-inherit">{step.id === currentStep ? "" : step.id}</span>
-                )}
+        {stage === "recording" ? (
+          <>
+            <div className="rounded-lg border border-border-light p-4 bg-bg-faint">
+              <p className="text-sm text-text-primary font-medium mb-1">Recording</p>
+              <p className="text-xs text-text-muted mb-3">{prompt}</p>
+              <div className="flex gap-1 h-6 items-end mb-2">
+                {Array.from({ length: 20 }).map((_, idx) => {
+                  const active = (idx + recordingSeconds) % 5 !== 0;
+                  return (
+                    <span
+                      key={idx}
+                      className={`w-1 rounded-full ${active ? "bg-primary" : "bg-primary/25"}`}
+                      style={{ height: `${((idx % 6) + 1) * 4}px` }}
+                    />
+                  );
+                })}
               </div>
-              <span className="text-xs font-medium">{step.label}</span>
+              <p className="text-xs text-text-secondary">
+                Timer: 0:{String(recordingSeconds).padStart(2, "0")}
+              </p>
+              {softCapReached ? (
+                <p className="text-xs text-amber-700 mt-2">
+                  You&apos;re past the 60s guidance mark. We&apos;ll auto-stop at 90s.
+                </p>
+              ) : null}
+              <textarea
+                value={recordingTranscript}
+                onChange={(event) => setRecordingTranscript(event.target.value)}
+                rows={4}
+                className="mt-3 w-full border border-border-medium rounded-md px-3 py-2 text-sm"
+                placeholder="Paste or type your captured transcript while recording..."
+              />
             </div>
-          ))}
-        </nav>
-      </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={pauseOrResume}
+                className="px-4 py-2 rounded-md border border-border-medium text-sm"
+              >
+                {isPaused ? "Resume" : "Pause"}
+              </button>
+              <button
+                type="button"
+                onClick={retryRecording}
+                className="px-4 py-2 rounded-md border border-border-medium text-sm"
+              >
+                Retry
+              </button>
+              <button
+                type="button"
+                onClick={moveToProcessing}
+                className="px-4 py-2 rounded-md bg-primary text-white text-sm font-semibold"
+              >
+                Stop and continue
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            {typingMode ? (
+              <textarea
+                value={typingInput}
+                onChange={(event) => setTypingInput(event.target.value)}
+                rows={6}
+                className="w-full border border-border-medium rounded-md px-3 py-2 text-sm"
+                placeholder="Type your fundraiser story..."
+              />
+            ) : null}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={typingMode ? moveToProcessing : beginRecording}
+                className="px-4 py-2 rounded-md bg-primary text-white text-sm font-semibold"
+              >
+                {typingMode ? "Generate draft" : "Start recording"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setTypingMode((value) => !value)}
+                className="px-4 py-2 rounded-md border border-border-medium text-sm"
+              >
+                {typingMode ? "Use voice instead" : "Type instead"}
+              </button>
+            </div>
+          </>
+        )}
 
-      <div className="flex-1 p-6 md:p-10 bg-bg-faint">
-        <div className="max-w-2xl">
-          {renderStepContent()}
-
-          <div className="flex items-center justify-between">
-            <button
-              onClick={goToPreviousStep}
-              disabled={currentStep === 1}
-              className="flex items-center gap-2 px-5 py-2.5 border border-border-medium rounded-md text-sm font-medium text-text-primary hover:bg-bg-gray transition-colors"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="15,18 9,12 15,6" />
-              </svg>
-              Back
-            </button>
-            <button
-              onClick={goToNextStep}
-              disabled={!isCurrentStepValid()}
-              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-md text-sm font-semibold hover:bg-primary-dark transition-colors"
-            >
-              {currentStep === STEPS.length ? "Launch fundraiser" : "Continue"}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="9,18 15,12 9,6" />
-              </svg>
-            </button>
-          </div>
-        </div>
+        {error ? <p className="text-sm text-accent-red">{error}</p> : null}
       </div>
     </div>
   );

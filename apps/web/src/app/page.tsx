@@ -30,6 +30,20 @@ export default function HomePage() {
           <p className="text-lg text-text-secondary mb-8 max-w-2xl mx-auto">
             Join millions of people using GoSupportMe to raise money for the people and causes they care about.
           </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/fundraiser/new?source=hero_primary"
+              className="px-5 py-2.5 rounded-md bg-primary text-white text-sm font-semibold"
+            >
+              Start a fundraiser
+            </Link>
+            <Link
+              href="/charity/new?source=hero_secondary"
+              className="px-5 py-2.5 rounded-md border border-border-medium bg-white text-sm font-semibold text-text-primary"
+            >
+              Start a charity
+            </Link>
+          </div>
         </div>
       </section>
 
