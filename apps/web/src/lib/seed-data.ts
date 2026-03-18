@@ -157,7 +157,7 @@ export const SEED_COMMUNITIES: SeedCommunity[] = [
     description: "Rapid response support during fires, floods, and severe weather.",
     memberCount: 3105,
     coverImageUrl:
-      "https://images.unsplash.com/photo-1469571486292-b53601020f00?w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1200&auto=format&fit=crop",
   },
 ];
 

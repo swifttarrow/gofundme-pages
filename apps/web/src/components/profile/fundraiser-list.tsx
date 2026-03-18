@@ -17,7 +17,6 @@ export function FundraiserList({ fundraisers }: FundraiserListProps) {
 
   return (
     <div>
-      <h2 className="text-lg font-bold text-text-primary mb-4">My Fundraisers</h2>
       <div className="space-y-4">
         {fundraisers.map((f) => (
           <Link key={f.id} href={`/fundraiser/${f.id}`} className="block group">
