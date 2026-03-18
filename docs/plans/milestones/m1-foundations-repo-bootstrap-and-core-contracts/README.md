@@ -4,8 +4,8 @@
 Create the application skeleton and core contracts shared by all product surfaces and event processors.
 
 ## Dependencies
-- [ ] Milestone 0
-- [ ] Architecture and stack decisions finalized
+- [x] Milestone 0
+- [x] Architecture and stack decisions finalized
 
 ## Changes Required
 Bootstrap `apps/web`, `apps/api`, shared contracts, and initial database schema per [Phase 1 in the source plan](../2026-03-17-implementation-plan.md#phase-1-foundations---repo-bootstrap-and-core-contracts).
@@ -13,8 +13,8 @@ Bootstrap `apps/web`, `apps/api`, shared contracts, and initial database schema 
 ## Success Criteria
 
 ### Automated Verification
-- [ ] `npm run lint`
-- [ ] `npm run typecheck`
+- [x] `npm run lint`
+- [x] `npm run typecheck`
 - [ ] `npm run test`
 
 ### Manual Verification

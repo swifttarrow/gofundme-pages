@@ -13,12 +13,12 @@ Complete pre-implementation decision artifacts and lock architecture direction f
 ## Success Criteria
 
 ### Automated Verification
-- [ ] Markdown lint/check passes for all docs
+- [x] Markdown lint/check passes for all docs
 
 ### Manual Verification
-- [ ] Every Pre-Search prompt in PRD appendix has an explicit answer
-- [ ] Event contract and idempotency strategy are finalized
-- [ ] One stack/deployment path is selected with rationale
+- [x] Every Pre-Search prompt in PRD appendix has an explicit answer
+- [x] Event contract and idempotency strategy are finalized
+- [x] One stack/deployment path is selected with rationale
 - [ ] Human confirmation is captured before proceeding
 
 ## Tasks

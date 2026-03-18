@@ -21,3 +21,27 @@ Use this format for new entries:
 **Rationale:** One-week delivery window and high UI + event-orchestration scope favor faster iteration, shared TypeScript contracts, and lower integration friction while still meeting reliability goals.
 **Impact:** Planning artifacts now assume monorepo app split (`web/api/worker`), Zod-validated contracts, event-idempotent ingestion, and staged phase gates for human confirmation.
 **Owner:** Agent (pending developer confirmation)
+
+## [2026-03-17] Architecture locked — pre-search complete, implementation starting
+
+**Context:** Pre-search checklist (docs/pre-search.md) and architecture document (docs/architecture.md) completed. All PRD appendix prompts answered. Ready to begin M1 implementation.
+**Options considered:** See pre-search.md for full decision matrix.
+**Decision:** Proceed with Node.js + Fastify API, Next.js App Router, Postgres + BullMQ + Redis, deployed on Vercel + Railway.
+**Rationale:** Fastest iteration path with strong TypeScript throughout. BullMQ chosen over Redis Streams for simpler worker management. ULID event IDs for sortability. Integer cents for all money.
+**Impact:** M1 implementation begins: monorepo bootstrap, core contracts, initial schema.
+**Owner:** Agent + developer confirmed
+
+**Key invariants locked:**
+- All money: integer cents (no floats)
+- Event IDs: ULIDs with `evt_` prefix
+- Notifications: idempotent by `UNIQUE(userId, dedupeKey)`
+- Badges: idempotent by `UNIQUE(userId, type)`
+- Donation: exactly one canonical event per successful submission
+
+**Design system tokens (from Pencil):**
+- Primary: `#00B964` (green)
+- Text: `#1A1A1A` / `#6B6B6B` / `#9E9E9E`
+- Background: `#FFFFFF` / `#F7F7F7` / `#FAFAFA`
+- Border: `#E8E8E8`
+- Font: Inter
+- Radii: sm=6, md=10, lg=16, xl=24
