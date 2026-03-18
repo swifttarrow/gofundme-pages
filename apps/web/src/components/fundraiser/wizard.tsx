@@ -425,17 +425,16 @@ export function FundraiserWizard() {
           Raise support for a specific cause in a few guided steps.
         </p>
 
-        <nav className="space-y-1">
+        <nav className="space-y-1" aria-label="Fundraiser steps">
           {STEPS.map((step) => (
-            <button
+            <div
               key={step.id}
-              onClick={() => setCurrentStep(step.id)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-left transition-colors ${
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md ${
                 step.id === currentStep
                   ? "bg-primary-light text-primary"
                   : step.id < currentStep
-                  ? "text-text-secondary hover:bg-bg-faint"
-                  : "text-text-muted hover:bg-bg-faint"
+                  ? "text-text-secondary"
+                  : "text-text-muted"
               }`}
             >
               <div
@@ -456,7 +455,7 @@ export function FundraiserWizard() {
                 )}
               </div>
               <span className="text-xs font-medium">{step.label}</span>
-            </button>
+            </div>
           ))}
         </nav>
       </div>
