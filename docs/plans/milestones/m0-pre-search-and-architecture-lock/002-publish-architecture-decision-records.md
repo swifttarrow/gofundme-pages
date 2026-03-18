@@ -5,7 +5,7 @@ Lock and document architecture choices and rejected alternatives before any impl
 
 ## Deliverables
 - [ ] `docs/architecture.md` drafted with system diagram, contracts, reliability, observability, and AI cost controls
-- [ ] `developer-log.md` updated with final architecture decisions and rejected alternatives
+- [ ] `docs/developer-log.md` updated with final architecture decisions and rejected alternatives
 
 ## Notes
 Capture idempotency strategy and deployment path rationale explicitly to satisfy phase gate signoff requirements.

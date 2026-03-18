@@ -93,7 +93,7 @@ Do at least one explicit feedback pass focused on technical tradeoffs and altern
 
 ## Recording Major Decisions
 
-Capture major decisions in `developer-log.md` so an outsider can follow the reasoning over time.
+Capture major decisions in `docs/developer-log.md` so an outsider can follow the reasoning over time.
 
 When to log:
 - Architecture or integration strategy changes
@@ -102,7 +102,7 @@ When to log:
 - Scope cuts/additions that change delivery strategy
 - Risky tradeoffs (performance, reliability, security, UX)
 
-If `developer-log.md` does not exist, create it.
+If `docs/developer-log.md` does not exist, create it.
 
 Entry format:
 

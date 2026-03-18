@@ -50,7 +50,7 @@ Finalize constraints, stack choices, domain model, and reliability decisions bef
 **File**: `docs/pre-search.md`  
 **Changes**: Complete all checklist sections from PRD appendix, including scale model, cost envelope, risk posture, architecture decisions, and testing approach.
 
-**File**: `developer-log.md`  
+**File**: `docs/developer-log.md`  
 **Changes**: Add final architecture decisions and rejected alternatives.
 
 **File**: `docs/architecture.md`  

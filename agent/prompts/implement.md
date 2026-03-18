@@ -36,7 +36,7 @@ When the developer responds with a product or technical decision, record it (see
 
 Whenever you ask for clarification from the developer and receive an answer that involves **product or technical considerations**, append it to the dev log:
 
-1. **Path**: `developer-log.md`
+1. **Path**: `docs/developer-log.md`
 2. **If the file does not exist**: Create it with a heading and the decision entry
 3. **Format** for each entry:
    - Date (YYYY-MM-DD)
