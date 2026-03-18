@@ -1,5 +1,5 @@
 {
-  "version": "2.8",
+  "version": "2.9",
   "children": [
     {
       "type": "frame",
@@ -206,18 +206,38 @@
               "gap": 12,
               "children": [
                 {
-                  "type": "text",
-                  "id": "KuE2I",
-                  "name": "heroTitle",
-                  "fill": "$--text-primary",
-                  "textGrowth": "fixed-width",
+                  "type": "frame",
+                  "id": "jFeyA",
+                  "name": "heroTitle Row",
                   "width": "fill_container",
-                  "content": "Help the Martinez Family Rebuild After the Fire",
-                  "lineHeight": 1.2,
-                  "fontFamily": "Space Grotesk",
-                  "fontSize": 36,
-                  "fontWeight": "600",
-                  "letterSpacing": -1
+                  "gap": 10,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ZLdQW",
+                      "name": "heroTitle",
+                      "fill": "$--text-primary",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "Help the Martinez Family Rebuild After the Fire",
+                      "lineHeight": 1.2,
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 36,
+                      "fontWeight": "600",
+                      "letterSpacing": -1
+                    },
+                    {
+                      "id": "l9Rlo",
+                      "type": "ref",
+                      "ref": "mOS38",
+                      "width": 32,
+                      "height": 32,
+                      "name": "m4",
+                      "x": 1312,
+                      "y": 5.5
+                    }
+                  ]
                 },
                 {
                   "type": "frame",
@@ -1506,18 +1526,38 @@
           ],
           "children": [
             {
-              "type": "text",
-              "id": "VMgzw",
-              "name": "mTitle",
-              "fill": "$--text-primary",
-              "textGrowth": "fixed-width",
+              "type": "frame",
+              "id": "AKXHI",
+              "name": "mTitle Row",
               "width": "fill_container",
-              "content": "Help the Martinez Family Rebuild After the Fire",
-              "lineHeight": 1.25,
-              "fontFamily": "Space Grotesk",
-              "fontSize": 24,
-              "fontWeight": "600",
-              "letterSpacing": -0.5
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "MQeGK",
+                  "name": "mTitle",
+                  "fill": "$--text-primary",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Help the Martinez Family Rebuild After the Fire",
+                  "lineHeight": 1.25,
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 24,
+                  "fontWeight": "600",
+                  "letterSpacing": -0.5
+                },
+                {
+                  "id": "yZg2v",
+                  "type": "ref",
+                  "ref": "mOS38",
+                  "width": 28,
+                  "height": 28,
+                  "name": "m5",
+                  "x": 330,
+                  "y": 16
+                }
+              ]
             },
             {
               "type": "frame",
@@ -2310,15 +2350,36 @@
                   "gap": 8,
                   "children": [
                     {
-                      "type": "text",
-                      "id": "ztGbY",
-                      "name": "cCommName",
-                      "fill": "$--text-primary",
-                      "content": "Bay Area Community Support",
-                      "fontFamily": "Space Grotesk",
-                      "fontSize": 28,
-                      "fontWeight": "600",
-                      "letterSpacing": -0.5
+                      "type": "frame",
+                      "id": "VjudD",
+                      "name": "cTitleRow",
+                      "width": "fill_container",
+                      "gap": 10,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "id": "rd4c3",
+                          "type": "ref",
+                          "ref": "mOS38",
+                          "width": 32,
+                          "height": 32,
+                          "cornerRadius": 16,
+                          "name": "cm1",
+                          "x": 0,
+                          "y": 2
+                        },
+                        {
+                          "type": "text",
+                          "id": "ztGbY",
+                          "name": "cCommName",
+                          "fill": "$--text-primary",
+                          "content": "Bay Area Community Support",
+                          "fontFamily": "Space Grotesk",
+                          "fontSize": 28,
+                          "fontWeight": "600",
+                          "letterSpacing": -0.5
+                        }
+                      ]
                     },
                     {
                       "type": "text",
@@ -3548,15 +3609,35 @@
           "padding": 16,
           "children": [
             {
-              "type": "text",
-              "id": "E96iq",
-              "name": "mCName",
-              "fill": "$--text-primary",
-              "content": "Bay Area Community Support",
-              "fontFamily": "Space Grotesk",
-              "fontSize": 22,
-              "fontWeight": "600",
-              "letterSpacing": -0.5
+              "type": "frame",
+              "id": "tm1eG",
+              "name": "mCTitleRow",
+              "width": "fill_container",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "id": "0U8yF",
+                  "type": "ref",
+                  "ref": "mOS38",
+                  "width": 28,
+                  "height": 28,
+                  "cornerRadius": 14,
+                  "name": "mc2m",
+                  "x": 0
+                },
+                {
+                  "type": "text",
+                  "id": "E96iq",
+                  "name": "mCName",
+                  "fill": "$--text-primary",
+                  "content": "Bay Area Community Support",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 22,
+                  "fontWeight": "600",
+                  "letterSpacing": -0.5
+                }
+              ]
             },
             {
               "type": "text",
@@ -4674,6 +4755,16 @@
                   "justifyContent": "space_between",
                   "alignItems": "center",
                   "children": [
+                    {
+                      "id": "EDccr",
+                      "type": "ref",
+                      "ref": "mOS38",
+                      "width": 32,
+                      "height": 32,
+                      "cornerRadius": 16,
+                      "name": "df1",
+                      "x": 0
+                    },
                     {
                       "type": "text",
                       "id": "IK26A",
@@ -6101,15 +6192,34 @@
               ],
               "children": [
                 {
-                  "type": "text",
-                  "id": "cSNI8",
-                  "name": "profileName",
-                  "fill": "$--text-primary",
-                  "content": "Janahan Sivaraman",
-                  "fontFamily": "Space Grotesk",
-                  "fontSize": 28,
-                  "fontWeight": "700",
-                  "letterSpacing": -0.5
+                  "type": "frame",
+                  "id": "5zRF1",
+                  "name": "Name Row",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "lnvp5",
+                      "name": "profileName",
+                      "fill": "$--text-primary",
+                      "content": "Janahan Sivaraman",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 28,
+                      "fontWeight": "700",
+                      "letterSpacing": -0.5
+                    },
+                    {
+                      "id": "IhLee",
+                      "type": "ref",
+                      "ref": "mOS38",
+                      "width": 32,
+                      "height": 32,
+                      "name": "m1",
+                      "x": 263,
+                      "y": 2
+                    }
+                  ]
                 },
                 {
                   "type": "frame",
@@ -7377,6 +7487,7 @@
                       "type": "frame",
                       "id": "UeAHd",
                       "name": "act1",
+                      "width": "fill_container",
                       "gap": 10,
                       "children": [
                         {
@@ -7406,6 +7517,7 @@
                       "type": "frame",
                       "id": "e5fFb",
                       "name": "act2",
+                      "width": "fill_container",
                       "gap": 10,
                       "children": [
                         {
@@ -7601,15 +7713,33 @@
               ]
             },
             {
-              "type": "text",
-              "id": "g2orX",
-              "name": "mName",
-              "fill": "$--text-primary",
-              "content": "Janahan Sivaraman",
-              "fontFamily": "Space Grotesk",
-              "fontSize": 22,
-              "fontWeight": "700",
-              "letterSpacing": -0.5
+              "type": "frame",
+              "id": "ilJHo",
+              "name": "mName Row",
+              "gap": 6,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "YadbW",
+                  "name": "mName",
+                  "fill": "$--text-primary",
+                  "content": "Janahan Sivaraman",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 22,
+                  "fontWeight": "700",
+                  "letterSpacing": -0.5
+                },
+                {
+                  "id": "ep6jn",
+                  "type": "ref",
+                  "ref": "mOS38",
+                  "width": 28,
+                  "height": 28,
+                  "name": "m2",
+                  "x": 205
+                }
+              ]
             },
             {
               "type": "frame",
@@ -8848,15 +8978,34 @@
               ],
               "children": [
                 {
-                  "type": "text",
-                  "id": "7F0s8",
-                  "name": "wizFormTitle",
-                  "fill": "$--text-primary",
-                  "content": "Transparency Setup",
-                  "fontFamily": "Space Grotesk",
-                  "fontSize": 28,
-                  "fontWeight": "700",
-                  "letterSpacing": -0.5
+                  "type": "frame",
+                  "id": "LJxpP",
+                  "name": "wizFormTitle Row",
+                  "gap": 8,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "YTY4U",
+                      "name": "wizFormTitle",
+                      "fill": "$--text-primary",
+                      "content": "Transparency Setup",
+                      "fontFamily": "Space Grotesk",
+                      "fontSize": 28,
+                      "fontWeight": "700",
+                      "letterSpacing": -0.5
+                    },
+                    {
+                      "id": "7784h",
+                      "type": "ref",
+                      "ref": "mOS38",
+                      "width": 32,
+                      "height": 32,
+                      "name": "m3",
+                      "x": 272,
+                      "y": 2
+                    }
+                  ]
                 },
                 {
                   "type": "text",
@@ -9389,6 +9538,17 @@
           "justifyContent": "space_between",
           "alignItems": "center",
           "children": [
+            {
+              "id": "2UTNp",
+              "type": "ref",
+              "ref": "mOS38",
+              "width": 32,
+              "height": 32,
+              "cornerRadius": 16,
+              "name": "nf1",
+              "x": 48,
+              "y": 26
+            },
             {
               "type": "text",
               "id": "5rUrX",
@@ -10011,15 +10171,35 @@
           ],
           "children": [
             {
-              "type": "text",
-              "id": "HW128",
-              "name": "tipTitle",
-              "fill": "$--text-primary",
-              "content": "Complete your donation",
-              "fontFamily": "Space Grotesk",
-              "fontSize": 22,
-              "fontWeight": "700",
-              "letterSpacing": -0.5
+              "type": "frame",
+              "id": "wdnoJ",
+              "name": "tipTitleRow",
+              "width": "fill_container",
+              "gap": 10,
+              "alignItems": "center",
+              "children": [
+                {
+                  "id": "UV2y1",
+                  "type": "ref",
+                  "ref": "mOS38",
+                  "width": 28,
+                  "height": 28,
+                  "cornerRadius": 14,
+                  "name": "tf1",
+                  "x": 0
+                },
+                {
+                  "type": "text",
+                  "id": "HW128",
+                  "name": "tipTitle",
+                  "fill": "$--text-primary",
+                  "content": "Complete your donation",
+                  "fontFamily": "Space Grotesk",
+                  "fontSize": 22,
+                  "fontWeight": "700",
+                  "letterSpacing": -0.5
+                }
+              ]
             },
             {
               "type": "text",
@@ -10671,6 +10851,27 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "mOS38",
+      "x": 5680,
+      "y": 0,
+      "name": "Meerkat Mascot",
+      "reusable": true,
+      "clip": true,
+      "width": 64,
+      "height": 64,
+      "fill": [
+        "$--green-light",
+        {
+          "type": "image",
+          "enabled": true,
+          "url": "./images/generated-1773842578251.png",
+          "mode": "fill"
+        }
+      ],
+      "cornerRadius": 32
     }
   ],
   "variables": {
