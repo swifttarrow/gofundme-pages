@@ -5,6 +5,7 @@ async function apiFetch<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
+    credentials: "include",
     headers: { "Content-Type": "application/json", ...options.headers },
     ...options,
   });
@@ -16,6 +17,14 @@ async function apiFetch<T>(
 
   return res.json() as Promise<T>;
 }
+
+export type AuthUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  avatarUrl: string | null;
+};
 
 // ─── Fundraisers ─────────────────────────────────────────────────────────────
 export function getFundraisers(params?: {
@@ -66,6 +75,41 @@ export function getDonations(params: {
   return apiFetch<{ donations: unknown[]; hasMore: boolean }>(
     `/api/donations?${qs}`
   );
+}
+
+// ─── Follows ─────────────────────────────────────────────────────────────────
+export function getFollowStatus(params: {
+  followerUserId: string;
+  fundraiserId: string;
+}) {
+  const qs = new URLSearchParams({
+    follower_id: params.followerUserId,
+    fundraiser_id: params.fundraiserId,
+  });
+  return apiFetch<{ isFollowing: boolean }>(`/api/follows/status?${qs}`);
+}
+
+export function followFundraiser(data: {
+  followerUserId: string;
+  fundraiserId: string;
+}) {
+  return apiFetch<{ isFollowing: boolean; created: boolean }>("/api/follows", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function unfollowFundraiser(params: {
+  followerUserId: string;
+  fundraiserId: string;
+}) {
+  const qs = new URLSearchParams({
+    follower_id: params.followerUserId,
+    fundraiser_id: params.fundraiserId,
+  });
+  return apiFetch<{ isFollowing: boolean; removed: boolean }>(`/api/follows?${qs}`, {
+    method: "DELETE",
+  });
 }
 
 // ─── Events ──────────────────────────────────────────────────────────────────
@@ -128,6 +172,22 @@ export function getFeed(params?: {
 // ─── Badges ──────────────────────────────────────────────────────────────────
 export function getBadges(userId: string) {
   return apiFetch<{ badges: unknown[] }>(`/api/badges/${userId}`);
+}
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+export function login(data: { email: string; password: string }) {
+  return apiFetch<{ user: AuthUser }>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function getCurrentUser() {
+  return apiFetch<{ user: AuthUser }>("/api/auth/me");
+}
+
+export function logout() {
+  return apiFetch<{ ok: boolean }>("/api/auth/logout", { method: "POST" });
 }
 
 // ─── Charities ───────────────────────────────────────────────────────────────

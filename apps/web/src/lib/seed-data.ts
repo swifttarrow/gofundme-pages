@@ -13,6 +13,7 @@ export interface SeedUser {
 
 export interface SeedFundraiser {
   id: string;
+  communityId: string | null;
   organizerId: string;
   organizerName: string;
   organizerAvatar: string | null;
@@ -28,6 +29,15 @@ export interface SeedFundraiser {
   followerCount: number;
   createdAt: string;
   progressPercent: number;
+}
+
+export interface SeedCommunity {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  memberCount: number;
+  coverImageUrl: string;
 }
 
 export interface SeedDonation {
@@ -52,6 +62,21 @@ export interface SeedNotification {
   isRead: boolean;
   isBundled: boolean;
   bundleCount: number;
+  createdAt: string;
+}
+
+export interface SeedNetworkPost {
+  id: string;
+  authorId: string;
+  fundraiserId: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface SeedFavorite {
+  id: string;
+  userId: string;
+  fundraiserId: string;
   createdAt: string;
 }
 
@@ -106,9 +131,40 @@ export const SEED_USERS: SeedUser[] = [
   },
 ];
 
+export const SEED_COMMUNITIES: SeedCommunity[] = [
+  {
+    id: "c1",
+    name: "Bay Area Community Support",
+    slug: "bay-area-community-support",
+    description: "Neighbors helping neighbors through life's challenges.",
+    memberCount: 2647,
+    coverImageUrl:
+      "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&auto=format&fit=crop",
+  },
+  {
+    id: "c2",
+    name: "Education Access Network",
+    slug: "education-access-network",
+    description: "Supporting schools, students, and community learning programs.",
+    memberCount: 1982,
+    coverImageUrl:
+      "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1200&auto=format&fit=crop",
+  },
+  {
+    id: "c3",
+    name: "Local Disaster Relief Circle",
+    slug: "local-disaster-relief-circle",
+    description: "Rapid response support during fires, floods, and severe weather.",
+    memberCount: 3105,
+    coverImageUrl:
+      "https://images.unsplash.com/photo-1469571486292-b53601020f00?w=1200&auto=format&fit=crop",
+  },
+];
+
 export const SEED_FUNDRAISERS: SeedFundraiser[] = [
   {
     id: "b1b2c3d4-0001-0001-0001-000000000001",
+    communityId: "c1",
     organizerId: "a1b2c3d4-0001-0001-0001-000000000001",
     organizerName: "Sarah Johnson",
     organizerAvatar: "https://i.pravatar.cc/150?img=1",
@@ -131,6 +187,7 @@ Your support will help the Martinez family secure temporary housing, replace ess
   },
   {
     id: "b1b2c3d4-0002-0002-0002-000000000002",
+    communityId: null,
     organizerId: "a1b2c3d4-0003-0003-0003-000000000003",
     organizerName: "Jessica Rivera",
     organizerAvatar: "https://i.pravatar.cc/150?img=3",
@@ -153,6 +210,7 @@ Please help Donna fight back.`,
   },
   {
     id: "b1b2c3d4-0003-0003-0003-000000000003",
+    communityId: "c2",
     organizerId: "a1b2c3d4-0005-0005-0005-000000000005",
     organizerName: "Junisha Bhorman",
     organizerAvatar: "https://i.pravatar.cc/150?img=5",
@@ -175,6 +233,7 @@ Your donation directly invests in our community's children.`,
   },
   {
     id: "b1b2c3d4-0004-0004-0004-000000000004",
+    communityId: "c3",
     organizerId: "a1b2c3d4-0001-0001-0001-000000000001",
     organizerName: "Sarah Johnson",
     organizerAvatar: "https://i.pravatar.cc/150?img=1",
@@ -195,6 +254,7 @@ Funds will be distributed to affected families through our established neighborh
   },
   {
     id: "b1b2c3d4-0005-0005-0005-000000000005",
+    communityId: "c1",
     organizerId: "a1b2c3d4-0003-0003-0003-000000000003",
     organizerName: "Jessica Rivera",
     organizerAvatar: "https://i.pravatar.cc/150?img=3",
@@ -215,6 +275,7 @@ The garden will feature 30 individual plots for community members, communal herb
   },
   {
     id: "b1b2c3d4-0007-0007-0007-000000000007",
+    communityId: "c2",
     organizerId: "a1b2c3d4-0001-0001-0001-000000000001",
     organizerName: "Sarah Johnson",
     organizerAvatar: "https://i.pravatar.cc/150?img=1",
@@ -235,6 +296,7 @@ Funds cover tuition, transportation, meals, and a laptop to keep after camp.`,
   },
   {
     id: "b1b2c3d4-0008-0008-0008-000000000008",
+    communityId: null,
     organizerId: "a1b2c3d4-0003-0003-0003-000000000003",
     organizerName: "Jessica Rivera",
     organizerAvatar: "https://i.pravatar.cc/150?img=3",
@@ -255,6 +317,7 @@ We need to raise operating costs for the next 6 months while we secure long-term
   },
   {
     id: "b1b2c3d4-0009-0009-0009-000000000009",
+    communityId: null,
     organizerId: "a1b2c3d4-0005-0005-0005-000000000005",
     organizerName: "Junisha Bhorman",
     organizerAvatar: "https://i.pravatar.cc/150?img=5",
@@ -275,6 +338,7 @@ Without surgery, Eli's doctors say he has less than a year. Please help give Eli
   },
   {
     id: "b1b2c3d4-0010-0010-0010-000000000010",
+    communityId: "c3",
     organizerId: "a1b2c3d4-0001-0001-0001-000000000001",
     organizerName: "Sarah Johnson",
     organizerAvatar: "https://i.pravatar.cc/150?img=1",
@@ -404,6 +468,64 @@ export const SEED_NOTIFICATIONS: SeedNotification[] = [
     isBundled: false,
     bundleCount: 1,
     createdAt: "2024-03-10T10:00:00Z",
+  },
+];
+
+export const SEED_NETWORK_POSTS: SeedNetworkPost[] = [
+  {
+    id: "p1",
+    authorId: "a1b2c3d4-0001-0001-0001-000000000001",
+    fundraiserId: "b1b2c3d4-0004-0004-0004-000000000004",
+    content: "We secured temporary shelter for 12 families this week. Thank you for continuing to share and support.",
+    createdAt: "2026-03-17T18:40:00Z",
+  },
+  {
+    id: "p2",
+    authorId: "a1b2c3d4-0003-0003-0003-000000000003",
+    fundraiserId: "b1b2c3d4-0002-0002-0002-000000000002",
+    content: "Donna completed another treatment round today. Community support is making this possible.",
+    createdAt: "2026-03-18T14:10:00Z",
+  },
+  {
+    id: "p3",
+    authorId: "a1b2c3d4-0005-0005-0005-000000000005",
+    fundraiserId: "b1b2c3d4-0003-0003-0003-000000000003",
+    content: "Construction plans are approved and playground installation starts next month!",
+    createdAt: "2026-03-18T08:25:00Z",
+  },
+  {
+    id: "p4",
+    authorId: "a1b2c3d4-0001-0001-0001-000000000001",
+    fundraiserId: "b1b2c3d4-0001-0001-0001-000000000001",
+    content: "The Martinez family moved into stable housing today. Your help changed everything.",
+    createdAt: "2026-03-16T21:05:00Z",
+  },
+];
+
+export const SEED_FAVORITES: SeedFavorite[] = [
+  {
+    id: "fav-1",
+    userId: "a1b2c3d4-0002-0002-0002-000000000002",
+    fundraiserId: "b1b2c3d4-0001-0001-0001-000000000001",
+    createdAt: "2026-03-15T09:00:00Z",
+  },
+  {
+    id: "fav-2",
+    userId: "a1b2c3d4-0002-0002-0002-000000000002",
+    fundraiserId: "b1b2c3d4-0003-0003-0003-000000000003",
+    createdAt: "2026-03-16T10:20:00Z",
+  },
+  {
+    id: "fav-3",
+    userId: "a1b2c3d4-0002-0002-0002-000000000002",
+    fundraiserId: "b1b2c3d4-0008-0008-0008-000000000008",
+    createdAt: "2026-03-17T07:45:00Z",
+  },
+  {
+    id: "fav-4",
+    userId: "a1b2c3d4-0002-0002-0002-000000000002",
+    fundraiserId: "b1b2c3d4-0009-0009-0009-000000000009",
+    createdAt: "2026-03-17T20:15:00Z",
   },
 ];
 

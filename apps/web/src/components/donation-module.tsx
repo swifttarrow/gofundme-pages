@@ -2,23 +2,30 @@
 
 import { useEffect, useState } from "react";
 import { ProgressBar } from "@/components/fundraiser/progress-bar";
-import { SeedFundraiser, formatCents } from "@/lib/seed-data";
+import { SeedDonation, SeedFundraiser, formatCents, timeAgo } from "@/lib/seed-data";
+import { followFundraiser, getFollowStatus, unfollowFundraiser } from "@/lib/api";
 
 const SUGGESTED_AMOUNTS = [25, 50, 100, 250];
 const MAX_TIP_PERCENT = 30;
 
 interface DonationModuleProps {
   fundraiser: SeedFundraiser;
+  donations: SeedDonation[];
+  currentUserId?: string;
   onDonate?: (amountCents: number, tipPercent: number) => void;
 }
 
-export function DonationModule({ fundraiser, onDonate }: DonationModuleProps) {
+export function DonationModule({ fundraiser, donations, currentUserId, onDonate }: DonationModuleProps) {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(50);
   const [customAmount, setCustomAmount] = useState("");
   const [tipPercent, setTipPercent] = useState<number>(12);
-  const [showDonations, setShowDonations] = useState(false);
   const [isDonationModalOpen, setIsDonationModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState<1 | 2>(1);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(fundraiser.followerCount);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [followError, setFollowError] = useState<string | null>(null);
+  const recentDonations = donations.slice(0, 3);
 
   const amountDollars = selectedAmount ?? (parseFloat(customAmount) || 0);
   const amountCents = Math.round(amountDollars * 100);
@@ -49,6 +56,24 @@ export function DonationModule({ fundraiser, onDonate }: DonationModuleProps) {
     }
   }, [isDonationModalOpen]);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!currentUserId) return;
+
+    setFollowError(null);
+    getFollowStatus({ followerUserId: currentUserId, fundraiserId: fundraiser.id })
+      .then((result) => {
+        if (!cancelled) setIsFollowing(result.isFollowing);
+      })
+      .catch(() => {
+        if (!cancelled) setFollowError("Could not load follow state.");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUserId, fundraiser.id]);
+
   function handleAmountSelect(amount: number) {
     setSelectedAmount(amount);
     setCustomAmount("");
@@ -71,6 +96,35 @@ export function DonationModule({ fundraiser, onDonate }: DonationModuleProps) {
     setIsDonationModalOpen(false);
   }
 
+  async function handleToggleFollow() {
+    if (!currentUserId || isFollowLoading) return;
+
+    setIsFollowLoading(true);
+    setFollowError(null);
+
+    try {
+      if (isFollowing) {
+        const result = await unfollowFundraiser({
+          followerUserId: currentUserId,
+          fundraiserId: fundraiser.id,
+        });
+        setIsFollowing(result.isFollowing);
+        if (result.removed) setFollowerCount((count) => Math.max(count - 1, 0));
+      } else {
+        const result = await followFundraiser({
+          followerUserId: currentUserId,
+          fundraiserId: fundraiser.id,
+        });
+        setIsFollowing(result.isFollowing);
+        if (result.created) setFollowerCount((count) => count + 1);
+      }
+    } catch {
+      setFollowError("Couldn't update follow right now.");
+    } finally {
+      setIsFollowLoading(false);
+    }
+  }
+
   return (
     <>
       <div className="bg-white border border-border-light rounded-lg p-5 shadow-sm">
@@ -82,20 +136,19 @@ export function DonationModule({ fundraiser, onDonate }: DonationModuleProps) {
           progressPercent={fundraiser.progressPercent}
         />
 
-        {/* Toggle donations */}
-        <div className="flex items-center justify-between mt-3 mb-4">
-          <span className="text-sm text-text-secondary">{fundraiser.donorCount.toLocaleString()} donations</span>
-          <button
-            onClick={() => setShowDonations(!showDonations)}
-            className="relative w-10 h-5 rounded-full transition-colors duration-200 focus:outline-none"
-            style={{ backgroundColor: showDonations ? "#00B964" : "#D0D0D0" }}
-            aria-label="Toggle donations visibility"
-          >
-            <span
-              className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200"
-              style={{ transform: showDonations ? "translateX(20px)" : "translateX(0)" }}
-            />
-          </button>
+        <div className="mt-3 mb-4">
+          <p className="text-sm text-text-secondary">{fundraiser.donorCount.toLocaleString()} donations</p>
+          <div className="mt-2 space-y-2">
+            {recentDonations.map((donation) => (
+              <div key={donation.id} className="rounded-md border border-border-light bg-bg-faint px-3 py-2">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="font-medium text-text-primary truncate">{donation.donorName}</span>
+                  <span className="font-semibold text-primary">{formatCents(donation.amountCents)}</span>
+                </div>
+                <p className="mt-0.5 text-xs text-text-muted">{timeAgo(donation.createdAt)}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <button
@@ -108,6 +161,25 @@ export function DonationModule({ fundraiser, onDonate }: DonationModuleProps) {
         <p className="mt-2 text-xs text-text-muted leading-relaxed">
           You will choose your amount in the next step. Your tip is optional, and we explain exactly what it supports.
         </p>
+
+        <div className="mt-4 border-t border-border-light pt-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-text-muted">{followerCount.toLocaleString()} followers</p>
+            <button
+              type="button"
+              onClick={handleToggleFollow}
+              disabled={!currentUserId || isFollowLoading}
+              className={`px-3 py-1.5 rounded-md text-sm font-semibold border transition-colors ${
+                isFollowing
+                  ? "border-primary/40 bg-primary-light text-primary hover:bg-primary/15"
+                  : "border-border-medium text-text-primary hover:border-primary hover:text-primary"
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {isFollowLoading ? "Saving..." : isFollowing ? "Following" : "Follow"}
+            </button>
+          </div>
+          {followError && <p className="mt-2 text-xs text-accent-red">{followError}</p>}
+        </div>
 
       </div>
 

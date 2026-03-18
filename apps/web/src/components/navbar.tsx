@@ -1,30 +1,73 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { MeerkatMascot } from "@/components/meerkat-mascot";
-import { SEED_NOTIFICATIONS, timeAgo } from "@/lib/seed-data";
+import { AuthUser, getCurrentUser } from "@/lib/api";
+import { SEED_FAVORITES, SEED_FUNDRAISERS, SEED_NOTIFICATIONS, formatCents, timeAgo } from "@/lib/seed-data";
 
 const NAV_DROPDOWN_LIMIT = 4;
+const FAVORITES_PREVIEW_LIMIT = 3;
+const CURRENT_USER_ID = "a1b2c3d4-0002-0002-0002-000000000002";
 
 export function Navbar() {
+  const pathname = usePathname();
   const [searchValue, setSearchValue] = useState("");
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
+  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
+  const favoritesRef = useRef<HTMLDivElement>(null);
+  const createMenuRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = SEED_NOTIFICATIONS.filter((notification) => !notification.isRead).length;
   const recentNotifications = SEED_NOTIFICATIONS.slice(0, NAV_DROPDOWN_LIMIT);
+  const favoriteFundraisers = SEED_FAVORITES
+    .filter((favorite) => favorite.userId === CURRENT_USER_ID)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .map((favorite) => SEED_FUNDRAISERS.find((fundraiser) => fundraiser.id === favorite.fundraiserId))
+    .filter((fundraiser): fundraiser is NonNullable<typeof fundraiser> => fundraiser !== undefined)
+    .slice(0, FAVORITES_PREVIEW_LIMIT);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (!notificationsRef.current?.contains(event.target as Node)) {
         setIsNotificationsOpen(false);
       }
+      if (!favoritesRef.current?.contains(event.target as Node)) {
+        setIsFavoritesOpen(false);
+      }
+      if (!createMenuRef.current?.contains(event.target as Node)) {
+        setIsCreateMenuOpen(false);
+      }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getCurrentUser()
+      .then((response) => {
+        if (isMounted) {
+          setCurrentUser(response.user);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setCurrentUser(null);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-border-light">
@@ -78,75 +121,173 @@ export function Navbar() {
           >
             Communities
           </Link>
-          <Link
-            href="/charity/new"
-            className="bg-primary text-white text-sm font-semibold px-4 py-2 rounded-md
-                       hover:bg-primary-dark transition-colors whitespace-nowrap"
-          >
-            Start a Charity
-          </Link>
-          <div className="relative" ref={notificationsRef}>
+          <div className="relative" ref={createMenuRef}>
             <button
               type="button"
-              className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border-light text-text-secondary hover:text-text-primary hover:bg-bg-faint transition-colors"
-              aria-label={isNotificationsOpen ? "Close notification preview" : "Open notification preview"}
-              aria-expanded={isNotificationsOpen}
-              onClick={() => setIsNotificationsOpen((open) => !open)}
+              className="bg-primary text-white text-sm font-semibold px-4 py-2 rounded-md
+                         hover:bg-primary-dark transition-colors whitespace-nowrap inline-flex items-center gap-1.5"
+              aria-label={isCreateMenuOpen ? "Close create menu" : "Open create menu"}
+              aria-expanded={isCreateMenuOpen}
+              onClick={() => setIsCreateMenuOpen((open) => !open)}
             >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 4h16v12H5.17L4 17.17V4z" />
-                  <path d="m4 6 8 6 8-6" />
-                </svg>
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-primary text-white text-[10px] font-semibold leading-4 text-center">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
+              Create +
             </button>
-
-            {isNotificationsOpen && (
-              <div className="absolute right-0 mt-2 w-80 rounded-lg border border-border-light bg-white shadow-lg p-2 z-50">
-                <div className="flex items-center justify-between px-2 py-1.5">
-                  <p className="text-sm font-semibold text-text-primary">Notifications</p>
-                  <Link
-                    href="/notifications"
-                    className="text-xs text-primary font-medium hover:underline"
-                    onClick={() => setIsNotificationsOpen(false)}
-                  >
-                    View all
-                  </Link>
-                </div>
-                <div className="max-h-80 overflow-y-auto">
-                  {recentNotifications.map((notification) => (
-                    <Link
-                      key={notification.id}
-                      href={notification.deepLink}
-                      className={`block rounded-md px-2 py-2 hover:bg-bg-faint transition-colors ${
-                        notification.isRead ? "" : "bg-primary-light"
-                      }`}
-                      onClick={() => setIsNotificationsOpen(false)}
-                    >
-                      <p className="text-sm font-medium text-text-primary line-clamp-1">
-                        {notification.title}
-                      </p>
-                      <p className="text-xs text-text-secondary mt-0.5 line-clamp-1">
-                        {notification.body}
-                      </p>
-                      <p className="text-[11px] text-text-muted mt-1">
-                        {timeAgo(notification.createdAt)}
-                      </p>
-                    </Link>
-                  ))}
-                </div>
+            {isCreateMenuOpen && (
+              <div className="absolute right-0 mt-2 w-56 rounded-lg border border-border-light bg-white shadow-lg p-1.5 z-50">
+                <Link
+                  href="/fundraiser"
+                  className="block rounded-md px-3 py-2 text-sm text-text-primary hover:bg-bg-faint transition-colors"
+                  onClick={() => setIsCreateMenuOpen(false)}
+                >
+                  Create fundraiser
+                </Link>
+                <Link
+                  href="/charity/new"
+                  className="block rounded-md px-3 py-2 text-sm text-text-primary hover:bg-bg-faint transition-colors"
+                  onClick={() => setIsCreateMenuOpen(false)}
+                >
+                  Create charity
+                </Link>
               </div>
             )}
           </div>
-          <Link
-            href="/sign-in"
-            className="text-sm text-text-secondary hover:text-text-primary transition-colors"
-          >
-            Sign in
-          </Link>
+          <div className="flex items-center gap-0.5">
+            <div className="relative" ref={favoritesRef}>
+              <button
+                type="button"
+                className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-faint transition-colors"
+                aria-label={isFavoritesOpen ? "Close favorites preview" : "Open favorites preview"}
+                aria-expanded={isFavoritesOpen}
+                onClick={() => setIsFavoritesOpen((open) => !open)}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+              </button>
+
+              {isFavoritesOpen && (
+                <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-xl border border-primary/20 bg-white shadow-[0_12px_30px_rgba(0,185,100,0.12)] p-2 z-50">
+                  <div className="flex items-center justify-between rounded-lg px-2.5 py-2">
+                    <p className="text-sm font-semibold text-text-primary">Favorites</p>
+                    <Link
+                      href="/favorites"
+                      className="text-xs text-primary font-medium hover:underline"
+                      onClick={() => setIsFavoritesOpen(false)}
+                    >
+                      View All
+                    </Link>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {favoriteFundraisers.map((fundraiser) => (
+                      <Link
+                        key={fundraiser.id}
+                        href={`/fundraiser/${fundraiser.id}`}
+                        className="block rounded-md px-2 py-2 hover:bg-primary/5 transition-colors"
+                        onClick={() => setIsFavoritesOpen(false)}
+                      >
+                        <p className="text-sm font-medium text-text-primary line-clamp-1">
+                          {fundraiser.title}
+                        </p>
+                        <p className="text-xs text-text-secondary mt-0.5">
+                          {formatCents(fundraiser.raisedCents)} raised
+                        </p>
+                      </Link>
+                    ))}
+                    {favoriteFundraisers.length === 0 && (
+                      <p className="mx-1 mt-1 rounded-md bg-bg-faint px-2 py-3 text-xs text-text-muted">
+                        No favorites yet.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="relative" ref={notificationsRef}>
+              <button
+                type="button"
+                className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-faint transition-colors"
+                aria-label={isNotificationsOpen ? "Close notification preview" : "Open notification preview"}
+                aria-expanded={isNotificationsOpen}
+                onClick={() => setIsNotificationsOpen((open) => !open)}
+              >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M4 4h16v12H5.17L4 17.17V4z" />
+                    <path d="m4 6 8 6 8-6" />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-primary text-white text-[10px] font-semibold leading-4 text-center">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+              </button>
+
+              {isNotificationsOpen && (
+                <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-xl border border-primary/20 bg-white shadow-[0_14px_32px_rgba(16,24,40,0.16)] p-2 z-50">
+                  <div className="flex items-center justify-between rounded-lg px-2.5 py-2">
+                    <p className="text-sm font-semibold text-text-primary">Notifications</p>
+                    <Link
+                      href="/notifications"
+                      className="text-xs text-primary font-medium hover:underline"
+                      onClick={() => setIsNotificationsOpen(false)}
+                    >
+                      View all
+                    </Link>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {recentNotifications.map((notification) => (
+                      <Link
+                        key={notification.id}
+                        href={notification.deepLink}
+                        className="block rounded-md px-2 py-2 transition-colors hover:bg-primary/5"
+                        onClick={() => setIsNotificationsOpen(false)}
+                      >
+                        <p className="text-sm font-medium text-text-primary line-clamp-1">
+                          {notification.title}
+                        </p>
+                        <p className="text-xs text-text-secondary mt-0.5 line-clamp-1">
+                          {notification.body}
+                        </p>
+                        <p className="text-[11px] text-text-muted mt-1">
+                          {timeAgo(notification.createdAt)}
+                        </p>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          {currentUser ? (
+            <div className="ml-1 pl-3 border-l border-border-light">
+              <Link
+                href={`/profile/${currentUser.id}`}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-light overflow-hidden bg-bg-gray"
+                aria-label={`View ${currentUser.name}'s profile`}
+                title={currentUser.name}
+              >
+                {currentUser.avatarUrl ? (
+                  <Image
+                    src={currentUser.avatarUrl}
+                    alt={currentUser.name}
+                    width={36}
+                    height={36}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xs font-semibold text-text-primary">
+                    {currentUser.name.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </Link>
+            </div>
+          ) : (
+            <Link
+              href="/sign-in"
+              className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+            >
+              Sign in
+            </Link>
+          )}
         </nav>
 
         {/* Mobile menu button */}

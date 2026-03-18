@@ -1,11 +1,5 @@
 import Link from "next/link";
-import { SEED_FUNDRAISERS, formatCents } from "@/lib/seed-data";
-
-const COMMUNITIES = [
-  { id: "1", name: "Oakland Mutual Aid", members: 1840 },
-  { id: "2", name: "SF Housing Support", members: 2310 },
-  { id: "3", name: "Peninsula Parents Network", members: 1245 },
-];
+import { SEED_COMMUNITIES, SEED_FUNDRAISERS, formatCents } from "@/lib/seed-data";
 
 export function CommunitySidebar() {
   const trending = SEED_FUNDRAISERS
@@ -19,8 +13,8 @@ export function CommunitySidebar() {
       <div className="bg-white border border-border-light rounded-lg p-4">
         <h3 className="font-bold text-sm text-text-primary mb-3">Related Communities</h3>
         <div className="space-y-2">
-          {COMMUNITIES.map((c) => (
-            <div key={c.id} className="flex items-center gap-2">
+          {SEED_COMMUNITIES.map((c) => (
+            <Link key={c.id} href={`/community/${c.slug}`} className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00B964" strokeWidth="2">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -31,9 +25,9 @@ export function CommunitySidebar() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-text-primary truncate">{c.name}</p>
-                <p className="text-xs text-text-muted">{c.members.toLocaleString()} members</p>
+                <p className="text-xs text-text-muted">{c.memberCount.toLocaleString()} members</p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
