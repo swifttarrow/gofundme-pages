@@ -18,25 +18,20 @@ Submissions will be graded on:
 * Horizontally scalable
 
 ## Functional Requirements
-For all UI views/pages, they should be supported on all screen sizes in a responsive manner. This is true for both editing and viewing functionality.
+FR1. Fundraiser page requirements: [fundraiser-page.md](./fundraiser-page.md)
 
-### Achievement Badges
-Badges users achieve through engagement with the platform. Please refer to `docs/requirements/achievement-badges.md`.
+FR2. Community page requirements: [community-page.md](./community-page.md)
 
-### Charity Starter Kit
-The charity starter kit is a means for a user to start their own micro-charity. Please refer to `docs/requirements/charity-starter-kit.md`.
+FR3. Profile page requirements: [profile-page.md](./profile-page.md)
 
-### Social Graph
-A social graph connects users with other entities on the platform. Please refer to `docs/requirements/social-graph.md`.
+FR4. Achievement badge requirements: [achievement-badges.md](./achievement-badges.md)
 
-### Fundraiser Page
-A fundraiser page is created by an author/owner to secure donations from donors. Please refer to `docs/requirements/fundraiser-page.md`.
+FR5. Charity Starter Kit requirements: [charity-starter-kit.md](./charity-starter-kit.md)
 
-### Cross-Page Advice
-Each core page (`fundraiser`, `community`, `profile`) includes an advice button that, when clicked, returns 1-2 actionable recommendations for improving page content. Advice is optional, user-triggered, and must degrade gracefully when unavailable.
+FR6. Content discovery requirements: [improved-content-discovery.md](./improved-content-discovery.md)
 
-### Profile Page
-The profile page captures a user's profile, their achievements, and their connected entities. Please refer to `docs/requirements/profile-page.md`.
+FR7. Notification requirements: [improved-notifications.md](./improved-notifications.md)
 
-### Community Page
-The community page groups similar fundraisers to achieve an overarching objective. Please refer to `docs/quirements/community-page.md`.
+FR8. Transparent tipping requirements: [improving-tips.md](./improving-tips.md)
+
+FR9. Mobile responsiveness requirements: [mobile-responsiveness.md](./mobile-responsiveness.md)

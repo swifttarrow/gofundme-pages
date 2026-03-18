@@ -1,19 +1,84 @@
-# GoFundMe Profile Page — MVP Requirements
+# Profile Page Spec
 
 ## Overview
-The profile page should present a user's identity, social context, and credibility signals while remaining privacy-safe and easy to scan.
+A user-centric page that showcases identity, credibility, and fundraising activity.
 
-## Core Requirements
-- Show profile header, cause footprint, connected communities, and achievement badges.
-- Render graph-based context modules with deterministic ranking and explainable reason labels.
-- Support responsive behavior across mobile, tablet, and desktop layouts.
+---
 
-## Advice Button Requirement
-- Include a "Get advice" button on the profile page.
-- On click, return 1-2 concise recommendations for improving profile/campaign-related content.
-- Advice is optional and user-triggered only; never auto-edit content.
-- If advice is unavailable, show a non-blocking fallback message.
+## Core Layout
 
-## Reliability and Privacy
-- Never expose private donor identity in advice or graph sections.
-- If graph or advice dependencies fail, keep the profile page readable with safe fallback content.
+### 1. Profile Header
+- Profile picture
+- Name
+- Location
+- Bio
+
+---
+
+### 2. Social Proof
+- Total raised (lifetime)
+- Number of fundraisers
+- Number of supporters/donations
+
+---
+
+### 3. Fundraisers (Primary Section)
+- List/grid of campaigns created by user
+- Each item:
+  - Title
+  - Progress bar
+  - Amount raised
+  - Thumbnail
+
+---
+
+### 4. Activity / Updates
+- Recent actions:
+  - Donations made
+  - Updates posted
+- Optional:
+  - Timeline view
+
+---
+
+### 5. About Section
+- Personal story / mission
+- Why they fundraise
+
+---
+
+### 6. Trust Signals
+- Verified badges (if applicable)
+- Organizer history
+- Links to beneficiaries
+
+---
+
+## Functional Requirements
+
+### Profile Management
+- Edit profile (name, bio, image)
+- Upload avatar
+- Privacy controls
+
+### Navigation
+- Tabs:
+  - Fundraisers
+  - Donations
+  - About
+
+---
+
+## Non-Functional Requirements
+
+- Fast load (<1.5s)
+- Mobile-first
+- Clean, minimal UI
+
+---
+
+## Key Metrics
+
+- Profile → fundraiser conversion rate
+- Profile views
+- Repeat donor rate
