@@ -12,6 +12,8 @@ import { recommendationsRoutes } from "./routes/recommendations";
 import { badgesRoutes } from "./routes/badges";
 import { charitiesRoutes } from "./routes/charities";
 import { feedRoutes } from "./routes/feed";
+import { followsRoutes } from "./routes/follows";
+import { authRoutes } from "./routes/auth";
 import { registerTelemetry } from "./services/telemetry";
 import { startWorkers } from "./worker/index";
 import { db } from "./db/client";
@@ -71,6 +73,8 @@ async function buildApp() {
   await app.register(fp(badgesRoutes));
   await app.register(fp(charitiesRoutes));
   await app.register(fp(feedRoutes));
+  await app.register(fp(followsRoutes));
+  await app.register(fp(authRoutes));
 
   return app;
 }

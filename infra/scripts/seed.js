@@ -2,8 +2,45 @@
 "use strict";
 
 const { Client } = require("pg");
+const fs = require("fs");
+const path = require("path");
+
+function loadEnvFromFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+
+  const content = fs.readFileSync(filePath, "utf8");
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+
+    const equalsIndex = line.indexOf("=");
+    if (equalsIndex <= 0) continue;
+
+    const key = line.slice(0, equalsIndex).trim();
+    let value = line.slice(equalsIndex + 1).trim();
+    if (!key) continue;
+
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    process.env[key] = value;
+  }
+}
+
+function loadLocalEnv() {
+  const rootDir = path.resolve(__dirname, "../..");
+  // Prioritize local overrides in development.
+  loadEnvFromFile(path.join(rootDir, ".env.local"));
+  loadEnvFromFile(path.join(rootDir, ".env"));
+}
 
 async function run() {
+  loadLocalEnv();
+
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
     console.error("DATABASE_URL environment variable is required");
@@ -106,6 +143,9 @@ async function run() {
 }
 
 run().catch((err) => {
+  if (err?.code === "42P01") {
+    console.error("Seed failed: required tables do not exist. Run `npm run db:migrate` first.");
+  }
   console.error("Seed failed:", err);
   process.exit(1);
 });

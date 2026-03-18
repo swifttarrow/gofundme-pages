@@ -1,4 +1,7 @@
 import { Pool, PoolClient, QueryResult, QueryResultRow } from "pg";
+import { loadLocalEnv } from "../config/load-env";
+
+loadLocalEnv();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/gosupportme",
