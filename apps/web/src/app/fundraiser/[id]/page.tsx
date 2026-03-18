@@ -7,7 +7,7 @@ import { TrustSafety } from "@/components/fundraiser/trust-safety";
 import { DonationModule } from "@/components/donation-module";
 
 interface FundraiserPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function generateStaticParams() {
@@ -15,7 +15,8 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: FundraiserPageProps) {
-  const fundraiser = SEED_FUNDRAISERS.find((f) => f.id === params.id);
+  const { id } = await params;
+  const fundraiser = SEED_FUNDRAISERS.find((f) => f.id === id);
   if (!fundraiser) return { title: "Fundraiser Not Found" };
   return {
     title: `${fundraiser.title} | GoSupportMe`,
@@ -26,8 +27,9 @@ export async function generateMetadata({ params }: FundraiserPageProps) {
   };
 }
 
-export default function FundraiserPage({ params }: FundraiserPageProps) {
-  const fundraiser = SEED_FUNDRAISERS.find((f) => f.id === params.id);
+export default async function FundraiserPage({ params }: FundraiserPageProps) {
+  const { id } = await params;
+  const fundraiser = SEED_FUNDRAISERS.find((f) => f.id === id);
   if (!fundraiser) notFound();
 
   const donations = SEED_DONATIONS.filter((d) => d.fundraiserId === fundraiser.id);

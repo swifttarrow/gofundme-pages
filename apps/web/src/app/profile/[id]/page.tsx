@@ -5,7 +5,7 @@ import { FundraiserList } from "@/components/profile/fundraiser-list";
 import { Badges, MOCK_BADGES } from "@/components/badges";
 
 interface ProfilePageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export async function generateStaticParams() {
@@ -13,13 +13,15 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: ProfilePageProps) {
-  const user = SEED_USERS.find((u) => u.id === params.id);
+  const { id } = await params;
+  const user = SEED_USERS.find((u) => u.id === id);
   if (!user) return { title: "Profile Not Found" };
   return { title: `${user.name} | GoSupportMe` };
 }
 
-export default function ProfilePage({ params }: ProfilePageProps) {
-  const user = SEED_USERS.find((u) => u.id === params.id);
+export default async function ProfilePage({ params }: ProfilePageProps) {
+  const { id } = await params;
+  const user = SEED_USERS.find((u) => u.id === id);
   if (!user) notFound();
 
   const userFundraisers = SEED_FUNDRAISERS.filter(

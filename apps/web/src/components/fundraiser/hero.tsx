@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useState } from "react";
 import { SeedFundraiser } from "@/lib/seed-data";
 
 interface HeroProps {
@@ -6,6 +9,29 @@ interface HeroProps {
 }
 
 export function FundraiserHero({ fundraiser }: HeroProps) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleShare() {
+    const shareUrl = window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: fundraiser.title,
+          text: `Support this fundraiser: ${fundraiser.title}`,
+          url: shareUrl,
+        });
+        return;
+      } catch {
+        // Fall back to copy-to-clipboard if native share is dismissed or unavailable.
+      }
+    }
+
+    await navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  }
+
   return (
     <div>
       {/* Cover Image */}
@@ -28,9 +54,31 @@ export function FundraiserHero({ fundraiser }: HeroProps) {
       </div>
 
       {/* Title */}
-      <h1 className="text-2xl md:text-3xl font-bold text-text-primary mt-5 leading-tight">
-        {fundraiser.title}
-      </h1>
+      <div className="mt-5 flex items-start justify-between gap-3">
+        <h1 className="text-2xl md:text-3xl font-bold text-text-primary leading-tight">
+          {fundraiser.title}
+        </h1>
+        <div className="flex-shrink-0">
+          <button
+            type="button"
+            onClick={handleShare}
+            title="Share fundraiser"
+            aria-label="Share fundraiser"
+            className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-border-medium text-text-secondary hover:text-primary hover:border-primary transition-colors"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+            </svg>
+          </button>
+          {copied && (
+            <p className="mt-1 text-[11px] text-primary text-right">Copied</p>
+          )}
+        </div>
+      </div>
 
       {/* Organizer badge */}
       <div className="flex items-center gap-2 mt-3">

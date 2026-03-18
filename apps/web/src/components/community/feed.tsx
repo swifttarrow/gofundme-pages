@@ -60,7 +60,7 @@ export function CommunityFeed() {
 
 function FeedPost({ post }: { post: FeedPost }) {
   return (
-    <div className="border-b border-border-light pb-5">
+    <div className="border-b border-border-light pb-5 rounded-md transition-colors hover:bg-bg-faint/60">
       {/* Author */}
       <div className="flex items-center gap-2 mb-2">
         <div className="relative w-8 h-8 rounded-full overflow-hidden bg-bg-gray flex-shrink-0">
@@ -91,9 +91,9 @@ function FeedPost({ post }: { post: FeedPost }) {
       {/* Link to fundraiser */}
       <Link
         href={`/fundraiser/${post.fundraiserId}`}
-        className="text-xs text-primary font-medium hover:underline"
+        className="inline-flex items-center text-xs text-primary font-medium hover:underline"
       >
-        {post.fundraiserTitle} →
+        View fundraiser: {post.fundraiserTitle} →
       </Link>
 
       {/* Likes */}

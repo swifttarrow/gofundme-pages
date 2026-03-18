@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { SeedNotification, timeAgo } from "@/lib/seed-data";
 
 const TABS = [
@@ -137,12 +138,27 @@ interface NotificationRowProps {
 }
 
 function NotificationRow({ notification, isRead, onRead }: NotificationRowProps) {
+  const router = useRouter();
+
+  function handleRowClick() {
+    onRead();
+    router.push(notification.deepLink);
+  }
+
   return (
     <div
       className={`flex gap-3 p-3 rounded-lg transition-colors cursor-pointer ${
         !isRead ? "bg-primary-light border border-primary/10" : "hover:bg-bg-faint"
       }`}
-      onClick={onRead}
+      onClick={handleRowClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleRowClick();
+        }
+      }}
+      role="link"
+      tabIndex={0}
     >
       {/* Unread dot */}
       <div className="flex-shrink-0 flex flex-col items-center gap-1 pt-1">
@@ -169,7 +185,10 @@ function NotificationRow({ notification, isRead, onRead }: NotificationRowProps)
           <Link
             href={notification.deepLink}
             className="text-xs text-primary font-medium hover:underline"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRead();
+            }}
           >
             View →
           </Link>

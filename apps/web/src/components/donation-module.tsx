@@ -1,33 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProgressBar } from "@/components/fundraiser/progress-bar";
 import { SeedFundraiser, formatCents } from "@/lib/seed-data";
 
 const SUGGESTED_AMOUNTS = [25, 50, 100, 250];
-const TIP_OPTIONS = [
-  { label: "10%", value: 10 },
-  { label: "15%", value: 15 },
-  { label: "20%", value: 20 },
-  { label: "Other", value: "other" as const },
-];
+const MAX_TIP_PERCENT = 30;
 
 interface DonationModuleProps {
   fundraiser: SeedFundraiser;
-  onDonate?: (amountCents: number, tipPercent: number | "other") => void;
+  onDonate?: (amountCents: number, tipPercent: number) => void;
 }
 
 export function DonationModule({ fundraiser, onDonate }: DonationModuleProps) {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(50);
   const [customAmount, setCustomAmount] = useState("");
-  const [tipOption, setTipOption] = useState<number | "other">(10);
+  const [tipPercent, setTipPercent] = useState<number>(12);
   const [showDonations, setShowDonations] = useState(false);
+  const [isDonationModalOpen, setIsDonationModalOpen] = useState(false);
+  const [modalStep, setModalStep] = useState<1 | 2>(1);
 
   const amountDollars = selectedAmount ?? (parseFloat(customAmount) || 0);
   const amountCents = Math.round(amountDollars * 100);
-  const tipCents =
-    tipOption === "other" ? 0 : Math.round((amountCents * tipOption) / 100);
+  const tipCents = Math.round((amountCents * tipPercent) / 100);
   const totalCents = amountCents + tipCents;
+
+  useEffect(() => {
+    if (!isDonationModalOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsDonationModalOpen(false);
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = "";
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isDonationModalOpen]);
+
+  useEffect(() => {
+    if (!isDonationModalOpen) {
+      setModalStep(1);
+    }
+  }, [isDonationModalOpen]);
 
   function handleAmountSelect(amount: number) {
     setSelectedAmount(amount);
@@ -42,121 +62,214 @@ export function DonationModule({ fundraiser, onDonate }: DonationModuleProps) {
   function handleDonate() {
     if (amountCents <= 0) return;
     if (onDonate) {
-      onDonate(amountCents, tipOption);
+      onDonate(amountCents, tipPercent);
     } else {
       alert(
         `Donation of ${formatCents(amountCents)} + tip ${formatCents(tipCents)} = ${formatCents(totalCents)} submitted!`
       );
     }
+    setIsDonationModalOpen(false);
   }
 
   return (
-    <div className="bg-white border border-border-light rounded-lg p-5 shadow-sm">
-      {/* Progress */}
-      <ProgressBar
-        raisedCents={fundraiser.raisedCents}
-        goalCents={fundraiser.goalCents}
-        donorCount={fundraiser.donorCount}
-        progressPercent={fundraiser.progressPercent}
-      />
+    <>
+      <div className="bg-white border border-border-light rounded-lg p-5 shadow-sm">
+        {/* Progress */}
+        <ProgressBar
+          raisedCents={fundraiser.raisedCents}
+          goalCents={fundraiser.goalCents}
+          donorCount={fundraiser.donorCount}
+          progressPercent={fundraiser.progressPercent}
+        />
 
-      {/* Toggle donations */}
-      <div className="flex items-center justify-between mt-3 mb-4">
-        <span className="text-sm text-text-secondary">{fundraiser.donorCount.toLocaleString()} donations</span>
-        <button
-          onClick={() => setShowDonations(!showDonations)}
-          className="relative w-10 h-5 rounded-full transition-colors duration-200 focus:outline-none"
-          style={{ backgroundColor: showDonations ? "#00B964" : "#D0D0D0" }}
-          aria-label="Toggle donations visibility"
-        >
-          <span
-            className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200"
-            style={{ transform: showDonations ? "translateX(20px)" : "translateX(0)" }}
-          />
-        </button>
-      </div>
-
-      {/* Choose amount */}
-      <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
-        Choose an amount
-      </p>
-
-      {/* Suggested amounts */}
-      <div className="grid grid-cols-4 gap-2 mb-3">
-        {SUGGESTED_AMOUNTS.map((amount) => (
+        {/* Toggle donations */}
+        <div className="flex items-center justify-between mt-3 mb-4">
+          <span className="text-sm text-text-secondary">{fundraiser.donorCount.toLocaleString()} donations</span>
           <button
-            key={amount}
-            onClick={() => handleAmountSelect(amount)}
-            className={`py-2 text-sm font-semibold rounded-md border transition-all ${
-              selectedAmount === amount
-                ? "bg-primary border-primary text-white"
-                : "border-border-medium text-text-primary hover:border-primary hover:text-primary"
-            }`}
+            onClick={() => setShowDonations(!showDonations)}
+            className="relative w-10 h-5 rounded-full transition-colors duration-200 focus:outline-none"
+            style={{ backgroundColor: showDonations ? "#00B964" : "#D0D0D0" }}
+            aria-label="Toggle donations visibility"
           >
-            ${amount}
+            <span
+              className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200"
+              style={{ transform: showDonations ? "translateX(20px)" : "translateX(0)" }}
+            />
           </button>
-        ))}
+        </div>
+
+        <button
+          onClick={() => setIsDonationModalOpen(true)}
+          className="w-full bg-primary text-white font-bold py-3.5 rounded-md hover:bg-primary-dark transition-colors text-base"
+        >
+          Donate now
+        </button>
+
+        <p className="mt-2 text-xs text-text-muted leading-relaxed">
+          You will choose your amount in the next step. Your tip is optional, and we explain exactly what it supports.
+        </p>
+
       </div>
 
-      {/* Custom amount */}
-      <div className="relative mb-4">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
-        <input
-          type="number"
-          min="1"
-          placeholder="Enter your amount"
-          value={customAmount}
-          onChange={(e) => handleCustomAmountChange(e.target.value)}
-          className="w-full pl-7 pr-3 py-2.5 border border-border-medium rounded-md text-sm
+      {isDonationModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <button
+            className="absolute inset-0 bg-black/45"
+            onClick={() => setIsDonationModalOpen(false)}
+            aria-label="Close donation modal"
+          />
+
+          <div
+            className="relative z-10 w-full sm:max-w-lg bg-white sm:rounded-xl shadow-xl max-h-[90vh] overflow-y-auto p-5"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Donate to ${fundraiser.title}`}
+          >
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-text-secondary">Donate to</p>
+                <h2 className="mt-0.5 text-lg font-bold text-text-primary truncate">{fundraiser.title}</h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsDonationModalOpen(false)}
+                  className="text-text-muted hover:text-text-primary transition-colors"
+                  aria-label="Close modal"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {modalStep === 1 ? (
+              <>
+                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
+                  Choose an amount
+                </p>
+
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {SUGGESTED_AMOUNTS.map((amount) => (
+                    <button
+                      key={amount}
+                      onClick={() => handleAmountSelect(amount)}
+                      className={`py-2 text-sm font-semibold rounded-md border transition-all ${
+                        selectedAmount === amount
+                          ? "bg-primary border-primary text-white"
+                          : "border-border-medium text-text-primary hover:border-primary hover:text-primary"
+                      }`}
+                    >
+                      ${amount}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative mb-4">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="Enter your amount"
+                    value={selectedAmount !== null ? String(selectedAmount) : customAmount}
+                    onChange={(e) => handleCustomAmountChange(e.target.value)}
+                    className="w-full pl-7 pr-3 py-2.5 border border-border-medium rounded-md text-sm
                      focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20
                      placeholder:text-text-muted"
-        />
-      </div>
+                  />
+                </div>
 
-      {/* Tip selector */}
-      <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
-        Tip GoSupportMe websites
-      </p>
-      <div className="grid grid-cols-4 gap-2 mb-4">
-        {TIP_OPTIONS.map((opt) => (
-          <button
-            key={opt.label}
-            onClick={() => setTipOption(opt.value)}
-            className={`py-2 text-sm font-semibold rounded-md border transition-all ${
-              tipOption === opt.value
-                ? "bg-primary border-primary text-white"
-                : "border-border-medium text-text-primary hover:border-primary hover:text-primary"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Donate button */}
-      <button
-        onClick={handleDonate}
-        disabled={amountCents <= 0}
-        className="w-full bg-primary text-white font-bold py-3.5 rounded-md hover:bg-primary-dark
+                <button
+                  onClick={() => setModalStep(2)}
+                  disabled={amountCents <= 0}
+                  className="w-full bg-primary text-white font-bold py-3.5 rounded-md hover:bg-primary-dark
                    transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base"
-      >
-        {amountCents > 0
-          ? `Donate ${formatCents(totalCents)}`
-          : "Donate now"}
-      </button>
+                >
+                  Continue
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
+                  Add an optional tip
+                </p>
 
-      {/* Share button */}
-      <button className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 border border-border-medium
-                          rounded-md text-sm font-medium text-text-primary hover:bg-bg-gray transition-colors">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="18" cy="5" r="3" />
-          <circle cx="6" cy="12" r="3" />
-          <circle cx="18" cy="19" r="3" />
-          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-        </svg>
-        Share
-      </button>
-    </div>
+                <div className="rounded-xl border border-border-light bg-bg-faint p-4 mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold text-text-primary">Tip amount</span>
+                    <span className="text-sm font-bold text-primary">{tipPercent}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max={MAX_TIP_PERCENT}
+                    step="1"
+                    value={tipPercent}
+                    onChange={(e) => setTipPercent(Number(e.target.value))}
+                    className="w-full accent-primary"
+                    aria-label="Tip percentage"
+                  />
+                  <div className="mt-2 flex items-center justify-between text-xs text-text-muted">
+                    <span>No tip</span>
+                    <span>{MAX_TIP_PERCENT}%</span>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-primary/15 bg-primary-light p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-11 w-11 rounded-full bg-white shadow-sm border border-primary/10 flex items-center justify-center text-xl">
+                      💚
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-text-primary">What your tip helps support</p>
+                      <p className="text-xs text-text-secondary leading-relaxed mt-1">
+                        Your donation always goes directly to this fundraiser. Tips help keep GoSupportMe running by
+                        funding secure payment processing, fraud and abuse monitoring, support for organizers and
+                        donors, and the tools that make fundraising pages easy to create and share.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border border-border-light rounded-md p-3 mb-4 text-sm">
+                  <div className="flex items-center justify-between text-text-secondary">
+                    <span>Donation amount</span>
+                    <span>{formatCents(amountCents)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-text-secondary mt-1">
+                    <span>Tip to GoSupportMe ({tipPercent}%)</span>
+                    <span>{formatCents(tipCents)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-text-primary font-bold mt-2 pt-2 border-t border-border-light">
+                    <span>Total charged</span>
+                    <span>{formatCents(totalCents)}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setModalStep(1)}
+                    className="w-1/3 border border-border-medium text-text-primary font-semibold py-3 rounded-md hover:bg-bg-faint transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={handleDonate}
+                    disabled={amountCents <= 0}
+                    className="w-2/3 bg-primary text-white font-bold py-3 rounded-md hover:bg-primary-dark
+                   transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base"
+                  >
+                    {amountCents > 0
+                      ? `Donate ${formatCents(totalCents)}`
+                      : "Donate now"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
