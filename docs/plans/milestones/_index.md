@@ -52,3 +52,18 @@
 
 ## Quick Links
 - [Requirement](../../requirements/voice-dictation-for-creating-fundraisers.md)
+
+# Milestones: Charity Starter Kit Request Flow (MVP)
+
+**Source requirement:** `docs/requirements/charity-starter-kit.md`
+
+## Milestone Order
+
+| # | Milestone | Status |
+|---|-----------|--------|
+| 12 | [m12-charity-request-intake-and-submission](./m12-charity-request-intake-and-submission/) | Pending |
+| 13 | [m13-review-decisioning-and-status-tracking](./m13-review-decisioning-and-status-tracking/) | Pending |
+| 14 | [m14-trust-safety-ops-and-success-metrics](./m14-trust-safety-ops-and-success-metrics/) | Pending |
+
+## Quick Links
+- [Requirement](../../requirements/charity-starter-kit.md)
