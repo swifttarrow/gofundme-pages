@@ -4,9 +4,9 @@
 Finalize a trustworthy publish surface that shows exactly what users are about to post.
 
 ## Deliverables
-- [ ] Publish screen renders preview card from latest edited draft data
-- [ ] `Publish fundraiser` CTA triggers final create mutation and loading/error states
-- [ ] Validation blocks publish when required content is missing
+- [x] Publish screen renders preview card from latest edited draft data
+- [x] `Publish fundraiser` CTA triggers final create mutation and loading/error states
+- [x] Validation blocks publish when required content is missing
 
 ## Notes
 Use draft snapshot semantics so users do not lose last-second edits during submission.

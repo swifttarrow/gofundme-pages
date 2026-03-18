@@ -4,9 +4,9 @@
 Produce a complete fundraiser draft from transcript text with consistent schema and UX-ready limits.
 
 ## Deliverables
-- [ ] Generation pipeline returns title (<= 80 chars), summary (<= 120 words), full story, goal suggestion, and category
-- [ ] Entity extraction includes person, cause, urgency, and amount hints
-- [ ] Processing state API exposes status and generated draft payload
+- [x] Generation pipeline returns title (<= 80 chars), summary (<= 120 words), full story, goal suggestion, and category
+- [x] Entity extraction includes person, cause, urgency, and amount hints
+- [x] Processing state API exposes status and generated draft payload
 
 ## Notes
 Structure prompts and output parsing so each generated field can be independently regenerated later in the review UI.

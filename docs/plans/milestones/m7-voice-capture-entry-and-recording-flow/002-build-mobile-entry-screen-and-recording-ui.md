@@ -4,9 +4,9 @@
 Create the guided voice capture interface with clear recording controls and real-time feedback.
 
 ## Deliverables
-- [ ] Entry screen includes prompt copy, subtext, and prominent mic control
-- [ ] Recording state includes waveform animation and elapsed timer
-- [ ] Stop, pause, and retry controls work and update UI state predictably
+- [x] Entry screen includes prompt copy, subtext, and prominent mic control
+- [x] Recording state includes waveform animation and elapsed timer
+- [x] Stop, pause, and retry controls work and update UI state predictably
 
 ## Notes
 Keep the interface minimal and optimized for mobile widths, with accessibility labels on all recording controls.

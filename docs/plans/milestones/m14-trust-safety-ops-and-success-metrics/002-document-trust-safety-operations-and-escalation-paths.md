@@ -4,9 +4,9 @@
 Establish the minimum operating model for manual review, suspicious-content handling, and post-launch charity reporting.
 
 ## Deliverables
-- [ ] MVP moderation playbook documented for suspicious submissions and identity-check escalation
-- [ ] Rejection reason taxonomy defined for clear creator feedback and consistent staff decisions
-- [ ] Post-launch charity report handling flow documented with ownership and response windows
+- [x] MVP moderation playbook documented for suspicious submissions and identity-check escalation
+- [x] Rejection reason taxonomy defined for clear creator feedback and consistent staff decisions
+- [x] Post-launch charity report handling flow documented with ownership and response windows
 
 ## Notes
 Keep this lightweight but explicit so the team can run safely before building deeper internal tooling.

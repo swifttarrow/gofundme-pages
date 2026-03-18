@@ -4,9 +4,9 @@
 Prevent harmful or hallucinated outputs and surface confidence signals before users publish.
 
 ## Deliverables
-- [ ] Moderation checks run on transcript and generated output before review screen render
-- [ ] Grounding checks ensure generated statements map back to transcript evidence
-- [ ] Confidence score is stored and exposed to UI with low-confidence fallback behavior
+- [x] Moderation checks run on transcript and generated output before review screen render
+- [x] Grounding checks ensure generated statements map back to transcript evidence
+- [x] Confidence score is stored and exposed to UI with low-confidence fallback behavior
 
 ## Notes
 Prefer deterministic rule checks in addition to model-based moderation to keep behavior auditable and predictable.

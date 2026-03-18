@@ -4,9 +4,9 @@
 Route all relevant "start fundraiser" surfaces to the new voice-first creation entry.
 
 ## Deliverables
-- [ ] Primary `Start a fundraiser` CTA opens the voice-first creation screen on mobile
-- [ ] Profile page CTA, community page CTA, and post-donation upsell link into the same flow
-- [ ] Tracking event captures source surface for each entry point
+- [x] Primary `Start a fundraiser` CTA opens the voice-first creation screen on mobile
+- [x] Profile page CTA, community page CTA, and post-donation upsell link into the same flow
+- [x] Tracking event captures source surface for each entry point
 
 ## Notes
 Align with existing navigation and avoid introducing route-level regressions for current fundraiser creation entry paths.

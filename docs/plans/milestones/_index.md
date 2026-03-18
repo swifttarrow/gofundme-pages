@@ -44,11 +44,11 @@
 
 | # | Milestone | Status |
 |---|-----------|--------|
-| 7 | [m7-voice-capture-entry-and-recording-flow](./m7-voice-capture-entry-and-recording-flow/) | Pending |
-| 8 | [m8-ai-transcription-and-fundraiser-generation](./m8-ai-transcription-and-fundraiser-generation/) | Pending |
-| 9 | [m9-review-edit-and-regeneration-experience](./m9-review-edit-and-regeneration-experience/) | Pending |
-| 10 | [m10-publish-success-and-distribution-surfaces](./m10-publish-success-and-distribution-surfaces/) | Pending |
-| 11 | [m11-observability-safety-and-mvp-validation](./m11-observability-safety-and-mvp-validation/) | Pending |
+| 7 | [m7-voice-capture-entry-and-recording-flow](./m7-voice-capture-entry-and-recording-flow/) | Complete |
+| 8 | [m8-ai-transcription-and-fundraiser-generation](./m8-ai-transcription-and-fundraiser-generation/) | Complete |
+| 9 | [m9-review-edit-and-regeneration-experience](./m9-review-edit-and-regeneration-experience/) | Complete |
+| 10 | [m10-publish-success-and-distribution-surfaces](./m10-publish-success-and-distribution-surfaces/) | Complete |
+| 11 | [m11-observability-safety-and-mvp-validation](./m11-observability-safety-and-mvp-validation/) | Complete |
 
 ## Quick Links
 - [Requirement](../../requirements/voice-dictation-for-creating-fundraisers.md)
@@ -61,9 +61,9 @@
 
 | # | Milestone | Status |
 |---|-----------|--------|
-| 12 | [m12-charity-request-intake-and-submission](./m12-charity-request-intake-and-submission/) | Pending |
-| 13 | [m13-review-decisioning-and-status-tracking](./m13-review-decisioning-and-status-tracking/) | Pending |
-| 14 | [m14-trust-safety-ops-and-success-metrics](./m14-trust-safety-ops-and-success-metrics/) | Pending |
+| 12 | [m12-charity-request-intake-and-submission](./m12-charity-request-intake-and-submission/) | Complete |
+| 13 | [m13-review-decisioning-and-status-tracking](./m13-review-decisioning-and-status-tracking/) | Complete |
+| 14 | [m14-trust-safety-ops-and-success-metrics](./m14-trust-safety-ops-and-success-metrics/) | Complete |
 
 ## Quick Links
 - [Requirement](../../requirements/charity-starter-kit.md)

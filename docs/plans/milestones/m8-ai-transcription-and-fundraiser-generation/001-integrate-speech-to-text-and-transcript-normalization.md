@@ -4,9 +4,9 @@
 Convert captured audio into high-quality text suitable for reliable downstream generation.
 
 ## Deliverables
-- [ ] Audio upload/ingest endpoint accepts 20-90 second clips and returns transcript
-- [ ] Transcript normalization removes obvious filler and applies basic cleanup
-- [ ] Error states return user-friendly messages for failed transcription
+- [x] Audio upload/ingest endpoint accepts 20-90 second clips and returns transcript
+- [x] Transcript normalization removes obvious filler and applies basic cleanup
+- [x] Error states return user-friendly messages for failed transcription
 
 ## Notes
 Preserve raw transcript for auditing while storing normalized transcript for generation and UI rendering.

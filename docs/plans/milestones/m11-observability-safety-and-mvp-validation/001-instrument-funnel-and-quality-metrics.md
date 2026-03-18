@@ -4,9 +4,9 @@
 Capture the key performance and behavioral metrics needed to evaluate MVP outcomes.
 
 ## Deliverables
-- [ ] Analytics events instrument entry, record, process, review, publish, and share stages
-- [ ] Derived metrics include completion rate, time-to-publish, edit rate, and stage drop-off
-- [ ] Dashboard/query definitions are documented and shareable with the team
+- [x] Analytics events instrument entry, record, process, review, publish, and share stages
+- [x] Derived metrics include completion rate, time-to-publish, edit rate, and stage drop-off
+- [x] Dashboard/query definitions are documented and shareable with the team
 
 ## Notes
 Use stable event names and payload schemas so future iterations can compare trends without remapping.

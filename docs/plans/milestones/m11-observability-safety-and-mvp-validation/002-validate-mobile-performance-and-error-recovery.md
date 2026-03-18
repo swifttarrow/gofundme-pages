@@ -4,9 +4,9 @@
 Ensure the voice-first creation flow remains fast, resilient, and recoverable on constrained mobile conditions.
 
 ## Deliverables
-- [ ] Mobile performance checks cover load time, interaction latency, and publish completion time
-- [ ] Error handling UX exists for permission denial, transcription failure, and generation timeout
-- [ ] Retry/recovery paths preserve user progress wherever possible
+- [x] Mobile performance checks cover load time, interaction latency, and publish completion time
+- [x] Error handling UX exists for permission denial, transcription failure, and generation timeout
+- [x] Retry/recovery paths preserve user progress wherever possible
 
 ## Notes
 Target perceived responsiveness first, especially during processing where uncertainty can drive abandonment.

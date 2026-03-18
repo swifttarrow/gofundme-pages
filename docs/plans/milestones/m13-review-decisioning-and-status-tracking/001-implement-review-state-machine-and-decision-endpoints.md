@@ -4,9 +4,9 @@
 Create reliable, auditable state transitions for charity requests and expose decision APIs for manual staff review actions.
 
 ## Deliverables
-- [ ] Charity request state machine implemented with explicit transition guards
-- [ ] Staff decision endpoints support approve/reject and require authenticated staff authorization
-- [ ] Approval path creates charity entity and ownership linkage in one transaction
+- [x] Charity request state machine implemented with explicit transition guards
+- [x] Staff decision endpoints support approve/reject and require authenticated staff authorization
+- [x] Approval path creates charity entity and ownership linkage in one transaction
 
 ## Notes
 Persist decision reason and timestamps to support creator communication and audit trails.
