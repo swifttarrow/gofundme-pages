@@ -1,332 +1,195 @@
----
+# 🧾 GoFundMe — Create a Charity (MVP Spec)
 
-# 🧩 Charity Starter Kit — Product Spec (Historical)
+## 🎯 Goal
 
-> Note: Active starter flow requirements now live in [fundraiser-starter-kit.md](./fundraiser-starter-kit.md).
-> Charity-specific legal onboarding requirements now live in [charity-partnership-program.md](./charity-partnership-program.md).
-
-## 1. 🎯 Overview
-
-**Goal:**
-Enable individuals to easily start a “lightweight charity” (micro-charity) directly on GoFundMe, with minimal friction and guided setup.
-
-**Vision:**
-Move from *one-off fundraisers* → *persistent, mission-driven entities*.
-
-**Core Value:**
-
-* Reduce friction of starting a cause
-* Increase donor trust via structure + transparency
-* Encourage repeat engagement + long-term fundraising
+Enable users to request the creation of a charity on GoFundMe through a **simple, guided flow**, with **manual review by GoFundMe staff** to ensure trust and legitimacy.
 
 ---
 
-## 2. 🧠 Key Concept
+# 🧠 Core Principles
 
-A **Charity Starter Kit (CSK)** is a guided flow that transforms a user into a **Charity Organizer** with:
-
-* A persistent charity page
-* Structured mission + goals
-* Recurring fundraising capabilities
-* Built-in trust signals (progress, updates, transparency)
-
-Think:
-
-> “Shopify for micro-charities” but embedded inside GoFundMe.
+* **Simple > Complete** (reduce intimidation)
+* **Trust-first** (everything is reviewed before going live)
+* **One at a time** (prevents spam + low-quality submissions)
 
 ---
 
-## 3. 👤 User Personas
+# 🚪 Entry Points
 
-### 1. First-time Organizer
-
-* Wants to help (e.g., local cause, medical, disaster relief)
-* Doesn’t know how to “formalize” it
-
-### 2. Repeat Fundraiser
-
-* Has run multiple campaigns
-* Wants continuity + identity
-
-### 3. Community Leader
-
-* Leads a group (school, neighborhood, online community)
-* Needs structure + credibility
+* Profile page → “Start a Charity”
+* Fundraiser page → “Turn this into a Charity”
+* Community page → “Create a Charity”
 
 ---
 
-## 4. 🚀 MVP Scope
+# 🧩 Flow Overview
 
-### Core Flow: “Start a Charity”
+### Step 0: Eligibility Gate
 
-```
-Entry Points:
-- Secondary CTA on homepage: “Start a Charity”
-- From fundraiser page: “Turn this into a lasting cause”
-- Profile page upsell
-```
+* If user has an **active or under-review charity request**:
 
----
+  * Block entry
+  * Show message:
 
-## 5. 🧱 Feature Breakdown
-
-### 5.1 Guided Charity Creation (Wizard)
-
-**Step-based flow (5–7 steps):**
-
-1. **Cause Definition**
-
-   * Name of charity
-   * Category (health, disaster relief, education, etc.)
-   * Guided mission statement tips
-
-2. **Story + Impact**
-
-   * Long-form description
-   * “Who does this help?”
-   * Advice-assisted summary suggestions (donor-friendly)
-
-3. **Structure**
-
-   * Choose type:
-
-     * Personal-led cause (MVP default)
-     * Community-led cause
-   * Optional: add collaborators
-
-4. **Funding Model**
-
-   * One-time donations (default)
-   * Toggle: recurring donations (monthly)
-
-5. **Transparency Setup**
-
-   * “How funds will be used” (structured inputs)
-   * Milestones (e.g., $5k → X impact)
-
-6. **Visual Identity**
-
-   * Cover image
-   * Template branding (optional logo + theme presets)
-
-7. **Review + Launch**
+    > “You can only create one charity at a time. Your current request is still in progress.”
 
 ---
 
-### 5.2 Charity Page (New Page Type)
+## ✍️ Step 1: “What We Help With” (Education Screen)
 
-Persistent page distinct from a single fundraiser.
+### Purpose
+
+Set expectations and reduce confusion about what GoFundMe handles vs. what the user is responsible for.
+
+### Content (simple, skimmable)
+
+**Header:**
+
+> “We help you get your charity started”
 
 **Sections:**
 
-* Mission + summary
-* Active fundraisers
-* Total funds raised (lifetime)
-* Updates / posts
-* Impact milestones
-* Donor feed (optional visibility)
-* Trust indicators (see below)
+* ✅ Collect donations securely
+* ✅ Host your charity page
+* ✅ Provide basic transparency tools
+* ⚠️ You are responsible for how funds are used
+* ⚠️ This is reviewed before going live
+
+**CTA:**
+
+* “Continue”
 
 ---
 
-### 5.3 Advice Layer
+## 🧾 Step 2: Charity Submission Form
 
-Used throughout creation:
+### Fields (keep this tight)
 
-* ✍️ Mission clarity recommendations
-* 🧾 Fund usage organization tips
-* 📊 Impact communication recommendations (basic)
-* 🏷️ Category + tagging suggestions
-* 🧠 Optional trust/readability advice
+**1. Charity Name** *(required)*
 
-**Example:**
+* Free text
 
-> "This sounds vague - want advice to make it more specific for donors?"
+**2. Mission / Purpose** *(required)*
 
----
+* Multi-line text
+* Helper text:
 
-### 5.4 Trust & Transparency Layer (MVP-lite)
+  > “What problem are you trying to solve?”
 
-**Displayed on Charity Page:**
+**3. Who / What Will Be Helped** *(required)*
 
-* “Funds allocated to…” breakdown
-* Milestone tracking
-* Update frequency badge (e.g., “Updated weekly”)
-* Organizer history:
+* Short text
+* Example: “Families affected by wildfires in LA”
 
-  * # of fundraisers
-  * Past success rate
+**4. How Funds Will Be Used** *(required)*
 
----
+* Multi-line text
+* Example prompt:
 
-### 5.5 Charity → Fundraiser Linkage
+  > “Be as specific as possible (e.g., food, shelter, medical supplies)”
 
-Each charity can:
+**5. Location** *(required)*
 
-* Spawn multiple fundraisers
-* Aggregate totals across campaigns
+* City / Region
 
-**Example:**
+**6. Cover Image** *(optional but recommended)*
 
-```
-Charity: “Help Austin Flood Victims”
-  ├── Fundraiser #1 (March floods)
-  ├── Fundraiser #2 (Rebuilding homes)
-```
+* Upload 1 image
+
+### CTA
+
+* “Submit for Review”
 
 ---
 
-### 5.6 Community Integration
+# 🔄 Post-Submission State
 
-* Followers / subscribers
-* Notifications on:
+## Confirmation Screen
 
-  * New fundraiser
-  * Updates
-  * Milestone completion
+> “Your charity request is under review”
 
----
+### Details:
 
-## 6. 🧪 MVP Constraints
+* Estimated review time (e.g., 1–3 days)
+* What happens next:
 
-Keep it lean:
-
-* No legal incorporation (no 501(c)(3) handling)
-* No complex compliance workflows
-* No fund custody changes (same GoFundMe rails)
-* No payouts beyond current system
-
-This is a **product-layer abstraction**, not a legal entity.
+  * “We may reach out for more info”
+  * “You’ll be notified once it’s approved or rejected”
 
 ---
 
-## 7. 🧩 Backend APIs (MVP)
+# 📬 Status Tracking
 
-### Create Charity
+### Entry Point:
 
-```
-POST /api/charities
-```
+* Profile → “Your Charity Request”
 
-### Get Charity
+### States:
 
-```
-GET /api/charities/{charityId}
-```
+* **Under Review**
+* **Approved**
+* **Rejected**
 
-### Link Fundraiser
+## If Approved
 
-```
-POST /api/charities/{charityId}/fundraisers
-```
+* Charity page is created automatically
+* User becomes **owner**
+* Prompt:
 
-### Advice Assist
+  > “Your charity is live. Start sharing it.”
 
-```
-POST /api/advice/charity-content
-POST /api/advice/charity-trust-check
-```
+## If Rejected
 
----
+* Show reason (short, human-readable)
+* CTA:
 
-## 8. 📊 Metrics & Instrumentation
-
-### Activation Funnel
-
-* % of users who start → complete charity setup
-* Time to create charity
-
-### Engagement
-
-* # of charities created per user
-* Repeat fundraisers per charity
-* Followers per charity
-
-### Monetization
-
-* Donation conversion rate (charity vs normal fundraiser)
-* Recurring donation adoption
-
-### Trust Signals
-
-* Donor retention rate
-* Refund / dispute rate
-* Update frequency
+  * “Edit and Resubmit”
 
 ---
 
-## 9. ⚠️ Risks & Mitigations
+# 🚫 Constraints
 
-### 1. Low-quality / spam charities
+## One Active Charity Rule
 
-* Mitigation:
+* User can only have:
 
-  * Advice-based trust checklist
-  * Soft moderation
-  * Visibility gating (low trust → limited reach)
+  * 1 under-review OR
+  * 1 active charity
 
-### 2. Donor confusion (charity vs fundraiser)
+### System Behavior:
 
-* Mitigation:
+* Disable “Start a Charity” if:
 
-  * Clear UI distinction
-  * Education tooltips
-
-### 3. Legal ambiguity
-
-* Mitigation:
-
-  * Clear disclaimer:
-    “This is not a registered nonprofit”
+  * Existing charity is under review
+  * OR user already owns an active charity
 
 ---
 
-## 10. ✨ Demo Story (Super Important)
+# 🛡️ Trust & Safety (MVP)
 
-For a demo, this should feel magical:
+* All submissions go through **manual review**
+* Internal tools (out of scope UI-wise):
 
-1. User clicks “Start a Charity”
-2. Types:
-
-   > “Help families affected by wildfires”
-3. Advice instantly returns:
-
-   * Suggests mission improvements
-   * Suggests milestones
-   * Suggests page clarity improvements
-4. User clicks “Launch”
-5. Immediately:
-
-   * Charity page live
-   * First fundraiser auto-created
-   * Shareable link
-
-👉 Total time: **< 2 minutes**
+  * Flag suspicious content
+  * Basic identity checks (if needed)
+* Users can report charities post-launch
 
 ---
 
-## 11. 🔮 Future Extensions (Post-MVP)
+# 📊 Success Metrics
 
-* Legal incorporation assistance (e.g., Stripe Atlas–style)
-* Bank account + fund segregation
-* Verified charity badge
-* Grant matching / partnerships
-* Impact verification via third parties
-* DAO-style community governance (👀 spicy)
+* Submission completion rate
+* Approval rate
+* Time to approval
+* % of approved charities that receive donations
 
 ---
 
-## 12. 🧠 Why This Matters (Strategic Insight)
+# 🔥 MVP Cut (What We’re NOT Building Yet)
 
-This shifts GoFundMe from:
-
-> “Place to raise money”
-> → “Platform to build causes”
-
-Which unlocks:
-
-* Retention (people come back)
-* Identity (charities as brands)
-* Network effects (followers, communities)
+* No legal incorporation flow
+* No multi-admin roles
+* No advanced financial reporting
+* No AI autofill (can layer in later)
 
 ---

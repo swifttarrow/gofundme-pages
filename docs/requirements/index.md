@@ -36,4 +36,4 @@ FR8. Transparent tipping requirements: [improving-tips.md](./improving-tips.md)
 
 FR9. Mobile responsiveness requirements: [mobile-responsiveness.md](./mobile-responsiveness.md)
 
-FR10. Charity partnership requirements: [charity-partnership-program.md](./charity-partnership-program.md)
+FR10. Charity creation requirements: [charity-starter-kit.md](./charity-starter-kit.md)
