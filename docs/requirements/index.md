@@ -26,7 +26,7 @@ FR3. Profile page requirements: [profile-page.md](./profile-page.md)
 
 FR4. Achievement badge requirements: [achievement-badges.md](./achievement-badges.md)
 
-FR5. Charity Starter Kit requirements: [charity-starter-kit.md](./charity-starter-kit.md)
+FR5. Fundraiser Starter requirements: [fundraiser-starter-kit.md](./fundraiser-starter-kit.md)
 
 FR6. Content discovery requirements: [improved-content-discovery.md](./improved-content-discovery.md)
 
@@ -35,3 +35,5 @@ FR7. Notification requirements: [improved-notifications.md](./improved-notificat
 FR8. Transparent tipping requirements: [improving-tips.md](./improving-tips.md)
 
 FR9. Mobile responsiveness requirements: [mobile-responsiveness.md](./mobile-responsiveness.md)
+
+FR10. Charity partnership requirements: [charity-partnership-program.md](./charity-partnership-program.md)

@@ -16,7 +16,7 @@
 
 ## Quick Links
 - [Plan](../2026-03-17-implementation-plan.md)
-# Milestones: GoWithMe Implementation Plan
+# Milestones: GoSupportMe Implementation Plan
 
 **Source plan:** `docs/plans/implementation-plan.md`
 

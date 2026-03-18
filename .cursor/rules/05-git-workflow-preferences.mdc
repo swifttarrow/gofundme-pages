@@ -1,0 +1,10 @@
+---
+description: Respect user git workflow preference (work on main by default)
+alwaysApply: true
+---
+
+# Git Workflow Preference
+
+- Default to implementing directly on `main`.
+- Do not ask to create or switch branches before starting work.
+- Only create/switch branches when the user explicitly requests it.

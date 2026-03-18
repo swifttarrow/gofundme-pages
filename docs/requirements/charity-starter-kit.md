@@ -1,6 +1,9 @@
 ---
 
-# 🧩 Charity Starter Kit — Product Spec (MVP)
+# 🧩 Charity Starter Kit — Product Spec (Historical)
+
+> Note: Active starter flow requirements now live in [fundraiser-starter-kit.md](./fundraiser-starter-kit.md).
+> Charity-specific legal onboarding requirements now live in [charity-partnership-program.md](./charity-partnership-program.md).
 
 ## 1. 🎯 Overview
 
@@ -58,7 +61,7 @@ Think:
 
 ```
 Entry Points:
-- CTA on homepage: “Start a Charity”
+- Secondary CTA on homepage: “Start a Charity”
 - From fundraiser page: “Turn this into a lasting cause”
 - Profile page upsell
 ```

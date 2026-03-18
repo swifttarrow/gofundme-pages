@@ -70,6 +70,12 @@ npm run dev --workspace=apps/web    # http://localhost:3000
 npm run dev --workspace=apps/api    # http://localhost:3001
 ```
 
+### Local Login
+
+- Visit `http://localhost:3000/sign-in`
+- Use any seeded user email from `infra/scripts/seed.js` (for example `michael@example.com`)
+- Password is controlled by `DEV_AUTH_PASSWORD` (default: `gosupportme-dev-password`)
+
 ## Pages
 
 | Route | Description |
@@ -79,7 +85,7 @@ npm run dev --workspace=apps/api    # http://localhost:3001
 | `/community` | Community feed with filters |
 | `/profile/[id]` | User profile with badges |
 | `/notifications` | Notification center |
-| `/charity/new` | Multi-step charity wizard |
+| `/fundraiser/new` | Multi-step fundraiser starter wizard |
 | `/tipping` | Transparent tipping module demo |
 
 ## API Endpoints
