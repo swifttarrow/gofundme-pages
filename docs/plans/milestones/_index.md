@@ -35,3 +35,20 @@
 - [Plan](../implementation-plan.md)
 - [PRD](../../prd.md)
 - [Pre-search](../../pre-search.md)
+
+# Milestones: Voice-First Fundraiser Creation (Mobile) - MVP
+
+**Source plan:** `docs/requirements/voice-dictation-for-creating-fundraisers.md`
+
+## Milestone Order
+
+| # | Milestone | Status |
+|---|-----------|--------|
+| 7 | [m7-voice-capture-entry-and-recording-flow](./m7-voice-capture-entry-and-recording-flow/) | Pending |
+| 8 | [m8-ai-transcription-and-fundraiser-generation](./m8-ai-transcription-and-fundraiser-generation/) | Pending |
+| 9 | [m9-review-edit-and-regeneration-experience](./m9-review-edit-and-regeneration-experience/) | Pending |
+| 10 | [m10-publish-success-and-distribution-surfaces](./m10-publish-success-and-distribution-surfaces/) | Pending |
+| 11 | [m11-observability-safety-and-mvp-validation](./m11-observability-safety-and-mvp-validation/) | Pending |
+
+## Quick Links
+- [Requirement](../../requirements/voice-dictation-for-creating-fundraisers.md)
