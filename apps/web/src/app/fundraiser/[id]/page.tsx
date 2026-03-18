@@ -1,0 +1,107 @@
+import { notFound } from "next/navigation";
+import { SEED_FUNDRAISERS, SEED_DONATIONS } from "@/lib/seed-data";
+import { FundraiserHero } from "@/components/fundraiser/hero";
+import { Story } from "@/components/fundraiser/story";
+import { DonationFeed } from "@/components/fundraiser/donation-feed";
+import { TrustSafety } from "@/components/fundraiser/trust-safety";
+import { DonationModule } from "@/components/donation-module";
+
+interface FundraiserPageProps {
+  params: { id: string };
+}
+
+export async function generateStaticParams() {
+  return SEED_FUNDRAISERS.map((f) => ({ id: f.id }));
+}
+
+export async function generateMetadata({ params }: FundraiserPageProps) {
+  const fundraiser = SEED_FUNDRAISERS.find((f) => f.id === params.id);
+  if (!fundraiser) return { title: "Fundraiser Not Found" };
+  return {
+    title: `${fundraiser.title} | GoSupportMe`,
+    description: fundraiser.story.slice(0, 160),
+    openGraph: {
+      images: [fundraiser.coverImageUrl],
+    },
+  };
+}
+
+export default function FundraiserPage({ params }: FundraiserPageProps) {
+  const fundraiser = SEED_FUNDRAISERS.find((f) => f.id === params.id);
+  if (!fundraiser) notFound();
+
+  const donations = SEED_DONATIONS.filter((d) => d.fundraiserId === fundraiser.id);
+
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Left column */}
+          <div className="flex-1 min-w-0">
+            <FundraiserHero fundraiser={fundraiser} />
+
+            {/* Mobile donation module */}
+            <div className="lg:hidden mt-6">
+              <DonationModule fundraiser={fundraiser} />
+            </div>
+
+            <div className="mt-8">
+              <Story story={fundraiser.story} organizerName={fundraiser.organizerName} />
+            </div>
+
+            <div className="mt-8">
+              <DonationFeed
+                donations={
+                  donations.length > 0
+                    ? donations
+                    : [
+                        {
+                          id: "mock-1",
+                          fundraiserId: fundraiser.id,
+                          donorName: "Michael Chen",
+                          donorAvatar: "https://i.pravatar.cc/150?img=2",
+                          amountCents: 15000,
+                          message: "Sending love and prayers. Stay strong!",
+                          isAnonymous: false,
+                          createdAt: new Date(Date.now() - 3600000).toISOString(),
+                        },
+                        {
+                          id: "mock-2",
+                          fundraiserId: fundraiser.id,
+                          donorName: "Anonymous",
+                          donorAvatar: null,
+                          amountCents: 10000,
+                          message: "Sending love and caring during difficult times.",
+                          isAnonymous: true,
+                          createdAt: new Date(Date.now() - 7200000).toISOString(),
+                        },
+                        {
+                          id: "mock-3",
+                          fundraiserId: fundraiser.id,
+                          donorName: "Jessica Rivera",
+                          donorAvatar: "https://i.pravatar.cc/150?img=3",
+                          amountCents: 9000,
+                          message: "This community is here for you. Every little helps.",
+                          isAnonymous: false,
+                          createdAt: new Date(Date.now() - 14400000).toISOString(),
+                        },
+                      ]
+                }
+                totalCount={fundraiser.donorCount}
+              />
+            </div>
+
+            <TrustSafety />
+          </div>
+
+          {/* Right column — Desktop donation module */}
+          <div className="hidden lg:block w-full max-w-sm flex-shrink-0">
+            <div className="sticky top-20">
+              <DonationModule fundraiser={fundraiser} />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

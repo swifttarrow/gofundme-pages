@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "outDir": "./dist",
+    "resolveJsonModule": true,
+    "paths": {
+      "@gosupportme/contracts": ["../../packages/contracts/src/index.ts"]
+    },
+    "baseUrl": "."
+  },
+  "include": ["src/**/*", "../../packages/contracts/src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
