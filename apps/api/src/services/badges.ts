@@ -1,6 +1,7 @@
 import { PoolClient } from "pg";
 import { PlatformEvent } from "@gosupportme/contracts";
 import { db } from "../db/client";
+import { badgeEvaluationsTotal, notificationsCreatedTotal } from "../observability/metrics";
 
 export const BADGE_DEFINITIONS = [
   {
@@ -154,6 +155,7 @@ export async function evaluateAndAwardBadges(
     return newlyAwarded;
   });
 
+  badgeEvaluationsTotal.inc();
   return awardedBadges;
 }
 
@@ -163,10 +165,11 @@ async function insertBadgeNotification(
   badge: BadgeDefinition,
   sourceEventId?: string
 ): Promise<void> {
-  await client.query(
+  const inserted = await client.query(
     `INSERT INTO notifications (user_id, type, title, body, reason_text, deep_link, source_event_id, dedupe_key)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-     ON CONFLICT (user_id, dedupe_key) DO NOTHING`,
+     ON CONFLICT (user_id, dedupe_key) DO NOTHING
+     RETURNING id`,
     [
       userId,
       "badge_earned",
@@ -178,4 +181,7 @@ async function insertBadgeNotification(
       `badge-earned-${badge.type}`,
     ]
   );
+  if ((inserted.rowCount ?? 0) > 0) {
+    notificationsCreatedTotal.inc({ type: "badge_earned" });
+  }
 }

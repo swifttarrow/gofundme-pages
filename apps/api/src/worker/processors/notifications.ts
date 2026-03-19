@@ -3,6 +3,7 @@ import { PlatformEvent } from "@gosupportme/contracts";
 import { db } from "../../db/client";
 import { redis } from "../../db/redis";
 import { notificationsCreatedTotal } from "../../observability/metrics";
+import { logError } from "../../services/telemetry";
 
 const DEDUPE_TTL_SECONDS = 72 * 60 * 60; // 72 hours
 const BUNDLE_THRESHOLD = 3;
@@ -214,6 +215,11 @@ async function insertNotification(data: NotificationData): Promise<void> {
     );
     notificationsCreatedTotal.inc({ type: data.type });
   } catch (err) {
-    console.error("Failed to insert notification:", err);
+    logError("notification.insert_failed", err, {
+      processor: "notifications",
+      notification_type: data.type,
+      user_id: data.userId,
+      source_event_id: data.sourceEventId ?? null,
+    });
   }
 }

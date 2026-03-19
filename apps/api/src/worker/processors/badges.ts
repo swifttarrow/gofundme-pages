@@ -1,8 +1,8 @@
 import { Job } from "bullmq";
 import { PlatformEvent } from "@gosupportme/contracts";
 import { db } from "../../db/client";
-import { jobsProcessedTotal } from "../../observability/metrics";
 import { evaluateAndAwardBadges } from "../../services/badges";
+import { logError } from "../../services/telemetry";
 
 interface BadgeJob {
   event: PlatformEvent;
@@ -20,11 +20,13 @@ export async function processBadge(job: Job<BadgeJob>): Promise<void> {
         trigger: event.type,
       });
     } catch (err) {
-      console.error(`Badge evaluation failed for user ${userId}:`, err);
+      logError("badge.user_evaluation_failed", err, {
+        processor: "badges",
+        user_id: userId,
+        event_id: event.eventId,
+      });
     }
   }
-
-  jobsProcessedTotal.inc({ queue: "badge-queue", status: "completed" });
 }
 
 async function extractRelevantUserIds(event: PlatformEvent): Promise<string[]> {

@@ -14,8 +14,10 @@ import { charitiesRoutes } from "./routes/charities";
 import { feedRoutes } from "./routes/feed";
 import { followsRoutes } from "./routes/follows";
 import { authRoutes } from "./routes/auth";
+import { telemetryRoutes } from "./routes/telemetry";
 import { registerTelemetry } from "./services/telemetry";
 import { startWorkers } from "./worker/index";
+import { startQueueMetricsPoller } from "./worker/queue-metrics";
 import { db } from "./db/client";
 import requestIdPlugin from "./middleware/request-id";
 
@@ -62,9 +64,18 @@ async function buildApp() {
   app.get("/health", async (_req, reply) => {
     try {
       await db.query("SELECT 1");
-      return reply.send({ status: "ok", db: "connected", ts: new Date().toISOString() });
+      return reply.send({
+        status: "ok",
+        service: process.env.SERVICE_NAME ?? "gosupportme-api",
+        db: "connected",
+        ts: new Date().toISOString(),
+      });
     } catch {
-      return reply.status(503).send({ status: "degraded", db: "disconnected" });
+      return reply.status(503).send({
+        status: "degraded",
+        service: process.env.SERVICE_NAME ?? "gosupportme-api",
+        db: "disconnected",
+      });
     }
   });
 
@@ -79,6 +90,7 @@ async function buildApp() {
   await app.register(fp(feedRoutes));
   await app.register(fp(followsRoutes));
   await app.register(fp(authRoutes));
+  await app.register(fp(telemetryRoutes));
 
   return app;
 }
@@ -86,7 +98,7 @@ async function buildApp() {
 async function main() {
   const app = await buildApp();
 
-  // Start background workers
+  const shutdownQueueMetrics = startQueueMetricsPoller();
   const { shutdown: shutdownWorkers } = startWorkers();
 
   try {
@@ -99,6 +111,7 @@ async function main() {
 
   const gracefulShutdown = async (signal: string) => {
     console.log(`Received ${signal}, shutting down...`);
+    await shutdownQueueMetrics();
     await shutdownWorkers();
     await app.close();
     await db.end();

@@ -1,0 +1,45 @@
+# Example Prometheus alerting rules for GoSupportMe MVP.
+# Tune thresholds for your environment; link Alertmanager receivers to on-call.
+
+groups:
+  - name: gosupportme-mvp
+    rules:
+      - alert: DonationFailureRateHigh
+        annotations:
+          summary: "Donation failure rate exceeds 5% over 5 minutes"
+          description: |
+            Impact: donors may be unable to complete gifts; revenue and trust at risk.
+            Runbook: docs/observability/runbooks/donation-failures.md
+            Confirm: rate(donation_fail_total[5m]) vs rate(donation_attempts_total[5m]).
+            Logs: filter JSON logs for message "donation.persist_failed" or "request.completed" on route POST /api/donations; correlate with request_id and event_id.
+          dashboard: "GoSupportMe MVP (import docs/observability/grafana-dashboard.json)"
+        expr: |
+          (
+            sum(rate(donation_fail_total[5m]))
+            /
+            clamp_min(sum(rate(donation_attempts_total[5m])), 0.01)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+
+      - alert: WorkerBacklogOrFailuresHigh
+        annotations:
+          summary: "Worker backlog or failure rate is elevated"
+          description: |
+            Impact: notifications, badges, or recommendations may lag or drop; async pipeline unhealthy.
+            Runbook: docs/observability/runbooks/worker-backlog-failures.md
+            Confirm: worker_queue_backlog{state="waiting"}, worker_jobs_failed_total, worker_jobs_completed_total by processor.
+            Logs: filter for message "worker.job.failed" or "worker.job.retry_scheduled"; use event_id and processor.
+          dashboard: "GoSupportMe MVP"
+        expr: |
+          (
+            sum(worker_queue_backlog{state="waiting"}) > 200
+          )
+          or
+          (
+            sum by (processor) (rate(worker_jobs_failed_total[5m])) > 0.1
+          )
+        for: 10m
+        labels:
+          severity: warning

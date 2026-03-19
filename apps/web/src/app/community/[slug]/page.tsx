@@ -5,6 +5,7 @@ import { FeaturedCampaigns } from "@/components/community/featured-campaigns";
 import { CommunityFeed } from "@/components/community/feed";
 import { CommunitySidebar } from "@/components/community/sidebar";
 import { CommunityFollowButton } from "@/components/community/follow-button";
+import { PageViewReporter } from "@/components/observability/page-view-reporter";
 
 interface CommunityDetailPageProps {
   params: Promise<{ slug: string }>;
@@ -42,6 +43,7 @@ export default async function CommunityDetailPage({ params }: CommunityDetailPag
 
   return (
     <div className="min-h-screen bg-white">
+      <PageViewReporter pageType="community" />
       <div className="relative h-52 md:h-64 overflow-hidden bg-text-primary">
         <Image
           src={community.coverImageUrl}

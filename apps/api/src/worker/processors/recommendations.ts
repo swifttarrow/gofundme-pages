@@ -1,8 +1,6 @@
 import { Job } from "bullmq";
 import { PlatformEvent } from "@gosupportme/contracts";
 import { db } from "../../db/client";
-import { jobsProcessedTotal } from "../../observability/metrics";
-
 interface RecommendationJob {
   event: PlatformEvent;
 }
@@ -10,19 +8,15 @@ interface RecommendationJob {
 export async function processRecommendation(job: Job<RecommendationJob>): Promise<void> {
   const { event } = job.data;
 
-  try {
-    switch (event.type) {
-      case "donation.created":
-        await handleDonationSignal(event);
-        break;
-      case "fundraiser.followed":
-        await handleFollowSignal(event);
-        break;
-      default:
-        break;
-    }
-  } finally {
-    jobsProcessedTotal.inc({ queue: "recommendation-queue", status: "completed" });
+  switch (event.type) {
+    case "donation.created":
+      await handleDonationSignal(event);
+      break;
+    case "fundraiser.followed":
+      await handleFollowSignal(event);
+      break;
+    default:
+      break;
   }
 }
 

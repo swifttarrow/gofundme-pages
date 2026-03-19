@@ -12,6 +12,7 @@ import { DonationModule } from "@/components/donation-module";
 import { CampaignCard } from "@/components/community/campaign-card";
 import { serverApiFetch } from "@/lib/server-api";
 import { toSeedFundraiser, DEFAULT_FUNDRAISER_IMAGE } from "@/lib/fundraiser-view";
+import { PageViewReporter } from "@/components/observability/page-view-reporter";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -282,6 +283,7 @@ export default async function FundraiserPage({ params }: FundraiserPageProps) {
 
   return (
     <div className="min-h-screen bg-white">
+      <PageViewReporter pageType="fundraiser" />
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left column */}

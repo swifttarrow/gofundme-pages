@@ -13,6 +13,7 @@ import { ProfileHeader } from "@/components/profile/header";
 import { FundraiserList } from "@/components/profile/fundraiser-list";
 import { Badge } from "@/lib/api";
 import { serverApiFetch } from "@/lib/server-api";
+import { PageViewReporter } from "@/components/observability/page-view-reporter";
 
 type ProfileTab = "fundraisers" | "donations" | "following";
 
@@ -329,6 +330,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
 
   return (
     <div className="min-h-screen bg-white">
+      <PageViewReporter pageType="profile" />
       <div className="max-w-4xl mx-auto px-4 py-8">
         <ProfileHeader user={user} badges={badges} isOwnProfile={isOwnProfile} />
         {isOwnProfile && hasCharityRequest ? (

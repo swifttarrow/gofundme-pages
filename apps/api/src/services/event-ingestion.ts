@@ -3,7 +3,7 @@ import { QueryResult, QueryResultRow } from "pg";
 import { PlatformEvent } from "@gosupportme/contracts";
 import { db } from "../db/client";
 import { createBullMQConnection } from "../db/redis";
-import { eventsIngestedTotal } from "../observability/metrics";
+import { platformEventsPersistedTotal } from "../observability/metrics";
 import { structuredLog } from "./telemetry";
 
 const bullConnection = createBullMQConnection();
@@ -70,7 +70,6 @@ export async function fanOutEvent(
     badgeQueue.add(event.type, { event }, jobOptions),
     recommendationQueue.add(event.type, { event }, jobOptions),
   ]);
-  eventsIngestedTotal.inc({ event_type: event.type });
   structuredLog("info", "event.fanned_out", {
     request_id: context?.requestId ?? null,
     event_id: event.eventId,
@@ -84,6 +83,7 @@ export async function insertEvent(
 ): Promise<{ stored: StoredEvent; isNew: boolean }> {
   const result = await storeEvent(event);
   if (result.isNew) {
+    platformEventsPersistedTotal.inc({ event_type: event.type });
     await fanOutEvent(event, context);
   }
   return result;

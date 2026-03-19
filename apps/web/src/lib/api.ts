@@ -558,3 +558,20 @@ export function resubmitCharityRequest(
     body: JSON.stringify(data),
   });
 }
+
+/** Fire-and-forget page view for observability counters (no throw on failure). */
+export async function recordPageView(pageType: "fundraiser" | "community" | "profile"): Promise<void> {
+  try {
+    const res = await fetch(`${API_BASE}/api/telemetry/page-view`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pageType }),
+    });
+    if (!res.ok) return;
+    if (res.status === 204) return;
+    await res.json().catch(() => undefined);
+  } catch {
+    // ignore — telemetry must not affect UX
+  }
+}

@@ -12,6 +12,7 @@ export async function eventsRoutes(app: FastifyInstance): Promise<void> {
     }
 
     const { stored, isNew } = await insertEvent(parse.data, { requestId: request.id });
+    request.observabilityEventId = stored.event_id;
 
     return reply.status(isNew ? 201 : 200).send({
       eventId: stored.event_id,

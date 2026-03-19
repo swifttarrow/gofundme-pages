@@ -4,7 +4,13 @@ import { PlatformEvent } from "@gosupportme/contracts";
 import { z } from "zod";
 import { db } from "../db/client";
 import { fanOutEvent, insertEvent, storeEvent } from "../services/event-ingestion";
-import { structuredLog } from "../services/telemetry";
+import { structuredLog, logError } from "../services/telemetry";
+import {
+  donationAttemptsTotal,
+  donationSuccessTotal,
+  donationFailTotal,
+  platformEventsPersistedTotal,
+} from "../observability/metrics";
 
 const DonationRequestSchema = z
   .object({
@@ -41,8 +47,11 @@ const DonationQuerySchema = z
 export async function donationsRoutes(app: FastifyInstance): Promise<void> {
   /** POST /api/donations */
   app.post("/api/donations", async (request: FastifyRequest, reply: FastifyReply) => {
+    donationAttemptsTotal.inc();
+
     const parse = DonationRequestSchema.safeParse(request.body);
     if (!parse.success) {
+      donationFailTotal.inc();
       return reply.status(400).send({ error: "Validation failed", details: parse.error.flatten() });
     }
 
@@ -50,6 +59,7 @@ export async function donationsRoutes(app: FastifyInstance): Promise<void> {
 
     // Server-side integer math check (belt-and-suspenders)
     if (data.totalCents !== data.amountCents + data.tipCents) {
+      donationFailTotal.inc();
       return reply.status(400).send({ error: "totalCents must equal amountCents + tipCents" });
     }
 
@@ -59,11 +69,13 @@ export async function donationsRoutes(app: FastifyInstance): Promise<void> {
       [data.fundraiserId]
     );
     if (fr.rowCount === 0) {
+      donationFailTotal.inc();
       return reply.status(404).send({ error: "Fundraiser not found or not active" });
     }
 
     const donationId = randomUUID();
     const eventId = randomUUID();
+    request.observabilityEventId = eventId;
     const now = new Date().toISOString();
     const event: PlatformEvent = {
       eventId,
@@ -81,90 +93,104 @@ export async function donationsRoutes(app: FastifyInstance): Promise<void> {
       },
     };
 
-    // Persist the event row before the donation insert so the FK is valid.
-    const autoFollowed = await db.transaction(async (client) => {
-      await storeEvent(event, client);
+    try {
+      // Persist the event row before the donation insert so the FK is valid.
+      const autoFollowed = await db.transaction(async (client) => {
+        await storeEvent(event, client);
 
-      await client.query(
-        `INSERT INTO donations (id, fundraiser_id, donor_user_id, amount_cents, tip_cents, total_cents, tip_percent, is_anonymous, message, event_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-        [
-          donationId,
-          data.fundraiserId,
-          data.donorUserId,
-          data.amountCents,
-          data.tipCents,
-          data.totalCents,
-          typeof data.tipPercent === "number" ? data.tipPercent : 0,
-          data.isAnonymous,
-          data.message,
-          eventId,
-        ]
-      );
+        await client.query(
+          `INSERT INTO donations (id, fundraiser_id, donor_user_id, amount_cents, tip_cents, total_cents, tip_percent, is_anonymous, message, event_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          [
+            donationId,
+            data.fundraiserId,
+            data.donorUserId,
+            data.amountCents,
+            data.tipCents,
+            data.totalCents,
+            typeof data.tipPercent === "number" ? data.tipPercent : 0,
+            data.isAnonymous,
+            data.message,
+            eventId,
+          ]
+        );
 
-      // Update fundraiser totals
-      await client.query(
-        `UPDATE fundraisers
-         SET raised_cents = raised_cents + $1, donor_count = donor_count + 1, updated_at = NOW()
-         WHERE id = $2`,
-        [data.amountCents, data.fundraiserId]
-      );
+        // Update fundraiser totals
+        await client.query(
+          `UPDATE fundraisers
+           SET raised_cents = raised_cents + $1, donor_count = donor_count + 1, updated_at = NOW()
+           WHERE id = $2`,
+          [data.amountCents, data.fundraiserId]
+        );
 
-      if (!data.donorUserId) {
-        return false;
-      }
+        if (!data.donorUserId) {
+          return false;
+        }
 
-      const followInsert = await client.query(
-        `INSERT INTO follows (follower_id, fundraiser_id)
-         VALUES ($1, $2)
-         ON CONFLICT (follower_id, fundraiser_id) DO NOTHING
-         RETURNING id`,
-        [data.donorUserId, data.fundraiserId]
-      );
+        const followInsert = await client.query(
+          `INSERT INTO follows (follower_id, fundraiser_id)
+           VALUES ($1, $2)
+           ON CONFLICT (follower_id, fundraiser_id) DO NOTHING
+           RETURNING id`,
+          [data.donorUserId, data.fundraiserId]
+        );
 
-      if (followInsert.rowCount === 0) {
-        return false;
-      }
+        if (followInsert.rowCount === 0) {
+          return false;
+        }
 
-      await client.query(
-        `UPDATE fundraisers
-         SET follower_count = follower_count + 1, updated_at = NOW()
-         WHERE id = $1`,
-        [data.fundraiserId]
-      );
+        await client.query(
+          `UPDATE fundraisers
+           SET follower_count = follower_count + 1, updated_at = NOW()
+           WHERE id = $1`,
+          [data.fundraiserId]
+        );
 
-      return true;
-    });
+        return true;
+      });
 
-    await fanOutEvent(event, { requestId: request.id });
+      platformEventsPersistedTotal.inc({ event_type: event.type });
+      await fanOutEvent(event, { requestId: request.id });
 
-    if (autoFollowed && data.donorUserId) {
-      await insertEvent(
-        {
-          eventId: randomUUID(),
-          type: "fundraiser.followed",
-          occurredAt: now,
-          payload: {
-            fundraiserId: data.fundraiserId,
-            followerUserId: data.donorUserId,
+      if (autoFollowed && data.donorUserId) {
+        await insertEvent(
+          {
+            eventId: randomUUID(),
+            type: "fundraiser.followed",
+            occurredAt: now,
+            payload: {
+              fundraiserId: data.fundraiserId,
+              followerUserId: data.donorUserId,
+            },
           },
-        },
-        { requestId: request.id }
-      );
+          { requestId: request.id }
+        );
+      }
+
+      donationSuccessTotal.inc();
+
+      structuredLog("info", "donation.created", {
+        request_id: request.id,
+        donation_id: donationId,
+        event_id: eventId,
+        fundraiser_id: data.fundraiserId,
+        donor_user_id: data.donorUserId,
+        amount_cents: data.amountCents,
+        total_cents: data.totalCents,
+        auto_followed: autoFollowed,
+      });
+
+      return reply.status(201).send({ donationId, eventId, totalCents: data.totalCents, autoFollowed });
+    } catch (err) {
+      donationFailTotal.inc();
+      logError("donation.persist_failed", err, {
+        request_id: request.id,
+        event_id: eventId,
+        fundraiser_id: data.fundraiserId,
+        donor_user_id: data.donorUserId,
+      });
+      throw err;
     }
-
-    structuredLog("info", "donation.created", {
-      request_id: request.id,
-      donation_id: donationId,
-      event_id: eventId,
-      fundraiser_id: data.fundraiserId,
-      donor_user_id: data.donorUserId,
-      amount_cents: data.amountCents,
-      total_cents: data.totalCents,
-      auto_followed: autoFollowed,
-    });
-
-    return reply.status(201).send({ donationId, eventId, totalCents: data.totalCents, autoFollowed });
   });
 
   /** GET /api/donations?fundraiserId=<uuid>&limit=10&cursor=<iso> */

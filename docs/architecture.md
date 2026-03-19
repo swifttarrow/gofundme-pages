@@ -188,13 +188,14 @@ The shipped charity model is review-gated rather than direct self-serve creation
 
 ## Observability
 
-Current observability is lightweight but implemented:
+See [docs/observability/README.md](./observability/README.md) (aligned with [docs/requirements/observability.md](./requirements/observability.md)):
 
-- `/health` checks database connectivity.
-- `/metrics` exposes Prometheus metrics from `prom-client`.
-- Request hooks record request counts and durations.
-- Worker processors increment job completion/failure counters.
-- Structured JSON logging helpers exist in `apps/api/src/services/telemetry.ts`.
+- `/health` — liveness plus Postgres connectivity; includes `service` name.
+- `/metrics` — Prometheus exposition (`prom-client`): HTTP histograms/counters (including `status_class`), in-flight gauge, donation and page-view counters, worker job lifecycle metrics, queue backlog gauges.
+- **Correlation** — `x-request-id` on every request; mutation routes set `observabilityEventId` so `request.completed` logs include `event_id` when applicable.
+- **Structured logs** — JSON lines via `structuredLog` / `logError` in `apps/api/src/services/telemetry.ts` (`request.start`, `request.completed`, `worker.job.*`, `donation.*`).
+- **Web** — fundraiser, community, and profile pages report views to `POST /api/telemetry/page-view`.
+- **Dashboards & alerts** — `docs/observability/grafana-dashboard.json`, `docs/observability/prometheus-alerts.yml`, and runbooks under `docs/observability/runbooks/`.
 
 ## AI Status
 
