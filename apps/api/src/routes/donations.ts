@@ -24,6 +24,19 @@ const DonationRequestSchema = z
     path: ["totalCents"],
   });
 
+const DonationQuerySchema = z
+  .object({
+    fundraiserId: z.string().uuid().optional(),
+    donorUserId: z.string().uuid().optional(),
+    includeAnonymous: z.enum(["true", "false"]).optional().default("false"),
+    limit: z.string().regex(/^\d+$/).optional(),
+    cursor: z.string().datetime({ offset: true }).optional(),
+  })
+  .refine((query) => query.fundraiserId || query.donorUserId, {
+    message: "fundraiserId or donorUserId is required",
+    path: ["fundraiserId"],
+  });
+
 export async function donationsRoutes(app: FastifyInstance): Promise<void> {
   /** POST /api/donations */
   app.post("/api/donations", async (request: FastifyRequest, reply: FastifyReply) => {
@@ -104,28 +117,45 @@ export async function donationsRoutes(app: FastifyInstance): Promise<void> {
 
   /** GET /api/donations?fundraiserId=<uuid>&limit=10&cursor=<iso> */
   app.get("/api/donations", async (request: FastifyRequest, reply: FastifyReply) => {
-    const query = request.query as {
-      fundraiserId?: string;
-      limit?: string;
-      cursor?: string;
-    };
-
-    if (!query.fundraiserId) {
-      return reply.status(400).send({ error: "fundraiserId is required" });
+    const parse = DonationQuerySchema.safeParse(request.query);
+    if (!parse.success) {
+      return reply.status(400).send({ error: "Validation failed", details: parse.error.flatten() });
     }
 
+    const query = parse.data;
     const limit = Math.min(parseInt(query.limit ?? "10", 10), 50);
     const cursor = query.cursor ? new Date(query.cursor) : new Date();
+    const includeAnonymous = query.includeAnonymous === "true";
+    const filters: string[] = ["d.created_at < $1"];
+    const params: Array<Date | number | string> = [cursor];
+
+    if (query.fundraiserId) {
+      params.push(query.fundraiserId);
+      filters.push(`d.fundraiser_id = $${params.length}`);
+    }
+
+    if (query.donorUserId) {
+      params.push(query.donorUserId);
+      filters.push(`d.donor_user_id = $${params.length}`);
+
+      if (!includeAnonymous) {
+        filters.push("d.is_anonymous = false");
+      }
+    }
+
+    params.push(limit);
 
     const result = await db.query(
-      `SELECT d.id, d.amount_cents, d.tip_cents, d.total_cents, d.is_anonymous, d.message, d.created_at,
+      `SELECT d.id, d.fundraiser_id, f.title AS fundraiser_title,
+              d.amount_cents, d.tip_cents, d.total_cents, d.is_anonymous, d.message, d.created_at,
               u.name as donor_name, u.avatar_url as donor_avatar
        FROM donations d
+       JOIN fundraisers f ON f.id = d.fundraiser_id
        LEFT JOIN users u ON u.id = d.donor_user_id
-       WHERE d.fundraiser_id = $1 AND d.created_at < $2
+       WHERE ${filters.join(" AND ")}
        ORDER BY d.created_at DESC
-       LIMIT $3`,
-      [query.fundraiserId, cursor, limit]
+       LIMIT $${params.length}`,
+      params
     );
 
     const donations = result.rows.map((row) => ({

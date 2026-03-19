@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type ChangeEvent } from "react";
 import { SeedUser, formatCents } from "@/lib/seed-data";
@@ -205,7 +206,11 @@ export function ProfileHeader({ user, badges, isOwnProfile = false }: ProfileHea
 
       {/* Avatar + name */}
       <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4 px-4 sm:px-0">
-        <div className="relative -mt-12 w-24 h-24 rounded-full overflow-hidden border-4 border-white bg-bg-gray flex-shrink-0">
+        <Link
+          href={`/profile/${user.id}`}
+          aria-label={`View ${profile.name}'s profile`}
+          className="relative -mt-12 w-24 h-24 rounded-full overflow-hidden border-4 border-white bg-bg-gray flex-shrink-0"
+        >
           {profile.avatarUrl ? (
             isLocalImageSource(profile.avatarUrl) ? (
               <img
@@ -227,7 +232,7 @@ export function ProfileHeader({ user, badges, isOwnProfile = false }: ProfileHea
               {profile.name.charAt(0)}
             </div>
           )}
-        </div>
+        </Link>
 
         <div className="flex-1 min-w-0 flex items-center justify-between gap-3">
           <div className="min-w-0">

@@ -4,7 +4,7 @@ import { SEED_USERS, SEED_FUNDRAISERS } from "@/lib/seed-data";
 
 interface FeedPost {
   id: string;
-  author: { name: string; avatar: string | null };
+  author: { id: string; name: string; avatar: string | null };
   fundraiserTitle: string;
   fundraiserId: string;
   content: string;
@@ -15,7 +15,11 @@ interface FeedPost {
 const MOCK_POSTS: FeedPost[] = [
   {
     id: "1",
-    author: { name: "Sarah Johnson", avatar: "https://i.pravatar.cc/150?img=1" },
+    author: {
+      id: SEED_USERS[0].id,
+      name: "Sarah Johnson",
+      avatar: "https://i.pravatar.cc/150?img=1",
+    },
     fundraiserTitle: "Help the Martinez Family Rebuild After the Fire",
     fundraiserId: SEED_FUNDRAISERS[0].id,
     content:
@@ -25,7 +29,11 @@ const MOCK_POSTS: FeedPost[] = [
   },
   {
     id: "2",
-    author: { name: "Jessica Rivera", avatar: "https://i.pravatar.cc/150?img=3" },
+    author: {
+      id: SEED_USERS[2].id,
+      name: "Jessica Rivera",
+      avatar: "https://i.pravatar.cc/150?img=3",
+    },
     fundraiserTitle: "Support Donna's Cancer Treatment Journey",
     fundraiserId: SEED_FUNDRAISERS[1].id,
     content:
@@ -35,7 +43,11 @@ const MOCK_POSTS: FeedPost[] = [
   },
   {
     id: "3",
-    author: { name: "Junisha Bhorman", avatar: "https://i.pravatar.cc/150?img=5" },
+    author: {
+      id: SEED_USERS[3].id,
+      name: "Junisha Bhorman",
+      avatar: "https://i.pravatar.cc/150?img=5",
+    },
     fundraiserTitle: "New Playground for Lincoln Elementary",
     fundraiserId: SEED_FUNDRAISERS[2].id,
     content:
@@ -63,7 +75,11 @@ function FeedPost({ post }: { post: FeedPost }) {
     <div className="border-b border-border-light pb-5 rounded-md transition-colors hover:bg-bg-faint/60">
       {/* Author */}
       <div className="flex items-center gap-2 mb-2">
-        <div className="relative w-8 h-8 rounded-full overflow-hidden bg-bg-gray flex-shrink-0">
+        <Link
+          href={`/profile/${post.author.id}`}
+          aria-label={`View ${post.author.name}'s profile`}
+          className="relative w-8 h-8 rounded-full overflow-hidden bg-bg-gray flex-shrink-0"
+        >
           {post.author.avatar ? (
             <Image
               src={post.author.avatar}
@@ -77,7 +93,7 @@ function FeedPost({ post }: { post: FeedPost }) {
               {post.author.name.charAt(0)}
             </div>
           )}
-        </div>
+        </Link>
         <div>
           <span className="text-sm font-semibold text-text-primary">{post.author.name}</span>
           <span className="text-xs text-text-muted ml-1">posted an update</span>

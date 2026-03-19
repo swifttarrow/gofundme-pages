@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { SeedFundraiser } from "@/lib/seed-data";
 
@@ -308,7 +309,11 @@ export function FundraiserHero({ fundraiser, currentUserId }: HeroProps) {
 
       {/* Organizer badge */}
       <div className="flex items-center gap-2 mt-3">
-        <div className="relative w-6 h-6 rounded-full overflow-hidden bg-primary flex-shrink-0">
+        <Link
+          href={`/profile/${fundraiser.organizerId}`}
+          aria-label={`View ${fundraiser.organizerName}'s profile`}
+          className="relative w-6 h-6 rounded-full overflow-hidden bg-primary flex-shrink-0"
+        >
           {fundraiser.organizerAvatar ? (
             <Image
               src={fundraiser.organizerAvatar}
@@ -322,7 +327,7 @@ export function FundraiserHero({ fundraiser, currentUserId }: HeroProps) {
               {fundraiser.organizerName.charAt(0)}
             </span>
           )}
-        </div>
+        </Link>
         <span className="text-sm text-text-secondary">
           <span className="text-text-primary font-medium">{fundraiser.organizerName}</span>
           {" "}is organizing this fundraiser for{" "}

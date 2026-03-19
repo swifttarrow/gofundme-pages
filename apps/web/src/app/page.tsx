@@ -84,7 +84,7 @@ export default function HomePage() {
       <section className="max-w-6xl mx-auto px-4 py-12">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-text-primary">Featured fundraisers</h2>
-          <Link href="/community" className="text-primary font-medium hover:underline">
+          <Link href="/fundraisers" className="text-primary font-medium hover:underline">
             See all
           </Link>
         </div>

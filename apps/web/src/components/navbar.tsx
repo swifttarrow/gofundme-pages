@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MeerkatMascot } from "@/components/meerkat-mascot";
 import {
@@ -25,10 +25,30 @@ const SEARCH_SUGGESTION_LIMIT = 5;
 const SEARCH_DEBOUNCE_MS = 250;
 const MIN_SEARCH_CHARACTERS = 2;
 
+function SearchParamsSync({
+  pathname,
+  onValueChange,
+}: {
+  pathname: string;
+  onValueChange: (value: string) => void;
+}) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (pathname === "/search") {
+      onValueChange(searchParams.get("q") ?? "");
+      return;
+    }
+
+    onValueChange("");
+  }, [onValueChange, pathname, searchParams]);
+
+  return null;
+}
+
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [searchValue, setSearchValue] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileCreateMenuOpen, setIsMobileCreateMenuOpen] = useState(false);
@@ -102,15 +122,6 @@ export function Navbar() {
     setIsSearchOpen(false);
     setIsSearchFocused(false);
   }, [pathname]);
-
-  useEffect(() => {
-    if (pathname === "/search") {
-      setSearchValue(searchParams.get("q") ?? "");
-      return;
-    }
-
-    setSearchValue("");
-  }, [pathname, searchParams]);
 
   useEffect(() => {
     const query = searchValue.trim();
@@ -284,6 +295,9 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-border-light">
+      <Suspense fallback={null}>
+        <SearchParamsSync pathname={pathname} onValueChange={setSearchValue} />
+      </Suspense>
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-1 flex-shrink-0">
@@ -544,28 +558,40 @@ export function Navbar() {
           {currentUser ? (
             <div className="ml-1 pl-3 border-l border-border-light flex items-center" ref={profileMenuRef}>
               <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsProfileMenuOpen((open) => !open)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-light overflow-hidden bg-bg-gray"
-                  aria-label={isProfileMenuOpen ? "Close profile menu" : "Open profile menu"}
-                  aria-expanded={isProfileMenuOpen}
-                  title={currentUser.name}
-                >
-                  {currentUser.avatarUrl ? (
-                    <Image
-                      src={currentUser.avatarUrl}
-                      alt={currentUser.name}
-                      width={36}
-                      height={36}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-xs font-semibold text-text-primary">
-                      {currentUser.name.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </button>
+                <div className="flex items-center gap-1">
+                  <Link
+                    href={`/profile/${currentUser.id}`}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-light overflow-hidden bg-bg-gray"
+                    aria-label={`View ${currentUser.name}'s profile`}
+                    title={currentUser.name}
+                  >
+                    {currentUser.avatarUrl ? (
+                      <Image
+                        src={currentUser.avatarUrl}
+                        alt={currentUser.name}
+                        width={36}
+                        height={36}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xs font-semibold text-text-primary">
+                        {currentUser.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setIsProfileMenuOpen((open) => !open)}
+                    className="inline-flex h-9 w-7 items-center justify-center rounded-md text-text-secondary hover:bg-bg-faint hover:text-text-primary transition-colors"
+                    aria-label={isProfileMenuOpen ? "Close profile menu" : "Open profile menu"}
+                    aria-expanded={isProfileMenuOpen}
+                    aria-haspopup="menu"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
+                </div>
                 {isProfileMenuOpen && (
                   <div className="absolute right-0 mt-2 w-44 rounded-lg border border-border-light bg-white shadow-lg p-1.5 z-50">
                     <Link
@@ -668,6 +694,7 @@ export function Navbar() {
                     href={currentUser ? "/fundraiser/new?source=primary_cta" : "/sign-in"}
                     className="block rounded-md px-3 py-2 text-sm text-text-primary hover:bg-bg-faint transition-colors"
                     onClick={() => {
+                      handleCreateCtaClick("fundraiser", "mobile");
                       setIsMobileMenuOpen(false);
                       setIsMobileCreateMenuOpen(false);
                     }}
@@ -678,9 +705,9 @@ export function Navbar() {
                     href={currentUser ? "/charity/new?source=primary_cta" : "/sign-in"}
                     className="block rounded-md px-3 py-2 text-sm text-text-primary hover:bg-bg-faint transition-colors"
                     onClick={() => {
+                      handleCreateCtaClick("charity", "mobile");
                       setIsMobileMenuOpen(false);
                       setIsMobileCreateMenuOpen(false);
-                      handleCreateCtaClick("fundraiser", "mobile");
                     }}
                   >
                     Create charity
@@ -691,7 +718,6 @@ export function Navbar() {
             {currentUser ? (
               <>
                 <Link
-                      handleCreateCtaClick("charity", "mobile");
                   href="/favorites"
                   className="rounded-md px-3 py-2 text-sm font-medium text-text-primary hover:bg-bg-faint transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}

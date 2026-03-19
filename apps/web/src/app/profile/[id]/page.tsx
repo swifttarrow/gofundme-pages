@@ -40,6 +40,15 @@ type ApiProfileUser = {
   location: string | null;
 };
 
+type ApiDonation = {
+  id: string;
+  fundraiser_id: string;
+  fundraiser_title: string | null;
+  amount_cents: number;
+  message: string | null;
+  created_at: string;
+};
+
 export async function generateStaticParams() {
   return SEED_USERS.map((u) => ({ id: u.id }));
 }
@@ -140,6 +149,41 @@ async function getUserBadges(userId: string): Promise<Badge[]> {
   }
 }
 
+async function getUserDonations(userId: string, includeAnonymous: boolean): Promise<
+  Array<{
+    id: string;
+    fundraiserId: string;
+    fundraiserTitle: string | null;
+    amountCents: number;
+    message: string | null;
+    createdAt: string;
+  }>
+> {
+  try {
+    const qs = new URLSearchParams({
+      donorUserId: userId,
+      includeAnonymous: String(includeAnonymous),
+      limit: "50",
+    });
+    const response = await serverApiFetch(`/api/donations?${qs}`, {
+      cache: "no-store",
+    });
+    if (!response.ok) return [];
+
+    const payload = (await response.json()) as { donations: ApiDonation[] };
+    return payload.donations.map((donation) => ({
+      id: donation.id,
+      fundraiserId: donation.fundraiser_id,
+      fundraiserTitle: donation.fundraiser_title,
+      amountCents: donation.amount_cents,
+      message: donation.message,
+      createdAt: donation.created_at,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export default async function ProfilePage({ params, searchParams }: ProfilePageProps) {
   const { id } = await params;
   const { tab } = await searchParams;
@@ -148,6 +192,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
   if (!user) notFound();
   const isOwnProfile = authenticatedUser?.id === user.id;
   const badges = await getUserBadges(user.id);
+  const userDonations = await getUserDonations(user.id, isOwnProfile);
 
   let hasCharityRequest = false;
   if (isOwnProfile) {
@@ -172,13 +217,6 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
   const fundraiserTitleById = new Map(
     SEED_FUNDRAISERS.map((fundraiser) => [fundraiser.id, fundraiser.title])
   );
-  const userDonations: Array<{
-    id: string;
-    fundraiserId: string;
-    amountCents: number;
-    message: string | null;
-    createdAt: string;
-  }> = [];
   const followedFundraiserIds = new Set(
     SEED_FAVORITES.filter((favorite) => favorite.userId === user.id).map(
       (favorite) => favorite.fundraiserId
@@ -268,7 +306,9 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-text-primary truncate">
-                            {fundraiserTitleById.get(donation.fundraiserId) ?? "Fundraiser"}
+                            {donation.fundraiserTitle ??
+                              fundraiserTitleById.get(donation.fundraiserId) ??
+                              "Fundraiser"}
                           </p>
                           <p className="text-xs text-text-muted mt-0.5">
                             {timeAgo(donation.createdAt)}
