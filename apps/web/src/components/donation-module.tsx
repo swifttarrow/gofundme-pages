@@ -95,6 +95,10 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
   }
 
   async function handleDonate() {
+    if (!currentUserId) {
+      router.push("/sign-in");
+      return;
+    }
     if (isDonationLoading) return;
     if (amountCents <= 0) return;
     setDonationError(null);
@@ -187,11 +191,7 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
         />
 
         <div className="mt-3 mb-4">
-          {recentDonations.length === 0 ? (
-            <p className="mt-2 rounded-md border border-dashed border-border-medium bg-bg-faint px-3 py-2 text-xs text-text-secondary">
-              Waiting for the first mock donation.
-            </p>
-          ) : (
+          {recentDonations.length > 0 ? (
             <div className="mt-2 space-y-2">
               {recentDonations.map((donation) => (
                 <div key={donation.id} className="rounded-md border border-border-light bg-bg-faint px-3 py-2">
@@ -235,11 +235,17 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
                 </div>
               ))}
             </div>
-          )}
+          ) : null}
         </div>
 
         <button
-          onClick={() => setIsDonationModalOpen(true)}
+          onClick={() => {
+            if (!currentUserId) {
+              router.push("/sign-in");
+              return;
+            }
+            setIsDonationModalOpen(true);
+          }}
           className="w-full bg-primary text-white font-bold py-3.5 rounded-md hover:bg-primary-dark transition-colors text-base"
         >
           Donate now

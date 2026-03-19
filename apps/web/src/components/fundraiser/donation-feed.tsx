@@ -54,6 +54,10 @@ export function DonationFeed({ donations, totalCount, currentUserId }: DonationF
     setFollowedDonors((prev) => ({ ...prev, [donorUserId]: !prev[donorUserId] }));
   }
 
+  if (!currentUserId) {
+    return null;
+  }
+
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">

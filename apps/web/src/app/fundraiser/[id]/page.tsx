@@ -183,7 +183,7 @@ export default async function FundraiserPage({ params }: FundraiserPageProps) {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left column */}
           <div className="flex-1 min-w-0">
-            <FundraiserHero fundraiser={fundraiser} />
+            <FundraiserHero fundraiser={fundraiser} currentUserId={currentUserId ?? undefined} />
 
             {/* Mobile donation module */}
             <div className="lg:hidden mt-6">

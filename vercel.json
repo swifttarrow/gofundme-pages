@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
   "installCommand": "npm install",
-  "buildCommand": "npm run build --workspace=packages/contracts && NEXT_DIST_DIR=../../.next npm run build --workspace=apps/web"
+  "buildCommand": "rm -rf public && mkdir -p public && cp -R apps/web/public/. ./public/ && npm run build --workspace=packages/contracts && NEXT_DIST_DIR=../../.next npm run build --workspace=apps/web"
 }
