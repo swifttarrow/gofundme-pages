@@ -14,6 +14,7 @@ import {
   getNotifications,
   logout,
 } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { SEED_FAVORITES, SEED_FUNDRAISERS, formatCents, timeAgo } from "@/lib/seed-data";
 import { APP_DATA_REFRESH_EVENT } from "@/lib/client-events";
 
@@ -227,10 +228,29 @@ export function Navbar() {
     }
   }
 
+  function handleCreateCtaClick(kind: "fundraiser" | "charity", placement: "desktop" | "mobile") {
+    if (kind === "fundraiser") {
+      trackEvent("create_fundraiser_cta_clicked", {
+        placement,
+        signed_in: Boolean(currentUser),
+      });
+      return;
+    }
+
+    trackEvent("create_charity_cta_clicked", {
+      placement,
+      signed_in: Boolean(currentUser),
+    });
+  }
+
   function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const query = searchValue.trim();
+    trackEvent("search_submitted", {
+      query_length: query.length,
+      has_query: query.length > 0,
+    });
     setIsSearchOpen(false);
     setIsSearchFocused(false);
     if (!query) {
@@ -249,8 +269,12 @@ export function Navbar() {
     }
   }
 
-  function handleSuggestionSelect(title: string) {
-    setSearchValue(title);
+  function handleSuggestionSelect(suggestion: Pick<FundraiserSummary, "id" | "title">) {
+    trackEvent("search_suggestion_selected", {
+      suggestion_id: suggestion.id,
+      query_length: searchValue.trim().length,
+    });
+    setSearchValue(suggestion.title);
     setIsSearchOpen(false);
     setIsSearchFocused(false);
   }
@@ -316,7 +340,7 @@ export function Navbar() {
                           href={`/fundraiser/${suggestion.id}`}
                           className="block rounded-lg px-3 py-2.5 transition-colors hover:bg-primary/5"
                           role="option"
-                          onClick={() => handleSuggestionSelect(suggestion.title)}
+                          onClick={() => handleSuggestionSelect(suggestion)}
                         >
                           <p className="text-sm font-medium text-text-primary line-clamp-1">
                             {suggestion.title}
@@ -381,14 +405,20 @@ export function Navbar() {
                 <Link
                   href={currentUser ? "/fundraiser/new?source=primary_cta" : "/sign-in"}
                   className="block rounded-md px-3 py-2 text-sm text-text-primary hover:bg-bg-faint transition-colors"
-                  onClick={() => setIsCreateMenuOpen(false)}
+                  onClick={() => {
+                    handleCreateCtaClick("fundraiser", "desktop");
+                    setIsCreateMenuOpen(false);
+                  }}
                 >
                   Create fundraiser
                 </Link>
                 <Link
                   href={currentUser ? "/charity/new?source=primary_cta" : "/sign-in"}
                   className="block rounded-md px-3 py-2 text-sm text-text-primary hover:bg-bg-faint transition-colors"
-                  onClick={() => setIsCreateMenuOpen(false)}
+                  onClick={() => {
+                    handleCreateCtaClick("charity", "desktop");
+                    setIsCreateMenuOpen(false);
+                  }}
                 >
                   Create charity
                 </Link>
@@ -650,6 +680,7 @@ export function Navbar() {
                     onClick={() => {
                       setIsMobileMenuOpen(false);
                       setIsMobileCreateMenuOpen(false);
+                      handleCreateCtaClick("fundraiser", "mobile");
                     }}
                   >
                     Create charity
@@ -660,6 +691,7 @@ export function Navbar() {
             {currentUser ? (
               <>
                 <Link
+                      handleCreateCtaClick("charity", "mobile");
                   href="/favorites"
                   className="rounded-md px-3 py-2 text-sm font-medium text-text-primary hover:bg-bg-faint transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}

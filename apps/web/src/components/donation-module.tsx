@@ -10,6 +10,7 @@ import { createDonation, followFundraiser, getFollowStatus, unfollowFundraiser }
 import { useToast } from "@/components/providers/toast-provider";
 import { evaluateBadgesAndToast } from "@/lib/badge-awards";
 import { emitAppDataRefresh } from "@/lib/client-events";
+import { trackEvent } from "@/lib/analytics";
 
 const SUGGESTED_AMOUNTS = [25, 50, 100, 250];
 const MAX_TIP_PERCENT = 30;
@@ -94,6 +95,11 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
     setSelectedAmount(null);
   }
 
+  function openDonationModal() {
+    trackEvent("donation_modal_opened", { fundraiser_id: fundraiser.id });
+    setIsDonationModalOpen(true);
+  }
+
   async function handleDonate() {
     if (!currentUserId) {
       router.push("/sign-in");
@@ -132,6 +138,10 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
         title: "Donation sent",
         description: `Your donation of ${formatCents(amountCents)} was submitted successfully.`,
       });
+      trackEvent("donation_submitted", {
+        fundraiser_id: fundraiser.id,
+        amount_cents: amountCents,
+      });
       emitAppDataRefresh();
       router.refresh();
       setIsDonationModalOpen(false);
@@ -156,6 +166,12 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
         });
         setIsFollowing(result.isFollowing);
         if (result.removed) setFollowerCount((count) => Math.max(count - 1, 0));
+        if (result.removed) {
+          trackEvent("fundraiser_follow_toggled", {
+            fundraiser_id: fundraiser.id,
+            action: "unfollowed",
+          });
+        }
       } else {
         const result = await followFundraiser({
           followerUserId: currentUserId,
@@ -164,6 +180,10 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
         setIsFollowing(result.isFollowing);
         if (result.created) setFollowerCount((count) => count + 1);
         if (result.created) {
+          trackEvent("fundraiser_follow_toggled", {
+            fundraiser_id: fundraiser.id,
+            action: "followed",
+          });
           try {
             await evaluateBadgesAndToast(currentUserId, showToast);
           } catch {
@@ -244,7 +264,7 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
               router.push("/sign-in");
               return;
             }
-            setIsDonationModalOpen(true);
+            openDonationModal();
           }}
           className="w-full bg-primary text-white font-bold py-3.5 rounded-md hover:bg-primary-dark transition-colors text-base"
         >
