@@ -488,6 +488,23 @@ async function insertNotification(client, notification, targetUserId) {
   return result.rowCount > 0;
 }
 
+async function deleteBadge(client, targetUserId, badgeType) {
+  await client.query(
+    `DELETE FROM notifications
+     WHERE user_id = $1
+       AND type = 'badge_earned'
+       AND dedupe_key = $2`,
+    [targetUserId, `badge-earned-${badgeType}`]
+  );
+
+  await client.query(
+    `DELETE FROM badges
+     WHERE user_id = $1
+       AND type = $2`,
+    [targetUserId, badgeType]
+  );
+}
+
 async function getTargetUser(client, email) {
   const result = await client.query(
     `SELECT id, email, name
@@ -579,6 +596,8 @@ async function run() {
         createdNotifications += 1;
       }
     }
+
+    await deleteBadge(client, targetUser.id, "first_donation");
 
     await client.query("COMMIT");
 
