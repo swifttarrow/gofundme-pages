@@ -177,8 +177,8 @@ This repo now deploys entirely on Railway.
 
 Recommended Railway environment variables:
 
-- `web`: `API_ORIGIN`, `NEXT_PUBLIC_APP_URL`
-- `api`: `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `CORS_ORIGIN`, `HOST=0.0.0.0`, `LOG_LEVEL`
+- `web`: `API_ORIGIN` (public `https://…` URL of the **api** service), `NEXT_PUBLIC_APP_URL` (public `https://…` URL of this **web** service). Both must be set on the web service so the Docker build can embed them (see `ARG` lines in `apps/web/Dockerfile`). If `API_ORIGIN` is missing or still `localhost`, `/api/*` rewrites fail and auth returns **500**.
+- `api`: `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `CORS_ORIGIN` (include the web origin, e.g. `https://your-web.up.railway.app`), `HOST=0.0.0.0`, `LOG_LEVEL`
 
 `PORT` is provided by Railway automatically for both services.
 

@@ -18,6 +18,13 @@ COPY . .
 
 ENV NODE_ENV=production
 
+# Next.js bakes `rewrites()` from next.config.js at build time. Railway passes
+# service variables into `docker build` when matching ARG names exist here.
+ARG API_ORIGIN=http://localhost:3001
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+ENV API_ORIGIN=$API_ORIGIN
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+
 RUN npm run build --workspace=packages/contracts \
   && npm run build --workspace=apps/web
 
