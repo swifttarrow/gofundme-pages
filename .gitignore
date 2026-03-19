@@ -7,6 +7,5 @@ apps/api/dist/
 packages/contracts/dist/
 *.tsbuildinfo
 .env.local
-.vercel
 playwright-report/
 test-results/

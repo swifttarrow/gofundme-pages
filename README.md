@@ -12,6 +12,7 @@ A GoFundMe-inspired fundraising platform built as a full-stack monorepo.
 | Database | PostgreSQL |
 | Cache/Queue | Redis + BullMQ |
 | Contracts | Zod (shared package) |
+| Deployment | Railway (web + API) |
 | Testing | Vitest + Playwright |
 
 ## Project Structure
@@ -164,6 +165,22 @@ npm run build
 npm run typecheck
 npm run test
 ```
+
+## Deployment
+
+This repo now deploys entirely on Railway.
+
+- `web` service: set `RAILWAY_DOCKERFILE_PATH=/apps/web/Dockerfile`
+- `api` service: set `RAILWAY_DOCKERFILE_PATH=/apps/api/Dockerfile`
+- `postgres` and `redis`: use Railway managed services
+- Leave the Railway service root directory empty so each Docker build can read the shared workspace packages from the repo root
+
+Recommended Railway environment variables:
+
+- `web`: `API_ORIGIN`, `NEXT_PUBLIC_APP_URL`
+- `api`: `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `CORS_ORIGIN`, `HOST=0.0.0.0`, `LOG_LEVEL`
+
+`PORT` is provided by Railway automatically for both services.
 
 ## Design System
 

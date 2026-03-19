@@ -1,9 +1,5 @@
 "use client";
 
-import { track } from "@vercel/analytics";
-
-type AnalyticsValue = string | number | boolean | null | undefined;
-
 type AnalyticsEventMap = {
   sign_in_submitted: {
     method: "password";
@@ -44,17 +40,11 @@ type AnalyticsEventMap = {
   };
 };
 
-function sanitizeProperties(properties?: Record<string, AnalyticsValue>) {
-  if (!properties) return undefined;
-
-  return Object.fromEntries(
-    Object.entries(properties).filter(([, value]) => value !== undefined)
-  ) as Record<string, Exclude<AnalyticsValue, undefined>>;
-}
-
 export function trackEvent<EventName extends keyof AnalyticsEventMap>(
   name: EventName,
   properties?: AnalyticsEventMap[EventName]
 ) {
-  track(name, sanitizeProperties(properties));
+  // Analytics is intentionally disabled until a replacement provider is added.
+  void name;
+  void properties;
 }

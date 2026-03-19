@@ -30,7 +30,7 @@
 ### 2) Budget and Cost Envelope
 
 **Monthly hosting budget:**
-- MVP target: $50–100/month (Railway Hobby plan + Vercel free tier)
+- MVP target: $50–100/month (Railway services for web, API, Postgres, and Redis)
 - Can exceed briefly to: $200/month for demo/submission period
 
 **Maximum AI spend:**
@@ -342,23 +342,22 @@ score = (interest_match × 0.4) + (donation_similarity × 0.3) + (trending_boost
 ### 4) Deployment and Scalability
 
 **Deployment topology:**
-- Frontend (Next.js): Vercel (automatic deployments from main branch)
-- API + Worker (Fastify): Railway (single service with `--mode api|worker`)
+- Frontend (Next.js): Railway
+- API + Worker (Fastify): Railway
 - Postgres: Railway managed Postgres
 - Redis: Railway managed Redis
 
 **Horizontal scaling first:**
 - API: stateless (JWT auth, no local session) — scale by adding Railway instances
 - Worker: stateless processor — scale by adding worker replicas (BullMQ handles concurrency)
-- Frontend: Vercel handles auto-scaling
+- Frontend: Railway handles horizontal scaling for the web service
 
 **Caching layers:**
 - Redis: recommendation scores (5 min TTL), community feed cursor (30s TTL), badge lists (60s TTL)
 - Next.js ISR: fundraiser page (revalidate: 60s) for read-heavy campaign pages
 
 **Rollback strategy:**
-- Vercel: instant rollback to previous deployment via dashboard
-- Railway: redeploy previous commit SHA
+- Railway: redeploy previous commit SHA for web and API services
 - DB: migrations are additive only (no destructive changes without explicit down migration)
 
 ### 5) Observability and Operations
@@ -397,7 +396,7 @@ score = (interest_match × 0.4) + (donation_similarity × 0.3) + (trending_boost
 | Event IDs | ULID | Sortable, collision-resistant, no coordination needed |
 | Money | Integer cents | Eliminates float rounding, standard industry practice |
 | Auth | JWT (stateless) | Enables horizontal scaling without session store |
-| Deploy | Vercel + Railway | Zero-ops frontend, managed DB+Redis on Railway |
+| Deploy | Railway | One hosting platform for web, API, and managed state services |
 | Testing | Vitest + Playwright | Fast unit tests, reliable E2E browser tests |
 | AI | Claude API behind flag | Optional enhancement, not in critical path |
 

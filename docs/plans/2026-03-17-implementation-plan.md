@@ -39,7 +39,7 @@ Verification definition:
 - Data: Postgres for canonical state + Redis for event stream/queue and caching.
 - Event model: canonical `PlatformEvent` persisted before fan-out.
 - Worker model: background processors for notifications, badges, recommendation signals.
-- Deploy: frontend + API + worker + Postgres + Redis on Railway/Vercel combination.
+- Deploy: frontend + API + worker + Postgres + Redis on Railway.
 
 If you want a different stack, update this section before implementation starts.
 
@@ -299,7 +299,7 @@ Harden reliability and operational readiness to satisfy production-oriented requ
 
 ## Open Assumptions to Confirm
 - Monorepo structure (`apps/web`, `apps/api`, `apps/worker`, `packages/contracts`) is acceptable.
-- Railway/Vercel deployment split is acceptable for timeline.
+- Railway-only deployment is acceptable for timeline.
 - Simulated donation processor is acceptable if full payment integration is out of scope for one-week sprint.
 - One-week schedule prioritizes end-to-end trust loop completeness over advanced visual polish.
 

@@ -13,6 +13,15 @@ Use this format for new entries:
 **Impact:** [What changes as a result]
 **Owner:** [Developer / Agent + developer confirmation]
 
+## [2026-03-19] Deployment simplified to Railway-only
+
+**Context:** The app previously documented and partially encoded a split deployment model with the frontend on a separate host from the backend services. The current goal is to consolidate hosting on Railway and remove the temporary analytics integration.
+**Options considered:** (A) Keep a split frontend/backend hosting model and only remove analytics vs (B) move both web and API deployment config to Railway and delete the old platform-specific hooks.
+**Decision:** Standardize deployment on Railway for both the web app and API, and remove the temporary analytics integration for now.
+**Rationale:** A single hosting platform reduces platform-specific config drift, keeps deployment setup consistent across services, and avoids carrying temporary analytics code that will be replaced later.
+**Impact:** The old frontend-host-specific config is removed, Railway Dockerfiles are added for `apps/web` and `apps/api`, the web analytics helper becomes a typed no-op, and operational docs now describe Railway-only deployment.
+**Owner:** Agent (requested by developer)
+
 ## [2026-03-17] Greenfield architecture direction for GoSupportMe
 
 **Context:** The PRD requires an implementation plan and pre-search decisions before coding, but leaves stack and deployment choices open.
@@ -26,7 +35,7 @@ Use this format for new entries:
 
 **Context:** Pre-search checklist (docs/pre-search.md) and architecture document (docs/architecture.md) completed. All PRD appendix prompts answered. Ready to begin M1 implementation.
 **Options considered:** See pre-search.md for full decision matrix.
-**Decision:** Proceed with Node.js + Fastify API, Next.js App Router, Postgres + BullMQ + Redis, deployed on Vercel + Railway.
+**Decision:** Proceed with Node.js + Fastify API, Next.js App Router, Postgres + BullMQ + Redis, deployed on Railway.
 **Rationale:** Fastest iteration path with strong TypeScript throughout. BullMQ chosen over Redis Streams for simpler worker management. Integer cents chosen for all money. Event ID format later settled on UUIDs during implementation.
 **Impact:** M1 implementation begins: monorepo bootstrap, core contracts, initial schema.
 **Owner:** Agent + developer confirmed
@@ -76,10 +85,10 @@ Use this format for new entries:
 ## [2026-03-17] Deployment and reliability baseline
 
 **Context:** MVP requires rapid deployment with horizontal scalability and low operational overhead.
-**Options considered:** (A) Single-host all-in-one deployment vs (B) split deployment: Next.js on Vercel, API/worker + state services on Railway.
-**Decision:** Deploy frontend on Vercel and run API, worker, Postgres, and Redis on Railway.
-**Rationale:** This split gives strong DX and autoscaling defaults while keeping core backend services managed and close together.
-**Impact:** API/worker remain stateless, queue retries are managed through BullMQ, and rollback paths are defined independently for frontend and backend.
+**Options considered:** (A) Single-host all-in-one deployment vs (B) Railway-hosted web plus Railway-managed API, worker, and state services.
+**Decision:** Deploy frontend, API, worker, Postgres, and Redis on Railway.
+**Rationale:** A single hosting platform reduces deployment drift while keeping the app stateless and operationally simple.
+**Impact:** API/worker remain stateless, queue retries are managed through BullMQ, and rollback paths are unified across the web and backend services.
 **Owner:** Agent + developer confirmed
 
 ## [2026-03-19] Session auth standardized on signed cookie JWTs
