@@ -29,11 +29,17 @@ export function DonationFeed({ donations, totalCount }: DonationFeedProps) {
         )}
       </div>
 
-      <div className="space-y-4">
-        {displayed.map((donation) => (
-          <DonationRow key={donation.id} donation={donation} />
-        ))}
-      </div>
+      {displayed.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border-medium bg-bg-faint px-4 py-6 text-sm text-text-secondary">
+          No donations yet. Mock donations will appear here once the scheduler runs.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {displayed.map((donation) => (
+            <DonationRow key={donation.id} donation={donation} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

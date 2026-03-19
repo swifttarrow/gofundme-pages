@@ -59,6 +59,7 @@ export function publishFundraiser(data: {
   category: string;
   location: string;
   breakdown: string[];
+  coverImageUrl?: string;
   distribution: {
     shareToCommunity: boolean;
     notifyFriends: boolean;

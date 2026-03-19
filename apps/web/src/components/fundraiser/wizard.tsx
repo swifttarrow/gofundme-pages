@@ -1,21 +1,28 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import { ingestEvent, publishFundraiser } from "@/lib/api";
 
 const CURRENT_USER_ID = "a1b2c3d4-0002-0002-0002-000000000002";
 const DEFAULT_LOCATION = "Atlanta, GA";
+const DEFAULT_FUNDRAISER_IMAGE =
+  "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&auto=format&fit=crop";
 const STEPS = [
-  { id: "basics", label: "Basics" },
+  { id: "basics", label: "General" },
   { id: "story", label: "Story" },
   { id: "review", label: "Review & publish" },
 ] as const;
+
+const IMAGE_UPLOAD_CONSTRAINTS = {
+  coverImageUrl: { maxWidth: 1600, maxHeight: 900, quality: 0.82 },
+} as const;
 
 type FormState = {
   title: string;
   category: string;
   goalAmount: string;
   location: string;
+  coverImageUrl: string;
   summary: string;
   story: string;
   breakdownText: string;
@@ -30,6 +37,7 @@ export function FundraiserWizard() {
     category: "Emergency",
     goalAmount: "5000",
     location: DEFAULT_LOCATION,
+    coverImageUrl: DEFAULT_FUNDRAISER_IMAGE,
     summary: "",
     story: "",
     breakdownText: "",
@@ -57,6 +65,63 @@ export function FundraiserWizard() {
     [form.breakdownText]
   );
   const goalAmountCents = Math.round(Number(form.goalAmount || "0") * 100);
+
+  function isLocalImageSource(src: string) {
+    return src.startsWith("data:") || src.startsWith("blob:");
+  }
+
+  function getScaledDimensions(
+    width: number,
+    height: number,
+    maxWidth: number,
+    maxHeight: number
+  ) {
+    const scale = Math.min(maxWidth / width, maxHeight / height, 1);
+    return {
+      width: Math.max(1, Math.round(width * scale)),
+      height: Math.max(1, Math.round(height * scale)),
+    };
+  }
+
+  function readFileAsOptimizedDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const objectUrl = URL.createObjectURL(file);
+      const image = new window.Image();
+
+      image.onload = () => {
+        const { maxWidth, maxHeight, quality } = IMAGE_UPLOAD_CONSTRAINTS.coverImageUrl;
+        const { width, height } = getScaledDimensions(image.width, image.height, maxWidth, maxHeight);
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const context = canvas.getContext("2d");
+        if (!context) {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error("Failed to prepare image upload."));
+          return;
+        }
+
+        context.drawImage(image, 0, 0, width, height);
+
+        try {
+          const dataUrl = canvas.toDataURL("image/webp", quality);
+          URL.revokeObjectURL(objectUrl);
+          resolve(dataUrl);
+        } catch {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error("Failed to process image file."));
+        }
+      };
+
+      image.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Failed to read image file."));
+      };
+
+      image.src = objectUrl;
+    });
+  }
 
   async function track(type: string, payload: Record<string, unknown>) {
     try {
@@ -122,6 +187,21 @@ export function FundraiserWizard() {
     setStepIndex((current) => Math.min(current + 1, STEPS.length - 1));
   }
 
+  async function handleCoverImageUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const dataUrl = await readFileAsOptimizedDataUrl(file);
+      updateField("coverImageUrl", dataUrl);
+      setError(null);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to process image upload.");
+    } finally {
+      event.target.value = "";
+    }
+  }
+
   async function publish() {
     const basicsError = getStepError(0);
     if (basicsError) {
@@ -153,6 +233,7 @@ export function FundraiserWizard() {
           shareToCommunity: form.shareToCommunity,
           notifyFriends: form.notifyFriends,
         },
+        coverImageUrl: form.coverImageUrl.trim() || undefined,
       });
       setShareUrl(result.shareUrl);
       setPublishedId(result.fundraiser.id);
@@ -178,7 +259,7 @@ export function FundraiserWizard() {
     <div className="max-w-3xl mx-auto py-8 px-4">
       <div className="mb-6">
         <p className="text-sm font-medium text-primary">Fundraiser starter</p>
-        <h1 className="text-3xl font-semibold text-text-primary mt-2">Create your fundraiser in 3 quick steps</h1>
+        <h1 className="text-3xl font-semibold text-text-primary mt-2">Create your fundraiser</h1>
         <p className="text-sm text-text-secondary mt-2 max-w-2xl">
           We&apos;ll guide you through the essentials, then let you review everything before you publish.
         </p>
@@ -210,7 +291,7 @@ export function FundraiserWizard() {
         {stepIndex === 0 ? (
           <>
             <div>
-              <h2 className="text-2xl font-semibold text-text-primary">Basics</h2>
+              <h2 className="text-2xl font-semibold text-text-primary">General</h2>
               <p className="text-sm text-text-secondary mt-1">
                 Start with the headline, category, goal, and location donors will see first.
               </p>
@@ -218,7 +299,9 @@ export function FundraiserWizard() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-text-primary mb-1">Fundraiser title *</label>
+                <label className="block text-sm font-medium text-text-primary mb-1">
+                  Title <span className="text-accent-red">*</span>
+                </label>
                 <input
                   value={form.title}
                   onChange={(event) => updateField("title", event.target.value)}
@@ -227,7 +310,9 @@ export function FundraiserWizard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">Category *</label>
+                <label className="block text-sm font-medium text-text-primary mb-1">
+                  Category <span className="text-accent-red">*</span>
+                </label>
                 <select
                   value={form.category}
                   onChange={(event) => updateField("category", event.target.value)}
@@ -242,7 +327,9 @@ export function FundraiserWizard() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">Goal amount (USD) *</label>
+                <label className="block text-sm font-medium text-text-primary mb-1">
+                  Goal amount (USD) <span className="text-accent-red">*</span>
+                </label>
                 <input
                   type="number"
                   min="1"
@@ -253,7 +340,9 @@ export function FundraiserWizard() {
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-text-primary mb-1">Location *</label>
+                <label className="block text-sm font-medium text-text-primary mb-1">
+                  Location <span className="text-accent-red">*</span>
+                </label>
                 <input
                   value={form.location}
                   onChange={(event) => updateField("location", event.target.value)}
@@ -275,7 +364,9 @@ export function FundraiserWizard() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Short summary *</label>
+              <label className="block text-sm font-medium text-text-primary mb-1">
+                Short summary <span className="text-accent-red">*</span>
+              </label>
               <textarea
                 value={form.summary}
                 onChange={(event) => updateField("summary", event.target.value)}
@@ -286,7 +377,9 @@ export function FundraiserWizard() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-text-primary mb-1">Full story *</label>
+              <label className="block text-sm font-medium text-text-primary mb-1">
+                Full story <span className="text-accent-red">*</span>
+              </label>
               <textarea
                 value={form.story}
                 onChange={(event) => updateField("story", event.target.value)}
@@ -294,6 +387,52 @@ export function FundraiserWizard() {
                 className="w-full border border-border-medium rounded-md px-3 py-2 text-sm"
                 placeholder="Share what happened, who needs help, and why support matters right now."
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-text-primary mb-2">Backsplash image</label>
+              <div className="rounded-lg border border-border-light bg-bg-faint p-3">
+                <div className="relative w-full aspect-[16/9] overflow-hidden rounded-md bg-white">
+                  {isLocalImageSource(form.coverImageUrl) ? (
+                    <img
+                      src={form.coverImageUrl}
+                      alt="Fundraiser backsplash preview"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <img
+                      src={form.coverImageUrl}
+                      alt="Fundraiser backsplash preview"
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <input
+                    id="fundraiser-backsplash-upload"
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(event) => void handleCoverImageUpload(event)}
+                  />
+                  <label
+                    htmlFor="fundraiser-backsplash-upload"
+                    className="inline-flex cursor-pointer items-center rounded-md border border-border-medium bg-white px-3 py-2 text-sm font-medium text-text-primary hover:bg-bg-faint"
+                  >
+                    Upload image
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => updateField("coverImageUrl", DEFAULT_FUNDRAISER_IMAGE)}
+                    className="inline-flex items-center rounded-md border border-border-medium bg-white px-3 py-2 text-sm font-medium text-text-primary hover:bg-bg-faint"
+                  >
+                    Reset image
+                  </button>
+                </div>
+                <p className="mt-2 text-xs text-text-muted">
+                  This image will appear at the top of your fundraiser page.
+                </p>
+              </div>
             </div>
 
             <div>
@@ -353,6 +492,13 @@ export function FundraiserWizard() {
 
                 <div className="rounded-lg border border-border-light bg-bg-faint p-5">
                   <p className="text-xs uppercase tracking-wide text-text-muted">Preview</p>
+                  <div className="relative mt-3 w-full aspect-[16/9] overflow-hidden rounded-lg bg-white">
+                    <img
+                      src={form.coverImageUrl}
+                      alt={form.title || "Fundraiser cover preview"}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                   <h3 className="text-2xl font-semibold text-text-primary mt-2">{form.title || "Untitled fundraiser"}</h3>
                   <p className="text-sm text-text-secondary mt-2">{form.summary || "Add a short summary in Step 2."}</p>
                   <p className="text-sm text-text-secondary mt-4 whitespace-pre-wrap">

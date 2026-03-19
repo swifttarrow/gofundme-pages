@@ -358,39 +358,6 @@ Without surgery, Eli's doctors say he has less than a year. Please help give Eli
   },
 ];
 
-export const SEED_DONATIONS: SeedDonation[] = [
-  {
-    id: "d1",
-    fundraiserId: "b1b2c3d4-0001-0001-0001-000000000001",
-    donorName: "Michael Chen",
-    donorAvatar: "https://i.pravatar.cc/150?img=2",
-    amountCents: 15000,
-    message: "Sending love and prayers to the Martinez family. Stay strong!",
-    isAnonymous: false,
-    createdAt: "2026-03-15T14:22:00Z",
-  },
-  {
-    id: "d2",
-    fundraiserId: "b1b2c3d4-0001-0001-0001-000000000001",
-    donorName: "Anonymous",
-    donorAvatar: null,
-    amountCents: 10000,
-    message: "Sending love and caring units in difficult times.",
-    isAnonymous: true,
-    createdAt: "2026-02-14T09:15:00Z",
-  },
-  {
-    id: "d3",
-    fundraiserId: "b1b2c3d4-0001-0001-0001-000000000001",
-    donorName: "Jessica Rivera",
-    donorAvatar: "https://i.pravatar.cc/150?img=3",
-    amountCents: 9000,
-    message: "This community is here for you. Every little helps.",
-    isAnonymous: false,
-    createdAt: "2026-01-23T16:48:00Z",
-  },
-];
-
 export const SEED_NOTIFICATIONS: SeedNotification[] = [
   {
     id: "n1",

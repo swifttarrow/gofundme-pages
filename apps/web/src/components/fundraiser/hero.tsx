@@ -11,6 +11,9 @@ interface HeroProps {
 export function FundraiserHero({ fundraiser }: HeroProps) {
   const [copied, setCopied] = useState(false);
 
+  const isLocalCoverImage =
+    fundraiser.coverImageUrl.startsWith("data:") || fundraiser.coverImageUrl.startsWith("blob:");
+
   async function handleShare() {
     const shareUrl = window.location.href;
 
@@ -36,14 +39,22 @@ export function FundraiserHero({ fundraiser }: HeroProps) {
     <div>
       {/* Cover Image */}
       <div className="relative w-full aspect-[16/9] md:aspect-[21/9] rounded-lg overflow-hidden bg-bg-gray">
-        <Image
-          src={fundraiser.coverImageUrl}
-          alt={fundraiser.title}
-          fill
-          className="object-cover"
-          priority
-          sizes="(max-width: 768px) 100vw, 60vw"
-        />
+        {isLocalCoverImage ? (
+          <img
+            src={fundraiser.coverImageUrl}
+            alt={fundraiser.title}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <Image
+            src={fundraiser.coverImageUrl}
+            alt={fundraiser.title}
+            fill
+            className="object-cover"
+            priority
+            sizes="(max-width: 768px) 100vw, 60vw"
+          />
+        )}
         {fundraiser.isUrgent && (
           <div className="absolute top-3 left-3">
             <span className="bg-accent-red text-white text-xs font-bold px-2 py-1 rounded-sm uppercase tracking-wide">

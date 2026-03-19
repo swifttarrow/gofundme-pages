@@ -1,23 +1,110 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { SEED_FUNDRAISERS, SEED_DONATIONS } from "@/lib/seed-data";
+import {
+  SEED_FUNDRAISERS,
+  type SeedDonation,
+  type SeedFundraiser,
+} from "@/lib/seed-data";
 import { FundraiserHero } from "@/components/fundraiser/hero";
 import { Story } from "@/components/fundraiser/story";
 import { DonationFeed } from "@/components/fundraiser/donation-feed";
 import { TrustSafety } from "@/components/fundraiser/trust-safety";
 import { DonationModule } from "@/components/donation-module";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const DEFAULT_FUNDRAISER_IMAGE =
+  "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&auto=format&fit=crop";
+
 interface FundraiserPageProps {
   params: Promise<{ id: string }>;
 }
+
+type ApiFundraiserResponse = {
+  id: string;
+  organizer_id: string;
+  organizer_name: string;
+  organizer_avatar: string | null;
+  title: string;
+  story: string;
+  cover_image_url: string | null;
+  goal_cents: number;
+  raised_cents: number;
+  category: string;
+  location: string | null;
+  is_urgent: boolean;
+  donor_count: number;
+  follower_count: number;
+  created_at: string;
+  progressPercent: number;
+  recentDonations: Array<{
+    id: string;
+    amount_cents: number;
+    is_anonymous: boolean;
+    message: string | null;
+    created_at: string;
+    donor_name: string;
+    donor_avatar: string | null;
+  }>;
+};
 
 export async function generateStaticParams() {
   return SEED_FUNDRAISERS.map((f) => ({ id: f.id }));
 }
 
+async function getApiFundraiser(id: string): Promise<ApiFundraiserResponse | null> {
+  try {
+    const response = await fetch(`${API_BASE}/api/fundraisers/${id}`, { cache: "no-store" });
+    if (!response.ok) return null;
+    return (await response.json()) as ApiFundraiserResponse;
+  } catch {
+    return null;
+  }
+}
+
+function mapApiFundraiserToSeed(fundraiser: ApiFundraiserResponse): SeedFundraiser {
+  return {
+    id: fundraiser.id,
+    communityId: null,
+    organizerId: fundraiser.organizer_id,
+    organizerName: fundraiser.organizer_name,
+    organizerAvatar: fundraiser.organizer_avatar,
+    title: fundraiser.title,
+    story: fundraiser.story,
+    coverImageUrl: fundraiser.cover_image_url ?? DEFAULT_FUNDRAISER_IMAGE,
+    goalCents: Number(fundraiser.goal_cents ?? 0),
+    raisedCents: Number(fundraiser.raised_cents ?? 0),
+    category: fundraiser.category,
+    location: fundraiser.location ?? "",
+    isUrgent: Boolean(fundraiser.is_urgent),
+    donorCount: Number(fundraiser.donor_count ?? 0),
+    followerCount: Number(fundraiser.follower_count ?? 0),
+    createdAt: fundraiser.created_at,
+    progressPercent: Number(fundraiser.progressPercent ?? 0),
+  };
+}
+
+function mapApiDonationToSeed(
+  fundraiserId: string,
+  donation: ApiFundraiserResponse["recentDonations"][number]
+): SeedDonation {
+  return {
+    id: donation.id,
+    fundraiserId,
+    donorName: donation.donor_name,
+    donorAvatar: donation.donor_avatar,
+    amountCents: Number(donation.amount_cents ?? 0),
+    message: donation.message,
+    isAnonymous: donation.is_anonymous,
+    createdAt: donation.created_at,
+  };
+}
+
 export async function generateMetadata({ params }: FundraiserPageProps) {
   const { id } = await params;
-  const fundraiser = SEED_FUNDRAISERS.find((f) => f.id === id);
+  const apiFundraiser = await getApiFundraiser(id);
+  const fundraiser = apiFundraiser
+    ? mapApiFundraiserToSeed(apiFundraiser)
+    : SEED_FUNDRAISERS.find((f) => f.id === id);
   if (!fundraiser) return { title: "Fundraiser Not Found" };
   return {
     title: `${fundraiser.title} | GoSupportMe`,
@@ -30,46 +117,16 @@ export async function generateMetadata({ params }: FundraiserPageProps) {
 
 export default async function FundraiserPage({ params }: FundraiserPageProps) {
   const { id } = await params;
-  const fundraiser = SEED_FUNDRAISERS.find((f) => f.id === id);
+  const apiFundraiser = await getApiFundraiser(id);
+  const fundraiser = apiFundraiser
+    ? mapApiFundraiserToSeed(apiFundraiser)
+    : SEED_FUNDRAISERS.find((f) => f.id === id);
   if (!fundraiser) notFound();
   const currentUserId = "a1b2c3d4-0002-0002-0002-000000000002";
 
-  const donations = SEED_DONATIONS.filter((d) => d.fundraiserId === fundraiser.id);
-  const displayedDonations =
-    donations.length > 0
-      ? donations
-      : [
-          {
-            id: "mock-1",
-            fundraiserId: fundraiser.id,
-            donorName: "Michael Chen",
-            donorAvatar: "https://i.pravatar.cc/150?img=2",
-            amountCents: 15000,
-            message: "Sending love and prayers. Stay strong!",
-            isAnonymous: false,
-            createdAt: new Date(Date.now() - 3600000).toISOString(),
-          },
-          {
-            id: "mock-2",
-            fundraiserId: fundraiser.id,
-            donorName: "Anonymous",
-            donorAvatar: null,
-            amountCents: 10000,
-            message: "Sending love and caring during difficult times.",
-            isAnonymous: true,
-            createdAt: new Date(Date.now() - 7200000).toISOString(),
-          },
-          {
-            id: "mock-3",
-            fundraiserId: fundraiser.id,
-            donorName: "Jessica Rivera",
-            donorAvatar: "https://i.pravatar.cc/150?img=3",
-            amountCents: 9000,
-            message: "This community is here for you. Every little helps.",
-            isAnonymous: false,
-            createdAt: new Date(Date.now() - 14400000).toISOString(),
-          },
-        ];
+  const donations = apiFundraiser
+    ? apiFundraiser.recentDonations.map((donation) => mapApiDonationToSeed(fundraiser.id, donation))
+    : [];
 
   return (
     <div className="min-h-screen bg-white">
@@ -83,7 +140,7 @@ export default async function FundraiserPage({ params }: FundraiserPageProps) {
             <div className="lg:hidden mt-6">
               <DonationModule
                 fundraiser={fundraiser}
-                donations={displayedDonations}
+                donations={donations}
                 currentUserId={currentUserId}
               />
             </div>
@@ -93,7 +150,7 @@ export default async function FundraiserPage({ params }: FundraiserPageProps) {
             </div>
 
             <div className="mt-8">
-              <DonationFeed donations={displayedDonations} totalCount={fundraiser.donorCount} />
+              <DonationFeed donations={donations} totalCount={fundraiser.donorCount} />
             </div>
 
             <TrustSafety />
@@ -104,7 +161,7 @@ export default async function FundraiserPage({ params }: FundraiserPageProps) {
             <div className="sticky top-20">
               <DonationModule
                 fundraiser={fundraiser}
-                donations={displayedDonations}
+                donations={donations}
                 currentUserId={currentUserId}
               />
               <div className="mt-4 rounded-lg border border-border-light bg-white p-4 space-y-2">

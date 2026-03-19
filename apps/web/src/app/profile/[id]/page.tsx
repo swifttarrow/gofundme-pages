@@ -5,7 +5,6 @@ import Image from "next/image";
 import {
   SEED_USERS,
   SEED_FUNDRAISERS,
-  SEED_DONATIONS,
   SEED_FAVORITES,
   SeedUser,
   formatCents,
@@ -113,9 +112,13 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
   const fundraiserTitleById = new Map(
     SEED_FUNDRAISERS.map((fundraiser) => [fundraiser.id, fundraiser.title])
   );
-  const userDonations = SEED_DONATIONS.filter(
-    (donation) => donation.donorName === user.name
-  );
+  const userDonations: Array<{
+    id: string;
+    fundraiserId: string;
+    amountCents: number;
+    message: string | null;
+    createdAt: string;
+  }> = [];
   const followedFundraiserIds = new Set(
     SEED_FAVORITES.filter((favorite) => favorite.userId === user.id).map(
       (favorite) => favorite.fundraiserId

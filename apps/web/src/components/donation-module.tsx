@@ -138,17 +138,23 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
 
         <div className="mt-3 mb-4">
           <p className="text-sm text-text-secondary">{fundraiser.donorCount.toLocaleString()} donations</p>
-          <div className="mt-2 space-y-2">
-            {recentDonations.map((donation) => (
-              <div key={donation.id} className="rounded-md border border-border-light bg-bg-faint px-3 py-2">
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="font-medium text-text-primary truncate">{donation.donorName}</span>
-                  <span className="font-semibold text-primary">{formatCents(donation.amountCents)}</span>
+          {recentDonations.length === 0 ? (
+            <p className="mt-2 rounded-md border border-dashed border-border-medium bg-bg-faint px-3 py-2 text-xs text-text-secondary">
+              Waiting for the first mock donation.
+            </p>
+          ) : (
+            <div className="mt-2 space-y-2">
+              {recentDonations.map((donation) => (
+                <div key={donation.id} className="rounded-md border border-border-light bg-bg-faint px-3 py-2">
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="font-medium text-text-primary truncate">{donation.donorName}</span>
+                    <span className="font-semibold text-primary">{formatCents(donation.amountCents)}</span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-text-muted">{timeAgo(donation.createdAt)}</p>
                 </div>
-                <p className="mt-0.5 text-xs text-text-muted">{timeAgo(donation.createdAt)}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <button
