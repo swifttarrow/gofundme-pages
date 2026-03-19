@@ -26,19 +26,12 @@ test("signed-in donors can follow and donate from a fundraiser page", async ({ p
   await expect(donationModule.getByText("847 donations")).toBeVisible();
 
   await expect(followButton).toBeVisible();
-  const initialFollowLabel = (await followButton.textContent())?.trim();
-
-  if (initialFollowLabel === "Following") {
-    await followButton.click();
-    await expect(followButton).toHaveText("Follow");
-    await followButton.click();
-    await dismissCelebrationIfPresent(page);
-    await expect(followButton).toHaveText("Following");
-  } else {
-    await followButton.click();
-    await dismissCelebrationIfPresent(page);
-    await expect(followButton).toHaveText("Following");
-  }
+  await expect(followButton).toHaveText("Following");
+  await followButton.click();
+  await expect(followButton).toHaveText("Follow");
+  await followButton.click();
+  await dismissCelebrationIfPresent(page);
+  await expect(followButton).toHaveText("Following");
 
   await donateButton.click();
   await expect(

@@ -42,6 +42,8 @@ export async function dismissCelebrationIfPresent(page: Page): Promise<void> {
   const isVisible = await dismissButton.isVisible().catch(() => false);
   if (isVisible) {
     await dismissButton.click();
-    await expect(dismissButton).toBeHidden();
+    await dismissButton.waitFor({ state: "detached", timeout: 5000 }).catch(async () => {
+      await expect(dismissButton).toBeHidden();
+    });
   }
 }
