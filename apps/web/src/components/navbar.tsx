@@ -211,56 +211,58 @@ export function Navbar() {
             )}
           </div>
           <div className="flex items-center gap-0.5">
-            <div className="relative" ref={favoritesRef}>
-              <button
-                type="button"
-                className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-faint transition-colors"
-                aria-label={isFavoritesOpen ? "Close favorites preview" : "Open favorites preview"}
-                aria-expanded={isFavoritesOpen}
-                onClick={() => setIsFavoritesOpen((open) => !open)}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                </svg>
-              </button>
+            {currentUser ? (
+              <div className="relative" ref={favoritesRef}>
+                <button
+                  type="button"
+                  className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-faint transition-colors"
+                  aria-label={isFavoritesOpen ? "Close favorites preview" : "Open favorites preview"}
+                  aria-expanded={isFavoritesOpen}
+                  onClick={() => setIsFavoritesOpen((open) => !open)}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
+                </button>
 
-              {isFavoritesOpen && (
-                <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-xl border border-primary/20 bg-white shadow-[0_12px_30px_rgba(0,185,100,0.12)] p-2 z-50">
-                  <div className="flex items-center justify-between rounded-lg px-2.5 py-2">
-                    <p className="text-sm font-semibold text-text-primary">Favorites</p>
-                    <Link
-                      href="/favorites"
-                      className="text-xs text-primary font-medium hover:underline"
-                      onClick={() => setIsFavoritesOpen(false)}
-                    >
-                      View All
-                    </Link>
-                  </div>
-                  <div className="max-h-80 overflow-y-auto">
-                    {favoriteFundraisers.map((fundraiser) => (
+                {isFavoritesOpen && (
+                  <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-xl border border-primary/20 bg-white shadow-[0_12px_30px_rgba(0,185,100,0.12)] p-2 z-50">
+                    <div className="flex items-center justify-between rounded-lg px-2.5 py-2">
+                      <p className="text-sm font-semibold text-text-primary">Favorites</p>
                       <Link
-                        key={fundraiser.id}
-                        href={`/fundraiser/${fundraiser.id}`}
-                        className="block rounded-md px-2 py-2 hover:bg-primary/5 transition-colors"
+                        href="/favorites"
+                        className="text-xs text-primary font-medium hover:underline"
                         onClick={() => setIsFavoritesOpen(false)}
                       >
-                        <p className="text-sm font-medium text-text-primary line-clamp-1">
-                          {fundraiser.title}
-                        </p>
-                        <p className="text-xs text-text-secondary mt-0.5">
-                          {formatCents(fundraiser.raisedCents)} raised
-                        </p>
+                        View All
                       </Link>
-                    ))}
-                    {favoriteFundraisers.length === 0 && (
-                      <p className="mx-1 mt-1 rounded-md bg-bg-faint px-2 py-3 text-xs text-text-muted">
-                        No favorites yet.
-                      </p>
-                    )}
+                    </div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {favoriteFundraisers.map((fundraiser) => (
+                        <Link
+                          key={fundraiser.id}
+                          href={`/fundraiser/${fundraiser.id}`}
+                          className="block rounded-md px-2 py-2 hover:bg-primary/5 transition-colors"
+                          onClick={() => setIsFavoritesOpen(false)}
+                        >
+                          <p className="text-sm font-medium text-text-primary line-clamp-1">
+                            {fundraiser.title}
+                          </p>
+                          <p className="text-xs text-text-secondary mt-0.5">
+                            {formatCents(fundraiser.raisedCents)} raised
+                          </p>
+                        </Link>
+                      ))}
+                      {favoriteFundraisers.length === 0 && (
+                        <p className="mx-1 mt-1 rounded-md bg-bg-faint px-2 py-3 text-xs text-text-muted">
+                          No favorites yet.
+                        </p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            ) : null}
             {currentUser ? (
               <div className="relative" ref={notificationsRef}>
                 <button
