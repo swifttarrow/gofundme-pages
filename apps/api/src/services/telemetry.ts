@@ -5,14 +5,17 @@ import {
   httpRequestDurationMs,
 } from "../observability/metrics";
 
+type InstrumentedRequest = FastifyRequest & { _startTime?: number };
+
 export function registerTelemetry(app: FastifyInstance): void {
   // Instrument every request
   app.addHook("onRequest", async (request: FastifyRequest) => {
-    (request as FastifyRequest & { _startTime: number })._startTime = Date.now();
+    (request as InstrumentedRequest)._startTime = Date.now();
   });
 
   app.addHook("onResponse", async (request: FastifyRequest, reply: FastifyReply) => {
-    const duration = Date.now() - (request as FastifyRequest & { _startTime: number })._startTime;
+    const startedAt = (request as InstrumentedRequest)._startTime;
+    const duration = typeof startedAt === "number" ? Date.now() - startedAt : undefined;
     const route = (request.routeOptions?.url as string | undefined) ?? request.url;
     const labels = {
       method: request.method,
@@ -20,7 +23,9 @@ export function registerTelemetry(app: FastifyInstance): void {
       status_code: String(reply.statusCode),
     };
     httpRequestsTotal.inc(labels);
-    httpRequestDurationMs.observe(labels, duration);
+    if (typeof duration === "number" && Number.isFinite(duration) && duration >= 0) {
+      httpRequestDurationMs.observe(labels, duration);
+    }
   });
 
   // Prometheus metrics endpoint

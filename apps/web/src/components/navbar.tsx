@@ -3,9 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { MeerkatMascot } from "@/components/meerkat-mascot";
-import { AuthUser, getCurrentUser } from "@/lib/api";
+import { AuthUser, getCurrentUser, logout } from "@/lib/api";
 import { SEED_FAVORITES, SEED_FUNDRAISERS, SEED_NOTIFICATIONS, formatCents, timeAgo } from "@/lib/seed-data";
 
 const NAV_DROPDOWN_LIMIT = 4;
@@ -14,14 +14,18 @@ const CURRENT_USER_ID = "a1b2c3d4-0002-0002-0002-000000000002";
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const favoritesRef = useRef<HTMLDivElement>(null);
   const createMenuRef = useRef<HTMLDivElement>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = SEED_NOTIFICATIONS.filter((notification) => !notification.isRead).length;
   const recentNotifications = SEED_NOTIFICATIONS.slice(0, NAV_DROPDOWN_LIMIT);
@@ -42,6 +46,9 @@ export function Navbar() {
       }
       if (!createMenuRef.current?.contains(event.target as Node)) {
         setIsCreateMenuOpen(false);
+      }
+      if (!profileMenuRef.current?.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
       }
     }
 
@@ -68,6 +75,19 @@ export function Navbar() {
       isMounted = false;
     };
   }, [pathname]);
+
+  async function handleLogout() {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      setCurrentUser(null);
+      router.push("/sign-in");
+      router.refresh();
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-border-light">
@@ -258,27 +278,53 @@ export function Navbar() {
             </div>
           </div>
           {currentUser ? (
-            <div className="ml-1 pl-3 border-l border-border-light">
-              <Link
-                href={`/profile/${currentUser.id}`}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-light overflow-hidden bg-bg-gray"
-                aria-label={`View ${currentUser.name}'s profile`}
-                title={currentUser.name}
-              >
-                {currentUser.avatarUrl ? (
-                  <Image
-                    src={currentUser.avatarUrl}
-                    alt={currentUser.name}
-                    width={36}
-                    height={36}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="text-xs font-semibold text-text-primary">
-                    {currentUser.name.charAt(0).toUpperCase()}
-                  </span>
+            <div className="ml-1 pl-3 border-l border-border-light flex items-center" ref={profileMenuRef}>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsProfileMenuOpen((open) => !open)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-light overflow-hidden bg-bg-gray"
+                  aria-label={isProfileMenuOpen ? "Close profile menu" : "Open profile menu"}
+                  aria-expanded={isProfileMenuOpen}
+                  title={currentUser.name}
+                >
+                  {currentUser.avatarUrl ? (
+                    <Image
+                      src={currentUser.avatarUrl}
+                      alt={currentUser.name}
+                      width={36}
+                      height={36}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs font-semibold text-text-primary">
+                      {currentUser.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </button>
+                {isProfileMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-44 rounded-lg border border-border-light bg-white shadow-lg p-1.5 z-50">
+                    <Link
+                      href={`/profile/${currentUser.id}`}
+                      className="block rounded-md px-3 py-2 text-sm text-text-primary hover:bg-bg-faint transition-colors"
+                      onClick={() => setIsProfileMenuOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsProfileMenuOpen(false);
+                        void handleLogout();
+                      }}
+                      disabled={isLoggingOut}
+                      className="w-full text-left rounded-md px-3 py-2 text-sm text-text-primary hover:bg-bg-faint transition-colors disabled:opacity-60"
+                    >
+                      {isLoggingOut ? "Signing out..." : "Log out"}
+                    </button>
+                  </div>
                 )}
-              </Link>
+              </div>
             </div>
           ) : (
             <Link

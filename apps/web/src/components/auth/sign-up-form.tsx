@@ -1,14 +1,15 @@
 "use client";
 
-import { FormEvent, useState } from "react";
 import Link from "next/link";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { login } from "@/lib/api";
+import { registerUser } from "@/lib/api";
 
 const DEFAULT_REDIRECT = "/";
 
-export function SignInForm() {
+export function SignUpForm() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -22,11 +23,11 @@ export function SignInForm() {
     setIsSubmitting(true);
 
     try {
-      await login({ email, password });
+      await registerUser({ name, email, password });
       router.push(DEFAULT_REDIRECT);
       router.refresh();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unable to sign in";
+      const message = err instanceof Error ? err.message : "Unable to create account";
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -36,12 +37,29 @@ export function SignInForm() {
   return (
     <div className="min-h-screen bg-bg-faint px-4 py-12">
       <div className="max-w-md mx-auto rounded-xl border border-border-light bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-text-primary">Sign in</h1>
+        <h1 className="text-2xl font-bold text-text-primary">Create account</h1>
         <p className="mt-2 text-sm text-text-secondary">
-          Welcome back. Sign in to manage your fundraisers, donations, and notifications.
+          Create your profile to start fundraising, donating, and following causes.
         </p>
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-text-primary mb-1.5">
+              Full name
+            </label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              placeholder="Your name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              required
+              className="w-full rounded-md border border-border-light px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
+            />
+          </div>
+
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-text-primary mb-1.5">
               Email
@@ -67,10 +85,11 @@ export function SignInForm() {
               id="password"
               name="password"
               type="password"
-              autoComplete="current-password"
-              placeholder="Enter your password"
+              autoComplete="new-password"
+              placeholder="At least 8 characters"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+              minLength={8}
               required
               className="w-full rounded-md border border-border-light px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20"
             />
@@ -87,14 +106,14 @@ export function SignInForm() {
             disabled={isSubmitting}
             className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? "Signing in..." : "Sign in"}
+            {isSubmitting ? "Creating account..." : "Create account"}
           </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-text-secondary">
-          New to GoSupportMe?{" "}
-          <Link href="/sign-up" className="text-primary font-medium hover:underline">
-            Create account
+          Already have an account?{" "}
+          <Link href="/sign-in" className="text-primary font-medium hover:underline">
+            Sign in
           </Link>
         </p>
       </div>

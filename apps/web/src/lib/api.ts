@@ -23,7 +23,10 @@ export type AuthUser = {
   email: string;
   name: string;
   role: string;
+  bio: string | null;
   avatarUrl: string | null;
+  backsplashUrl: string | null;
+  location: string | null;
 };
 
 export type VoiceDraft = {
@@ -252,30 +255,45 @@ export function login(data: { email: string; password: string }) {
   });
 }
 
+export function registerUser(data: {
+  email: string;
+  password: string;
+  name: string;
+  bio?: string;
+  avatarUrl?: string;
+  location?: string;
+}) {
+  return apiFetch<{ user: AuthUser }>("/api/auth/register", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
 export function getCurrentUser() {
-  return apiFetch<{ user: AuthUser }>("/api/auth/me");
+  return apiFetch<{ user: AuthUser }>("/api/auth/me", { cache: "no-store" });
 }
 
 export function logout() {
   return apiFetch<{ ok: boolean }>("/api/auth/logout", { method: "POST" });
 }
 
-// ─── Charities ───────────────────────────────────────────────────────────────
-export function createCharity(data: {
-  organizerId: string;
-  name: string;
-  description: string;
-  ein?: string;
-  websiteUrl?: string;
-  fundAllocation?: string;
-  milestones: Array<{ amount: number; label: string }>;
+export function updateProfile(data: {
+  name?: string;
+  bio?: string | null;
+  avatarUrl?: string | null;
+  backsplashUrl?: string | null;
+  location?: string | null;
 }) {
-  return apiFetch("/api/charities", { method: "POST", body: JSON.stringify(data) });
+  return apiFetch<{ user: AuthUser }>("/api/auth/profile", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
 }
 
+// ─── Charities ───────────────────────────────────────────────────────────────
 export function getCharityRequestEligibility(userId: string) {
   const qs = new URLSearchParams({ userId });
-  return apiFetch<{ state: "eligible" | "under_review" | "active_charity" }>(
+  return apiFetch<{ state: "eligible" | "under_review" | "active_community" }>(
     `/api/charities/requests/eligibility?${qs}`
   );
 }

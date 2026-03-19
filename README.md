@@ -73,8 +73,9 @@ npm run dev --workspace=apps/api    # http://localhost:3001
 ### Local Login
 
 - Visit `http://localhost:3000/sign-in`
+- Or create an account at `http://localhost:3000/sign-up`
 - Use any seeded user email from `infra/scripts/seed.js` (for example `michael@example.com`)
-- Password is controlled by `DEV_AUTH_PASSWORD` (default: `gosupportme-dev-password`)
+- Seeded user password is controlled by `DEV_AUTH_PASSWORD` (default: `gosupportme-dev-password`)
 
 ## Pages
 
@@ -110,6 +111,11 @@ npm run dev --workspace=apps/api    # http://localhost:3001
 | GET | `/api/charities/:id` | Charity detail |
 | PATCH | `/api/charities/:id/fundraisers/:fid` | Link fundraiser to charity |
 | GET | `/api/feed` | Community feed |
+| POST | `/api/auth/register` | Create account |
+| POST | `/api/auth/login` | Login with email/password |
+| GET | `/api/auth/me` | Get current authenticated user |
+| PATCH | `/api/auth/profile` | Update authenticated profile |
+| POST | `/api/auth/logout` | Logout |
 
 ## Event System
 

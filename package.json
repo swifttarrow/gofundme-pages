@@ -13,6 +13,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "db:migrate": "node infra/scripts/migrate.js",
+    "db:reset": "node infra/scripts/reset-and-migrate.js",
     "db:seed": "node infra/scripts/seed.js"
   },
   "devDependencies": {

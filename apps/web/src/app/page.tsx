@@ -1,9 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { SEED_COMMUNITIES, SEED_FUNDRAISERS, SEED_NETWORK_POSTS, SEED_USERS } from "@/lib/seed-data";
 import { CampaignCard } from "@/components/community/campaign-card";
+import { AuthUser, getCurrentUser } from "@/lib/api";
 
 export default function HomePage() {
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const featured = SEED_FUNDRAISERS.slice(0, 3);
   const featuredCommunities = SEED_COMMUNITIES.slice(0, 3);
   const fromNetwork = [...SEED_NETWORK_POSTS]
@@ -19,6 +24,26 @@ export default function HomePage() {
     })
     .filter((item): item is NonNullable<typeof item> => item !== null);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    getCurrentUser()
+      .then((response) => {
+        if (isMounted) {
+          setCurrentUser(response.user);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setCurrentUser(null);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -30,20 +55,6 @@ export default function HomePage() {
           <p className="text-lg text-text-secondary mb-8 max-w-2xl mx-auto">
             Join millions of people using GoSupportMe to raise money for the people and causes they care about.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href="/fundraiser/new?source=hero_primary"
-              className="px-5 py-2.5 rounded-md bg-primary text-white text-sm font-semibold"
-            >
-              Start a fundraiser
-            </Link>
-            <Link
-              href="/charity/new?source=hero_secondary"
-              className="px-5 py-2.5 rounded-md border border-border-medium bg-white text-sm font-semibold text-text-primary"
-            >
-              Start a charity
-            </Link>
-          </div>
         </div>
       </section>
 
@@ -121,34 +132,35 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* From Your Network */}
-      <section className="max-w-6xl mx-auto px-4 py-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-text-primary">From your network</h2>
-        </div>
-        <div className="space-y-3">
-          {fromNetwork.map(({ post, author, fundraiser }) => (
-            <article
-              key={post.id}
-              className="rounded-lg border border-border-light p-4 bg-white"
-            >
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-sm font-semibold text-text-primary">{author.name}</p>
-                <p className="text-xs text-text-muted">
-                  {new Date(post.createdAt).toLocaleString()}
-                </p>
-              </div>
-              <p className="text-sm text-text-secondary mt-2">{post.content}</p>
-              <Link
-                href={`/fundraiser/${fundraiser.id}`}
-                className="inline-flex items-center mt-3 text-sm text-primary font-medium hover:underline"
+      {currentUser ? (
+        <section className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-text-primary">From your network</h2>
+          </div>
+          <div className="space-y-3">
+            {fromNetwork.map(({ post, author, fundraiser }) => (
+              <article
+                key={post.id}
+                className="rounded-lg border border-border-light p-4 bg-white"
               >
-                View fundraiser: {fundraiser.title}
-              </Link>
-            </article>
-          ))}
-        </div>
-      </section>
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm font-semibold text-text-primary">{author.name}</p>
+                  <p className="text-xs text-text-muted">
+                    {new Date(post.createdAt).toLocaleString()}
+                  </p>
+                </div>
+                <p className="text-sm text-text-secondary mt-2">{post.content}</p>
+                <Link
+                  href={`/fundraiser/${fundraiser.id}`}
+                  className="inline-flex items-center mt-3 text-sm text-primary font-medium hover:underline"
+                >
+                  View fundraiser: {fundraiser.title}
+                </Link>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
     </div>
   );

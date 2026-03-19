@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -6,6 +7,7 @@ import {
   SEED_FUNDRAISERS,
   SEED_DONATIONS,
   SEED_FAVORITES,
+  SeedUser,
   formatCents,
   timeAgo,
 } from "@/lib/seed-data";
@@ -14,6 +16,7 @@ import { FundraiserList } from "@/components/profile/fundraiser-list";
 
 type ProfileTab = "fundraisers" | "donations" | "following";
 const CURRENT_USER_ID = "a1b2c3d4-0002-0002-0002-000000000002";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 interface ProfilePageProps {
   params: Promise<{ id: string }>;
@@ -27,16 +30,80 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: ProfilePageProps) {
   const { id } = await params;
   const user = SEED_USERS.find((u) => u.id === id);
-  if (!user) return { title: "Profile Not Found" };
+  if (!user) return { title: "Profile | GoSupportMe" };
   return { title: `${user.name} | GoSupportMe` };
+}
+
+async function getAuthenticatedUser(): Promise<SeedUser | null> {
+  const sessionToken = (await cookies()).get("gosupportme_session")?.value;
+  if (!sessionToken) return null;
+
+  try {
+    const response = await fetch(`${API_BASE}/api/auth/me`, {
+      headers: {
+        Cookie: `gosupportme_session=${sessionToken}`,
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) return null;
+    const payload = (await response.json()) as {
+      user: {
+        id: string;
+        name: string;
+        bio: string | null;
+        avatarUrl: string | null;
+        backsplashUrl: string | null;
+        location: string | null;
+        role: SeedUser["role"];
+      };
+    };
+
+    return {
+      id: payload.user.id,
+      name: payload.user.name,
+      bio: payload.user.bio,
+      avatarUrl: payload.user.avatarUrl,
+      backsplashUrl: payload.user.backsplashUrl,
+      location: payload.user.location,
+      role: payload.user.role,
+      amountRaised: 0,
+      followerCount: 0,
+      fundraiserCount: 0,
+      donationCount: 0,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export default async function ProfilePage({ params, searchParams }: ProfilePageProps) {
   const { id } = await params;
   const { tab } = await searchParams;
-  const user = SEED_USERS.find((u) => u.id === id);
+  const seedUser = SEED_USERS.find((u) => u.id === id);
+  const authenticatedUser = seedUser ? null : await getAuthenticatedUser();
+  const user = seedUser ?? (authenticatedUser?.id === id ? authenticatedUser : null);
   if (!user) notFound();
-  const isOwnProfile = user.id === CURRENT_USER_ID;
+  const isOwnProfile = user.id === CURRENT_USER_ID || authenticatedUser?.id === user.id;
+
+  let hasCharityRequest = false;
+  if (isOwnProfile) {
+    const sessionToken = (await cookies()).get("gosupportme_session")?.value;
+    if (sessionToken) {
+      try {
+        const res = await fetch(
+          `${API_BASE}/api/charities/requests/mine?userId=${encodeURIComponent(user.id)}`,
+          {
+            headers: { Cookie: `gosupportme_session=${sessionToken}` },
+            cache: "no-store",
+          }
+        );
+        hasCharityRequest = res.ok;
+      } catch {
+        // leave false
+      }
+    }
+  }
 
   const activeTab: ProfileTab =
     tab === "donations" || tab === "following" ? tab : "fundraisers";
@@ -75,7 +142,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
     <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <ProfileHeader user={user} isOwnProfile={isOwnProfile} />
-        {isOwnProfile ? (
+        {isOwnProfile && hasCharityRequest ? (
           <div className="mt-4 rounded-lg border border-border-light bg-white p-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-text-primary">Your Charity Request</p>
@@ -89,12 +156,6 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
                 className="px-3 py-2 rounded-md border border-border-medium text-sm font-medium text-text-primary"
               >
                 View request status
-              </Link>
-              <Link
-                href="/charity/new?source=profile_page"
-                className="px-3 py-2 rounded-md bg-primary text-white text-sm font-semibold"
-              >
-                Start a charity
               </Link>
             </div>
           </div>

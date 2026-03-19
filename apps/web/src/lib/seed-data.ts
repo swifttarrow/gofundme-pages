@@ -3,6 +3,7 @@ export interface SeedUser {
   name: string;
   bio: string | null;
   avatarUrl: string | null;
+  backsplashUrl?: string | null;
   location: string | null;
   role: "donor" | "organizer" | "admin";
   amountRaised: number;
@@ -366,7 +367,7 @@ export const SEED_DONATIONS: SeedDonation[] = [
     amountCents: 15000,
     message: "Sending love and prayers to the Martinez family. Stay strong!",
     isAnonymous: false,
-    createdAt: "2024-03-15T14:22:00Z",
+    createdAt: "2026-03-15T14:22:00Z",
   },
   {
     id: "d2",
@@ -376,7 +377,7 @@ export const SEED_DONATIONS: SeedDonation[] = [
     amountCents: 10000,
     message: "Sending love and caring units in difficult times.",
     isAnonymous: true,
-    createdAt: "2024-03-14T09:15:00Z",
+    createdAt: "2026-02-14T09:15:00Z",
   },
   {
     id: "d3",
@@ -386,7 +387,7 @@ export const SEED_DONATIONS: SeedDonation[] = [
     amountCents: 9000,
     message: "This community is here for you. Every little helps.",
     isAnonymous: false,
-    createdAt: "2024-03-13T16:48:00Z",
+    createdAt: "2026-01-23T16:48:00Z",
   },
 ];
 

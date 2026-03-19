@@ -4,6 +4,7 @@
 const { Client } = require("pg");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 function loadEnvFromFile(filePath) {
   if (!fs.existsSync(filePath)) return;
@@ -38,6 +39,12 @@ function loadLocalEnv() {
   loadEnvFromFile(path.join(rootDir, ".env"));
 }
 
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  return `scrypt$${salt}$${hash}`;
+}
+
 async function run() {
   loadLocalEnv();
 
@@ -51,14 +58,16 @@ async function run() {
   await client.connect();
 
   console.log("Seeding users...");
+  const seedPassword = process.env.DEV_AUTH_PASSWORD || "gosupportme-dev-password";
+  const seedPasswordHash = hashPassword(seedPassword);
   const users = await client.query(`
-    INSERT INTO users (id, email, name, bio, avatar_url, location, role)
+    INSERT INTO users (id, email, name, bio, avatar_url, location, role, password_hash)
     VALUES
-      ('a1b2c3d4-0001-0001-0001-000000000001', 'sarah@example.com', 'Sarah Johnson', 'Community organizer and advocate.', 'https://i.pravatar.cc/150?img=1', 'San Francisco, CA', 'organizer'),
-      ('a1b2c3d4-0002-0002-0002-000000000002', 'michael@example.com', 'Michael Chen', 'Proud supporter of local causes.', 'https://i.pravatar.cc/150?img=2', 'Oakland, CA', 'donor'),
-      ('a1b2c3d4-0003-0003-0003-000000000003', 'jessica@example.com', 'Jessica Rivera', 'Social worker and fundraising champion.', 'https://i.pravatar.cc/150?img=3', 'Berkeley, CA', 'organizer'),
-      ('a1b2c3d4-0004-0004-0004-000000000004', 'anonymous@example.com', 'Anonymous Donor', NULL, NULL, NULL, 'donor'),
-      ('a1b2c3d4-0005-0005-0005-000000000005', 'junisha@example.com', 'Junisha Bhorman', 'Passionate about education and community resilience.', 'https://i.pravatar.cc/150?img=5', 'Los Angeles, CA', 'organizer')
+      ('a1b2c3d4-0001-0001-0001-000000000001', 'sarah@example.com', 'Sarah Johnson', 'Community organizer and advocate.', 'https://i.pravatar.cc/150?img=1', 'San Francisco, CA', 'organizer', '${seedPasswordHash}'),
+      ('a1b2c3d4-0002-0002-0002-000000000002', 'michael@example.com', 'Michael Chen', 'Proud supporter of local causes.', 'https://i.pravatar.cc/150?img=2', 'Oakland, CA', 'donor', '${seedPasswordHash}'),
+      ('a1b2c3d4-0003-0003-0003-000000000003', 'jessica@example.com', 'Jessica Rivera', 'Social worker and fundraising champion.', 'https://i.pravatar.cc/150?img=3', 'Berkeley, CA', 'organizer', '${seedPasswordHash}'),
+      ('a1b2c3d4-0004-0004-0004-000000000004', 'anonymous@example.com', 'Anonymous Donor', NULL, NULL, NULL, 'donor', '${seedPasswordHash}'),
+      ('a1b2c3d4-0005-0005-0005-000000000005', 'junisha@example.com', 'Junisha Bhorman', 'Passionate about education and community resilience.', 'https://i.pravatar.cc/150?img=5', 'Los Angeles, CA', 'organizer', '${seedPasswordHash}')
     ON CONFLICT (id) DO NOTHING
     RETURNING id;
   `);

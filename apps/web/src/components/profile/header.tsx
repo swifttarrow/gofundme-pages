@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useState, type ChangeEvent } from "react";
 import { SeedUser, formatCents } from "@/lib/seed-data";
 import { Badges, MOCK_BADGES } from "@/components/badges";
+import { updateProfile } from "@/lib/api";
 
 const DEFAULT_BACKSPLASH_IMAGE =
   "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&auto=format&fit=crop";
@@ -21,55 +23,134 @@ interface EditableProfileState {
   backsplashUrl: string;
 }
 
+const IMAGE_UPLOAD_CONSTRAINTS = {
+  avatarUrl: { maxWidth: 512, maxHeight: 512, quality: 0.82 },
+  backsplashUrl: { maxWidth: 1600, maxHeight: 900, quality: 0.82 },
+} as const;
+
 function isLocalImageSource(src: string) {
   return src.startsWith("data:") || src.startsWith("blob:");
 }
 
-function readFileAsDataUrl(file: File): Promise<string> {
+function getScaledDimensions(
+  width: number,
+  height: number,
+  maxWidth: number,
+  maxHeight: number
+) {
+  const scale = Math.min(maxWidth / width, maxHeight / height, 1);
+  return {
+    width: Math.max(1, Math.round(width * scale)),
+    height: Math.max(1, Math.round(height * scale)),
+  };
+}
+
+function readFileAsOptimizedDataUrl(
+  file: File,
+  targetField: "backsplashUrl" | "avatarUrl"
+): Promise<string> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        resolve(reader.result);
-      } else {
-        reject(new Error("Failed to read image file."));
+    const objectUrl = URL.createObjectURL(file);
+    const image = new window.Image();
+
+    image.onload = () => {
+      const { maxWidth, maxHeight, quality } = IMAGE_UPLOAD_CONSTRAINTS[targetField];
+      const { width, height } = getScaledDimensions(image.width, image.height, maxWidth, maxHeight);
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const context = canvas.getContext("2d");
+      if (!context) {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Failed to prepare image upload."));
+        return;
+      }
+
+      context.drawImage(image, 0, 0, width, height);
+
+      try {
+        const dataUrl = canvas.toDataURL("image/webp", quality);
+        URL.revokeObjectURL(objectUrl);
+        resolve(dataUrl);
+      } catch {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Failed to process image file."));
       }
     };
-    reader.onerror = () => reject(new Error("Failed to read image file."));
-    reader.readAsDataURL(file);
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Failed to read image file."));
+    };
+
+    image.src = objectUrl;
   });
 }
 
 export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps) {
+  const router = useRouter();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [profile, setProfile] = useState<EditableProfileState>({
     name: user.name,
     location: user.location ?? "",
     bio: user.bio ?? "",
     avatarUrl: user.avatarUrl ?? "",
-    backsplashUrl: DEFAULT_BACKSPLASH_IMAGE,
+    backsplashUrl: user.backsplashUrl ?? DEFAULT_BACKSPLASH_IMAGE,
   });
   const [draftProfile, setDraftProfile] = useState<EditableProfileState>(profile);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   function handleOpenEditModal() {
     setDraftProfile(profile);
+    setSaveError(null);
     setIsEditModalOpen(true);
   }
 
-  function handleSave() {
-    setProfile({
-      ...draftProfile,
-      name: draftProfile.name.trim() || user.name,
-      location: draftProfile.location.trim(),
-      bio: draftProfile.bio.trim(),
-      avatarUrl: draftProfile.avatarUrl.trim(),
-      backsplashUrl: draftProfile.backsplashUrl.trim() || DEFAULT_BACKSPLASH_IMAGE,
-    });
-    setIsEditModalOpen(false);
+  async function handleSave() {
+    if (isSaving) return;
+
+    const normalizedName = draftProfile.name.trim();
+    if (!normalizedName) {
+      setSaveError("Name is required.");
+      return;
+    }
+
+    setSaveError(null);
+    setIsSaving(true);
+
+    try {
+      const response = await updateProfile({
+        name: normalizedName,
+        location: draftProfile.location.trim() || null,
+        bio: draftProfile.bio.trim() || null,
+        avatarUrl: draftProfile.avatarUrl.trim() || null,
+        backsplashUrl:
+          draftProfile.backsplashUrl.trim() === DEFAULT_BACKSPLASH_IMAGE
+            ? null
+            : draftProfile.backsplashUrl.trim() || null,
+      });
+
+      setProfile({
+        name: response.user.name,
+        location: response.user.location ?? "",
+        bio: response.user.bio ?? "",
+        avatarUrl: response.user.avatarUrl ?? "",
+        backsplashUrl: response.user.backsplashUrl ?? DEFAULT_BACKSPLASH_IMAGE,
+      });
+      setIsEditModalOpen(false);
+      router.refresh();
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Unable to save profile.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   function handleCancel() {
     setDraftProfile(profile);
+    setSaveError(null);
     setIsEditModalOpen(false);
   }
 
@@ -79,9 +160,16 @@ export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps
   ) {
     const file = event.target.files?.[0];
     if (!file) return;
-    const dataUrl = await readFileAsDataUrl(file);
-    setDraftProfile((prev) => ({ ...prev, [targetField]: dataUrl }));
-    event.target.value = "";
+
+    try {
+      const dataUrl = await readFileAsOptimizedDataUrl(file, targetField);
+      setDraftProfile((prev) => ({ ...prev, [targetField]: dataUrl }));
+      setSaveError(null);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Unable to process image upload.");
+    } finally {
+      event.target.value = "";
+    }
   }
 
   return (
@@ -204,7 +292,7 @@ export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps
               className="p-6 space-y-4"
               onSubmit={(e) => {
                 e.preventDefault();
-                handleSave();
+                void handleSave();
               }}
             >
               <h2 className="text-lg font-semibold text-text-primary">Edit profile</h2>
@@ -321,6 +409,12 @@ export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps
                 />
               </div>
 
+              {saveError ? (
+                <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {saveError}
+                </p>
+              ) : null}
+
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
@@ -331,9 +425,10 @@ export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps
                 </button>
                 <button
                   type="submit"
-                  className="text-xs font-semibold px-3 py-1.5 rounded-md bg-primary text-white hover:bg-primary-dark transition-colors"
+                  disabled={isSaving}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-md bg-primary text-white hover:bg-primary-dark transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Save
+                  {isSaving ? "Saving..." : "Save"}
                 </button>
               </div>
             </form>

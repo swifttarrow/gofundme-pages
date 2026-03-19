@@ -23,6 +23,7 @@ const HOST = process.env.HOST ?? "0.0.0.0";
 
 async function buildApp() {
   const app = Fastify({
+    bodyLimit: 8 * 1024 * 1024,
     logger: {
       level: process.env.LOG_LEVEL ?? "info",
       transport:
