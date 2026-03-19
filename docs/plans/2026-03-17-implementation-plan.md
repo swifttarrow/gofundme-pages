@@ -31,6 +31,7 @@ Verification definition:
 - Multi-region active-active deployment.
 - Full payment processor/payout production compliance implementation (simulate payment lifecycle safely for MVP if needed).
 - Non-essential UI polish before end-to-end correctness and observability are stable.
+- Mobile voice transcription / dictation for fundraiser creation in this scope.
 
 ## Architecture Direction (For Confirmation)
 - Backend: Node.js + Fastify (REST) with Zod contracts.
@@ -153,6 +154,9 @@ Ship the highest-conversion user surface with trust context, explicit tip select
 **File**: `apps/web/src/components/donation-module.tsx`  
 **Changes**: Add suggested amounts, custom amount, tip selector (`0/5/10/15/20/custom`), explicit total charged UI.
 
+**File**: `apps/web/src/app/fundraiser/new/page.tsx`  
+**Changes**: Replace the removed voice-first/mobile dictation flow with a guided fundraiser starter stepper capped at 3 screens (`Basics`, `Story`, `Review & publish`).
+
 **File**: `apps/api/src/routes/donations.ts`  
 **Changes**: Validate donation + tip totals server-side, emit `donation.created` event.
 
@@ -167,6 +171,7 @@ Ship the highest-conversion user surface with trust context, explicit tip select
 
 #### Manual Verification:
 - [ ] User can complete donation flow at `320px` without layout breakage
+- [ ] User can complete the `/fundraiser/new` starter flow in no more than 3 screens on mobile
 - [ ] Tip choice is explicit and never hidden/defaulted ambiguously
 - [ ] Donation emits one canonical event with traceable ID
 

@@ -1,10 +1,10 @@
-# Milestone 14: Trust, Safety, Ops, and Success Metrics
+# Milestone 9: Trust, Safety, Ops, and Success Metrics
 
 ## Overview
 Add the trust-first operational guardrails and measurement needed to run the charity request MVP safely.
 
 ## Dependencies
-- [x] Milestone 13 lifecycle and status tracking complete
+- [x] Milestone 8 lifecycle and status tracking complete
 - [x] Observability pipeline available for product metrics
 - [x] Basic moderation/support operations channel defined
 

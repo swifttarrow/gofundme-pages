@@ -36,23 +36,6 @@
 - [PRD](../../prd.md)
 - [Pre-search](../../pre-search.md)
 
-# Milestones: Voice-First Fundraiser Creation (Mobile) - MVP
-
-**Source plan:** `docs/requirements/voice-dictation-for-creating-fundraisers.md`
-
-## Milestone Order
-
-| # | Milestone | Status |
-|---|-----------|--------|
-| 7 | [m7-voice-capture-entry-and-recording-flow](./m7-voice-capture-entry-and-recording-flow/) | Complete |
-| 8 | [m8-ai-transcription-and-fundraiser-generation](./m8-ai-transcription-and-fundraiser-generation/) | Complete |
-| 9 | [m9-review-edit-and-regeneration-experience](./m9-review-edit-and-regeneration-experience/) | Complete |
-| 10 | [m10-publish-success-and-distribution-surfaces](./m10-publish-success-and-distribution-surfaces/) | Complete |
-| 11 | [m11-observability-safety-and-mvp-validation](./m11-observability-safety-and-mvp-validation/) | Complete |
-
-## Quick Links
-- [Requirement](../../requirements/voice-dictation-for-creating-fundraisers.md)
-
 # Milestones: Charity Starter Kit Request Flow (MVP)
 
 **Source requirement:** `docs/requirements/charity-starter-kit.md`
@@ -61,9 +44,9 @@
 
 | # | Milestone | Status |
 |---|-----------|--------|
-| 12 | [m12-charity-request-intake-and-submission](./m12-charity-request-intake-and-submission/) | Complete |
-| 13 | [m13-review-decisioning-and-status-tracking](./m13-review-decisioning-and-status-tracking/) | Complete |
-| 14 | [m14-trust-safety-ops-and-success-metrics](./m14-trust-safety-ops-and-success-metrics/) | Complete |
+| 7 | [m12-charity-request-intake-and-submission](./m12-charity-request-intake-and-submission/) | Complete |
+| 8 | [m13-review-decisioning-and-status-tracking](./m13-review-decisioning-and-status-tracking/) | Complete |
+| 9 | [m14-trust-safety-ops-and-success-metrics](./m14-trust-safety-ops-and-success-metrics/) | Complete |
 
 ## Quick Links
 - [Requirement](../../requirements/charity-starter-kit.md)

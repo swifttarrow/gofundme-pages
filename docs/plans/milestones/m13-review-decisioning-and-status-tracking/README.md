@@ -1,10 +1,10 @@
-# Milestone 13: Review Decisioning and Status Tracking
+# Milestone 8: Review Decisioning and Status Tracking
 
 ## Overview
 Implement manual review outcomes and user-facing status tracking so creators can monitor requests and act on decisions.
 
 ## Dependencies
-- [x] Milestone 12 intake and submission flow complete
+- [x] Milestone 7 intake and submission flow complete
 - [x] Internal review workflow (staff-side) can write request decisions
 - [x] Notification delivery channel available
 

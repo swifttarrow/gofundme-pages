@@ -1,4 +1,4 @@
-# Milestone 12: Charity Request Intake and Submission
+# Milestone 7: Charity Request Intake and Submission
 
 ## Overview
 Build the creator-facing charity request flow from entry points through submission confirmation, including one-active-request gating.
