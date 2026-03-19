@@ -15,7 +15,6 @@ import { FundraiserList } from "@/components/profile/fundraiser-list";
 import { Badge } from "@/lib/api";
 
 type ProfileTab = "fundraisers" | "donations" | "following";
-const CURRENT_USER_ID = "a1b2c3d4-0002-0002-0002-000000000002";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 interface ProfilePageProps {
@@ -32,13 +31,23 @@ type ApiBadge = {
   earned_at?: string;
 };
 
+type ApiProfileUser = {
+  id: string;
+  name: string;
+  role: SeedUser["role"];
+  bio: string | null;
+  avatarUrl: string | null;
+  backsplashUrl: string | null;
+  location: string | null;
+};
+
 export async function generateStaticParams() {
   return SEED_USERS.map((u) => ({ id: u.id }));
 }
 
 export async function generateMetadata({ params }: ProfilePageProps) {
   const { id } = await params;
-  const user = SEED_USERS.find((u) => u.id === id);
+  const user = await getProfileUserById(id);
   if (!user) return { title: "Profile | GoSupportMe" };
   return { title: `${user.name} | GoSupportMe` };
 }
@@ -86,6 +95,38 @@ async function getAuthenticatedUser(): Promise<SeedUser | null> {
   }
 }
 
+function mergeUserWithSeedStats(user: ApiProfileUser): SeedUser {
+  const seedUser = SEED_USERS.find((candidate) => candidate.id === user.id);
+
+  return {
+    id: user.id,
+    name: user.name,
+    bio: user.bio,
+    avatarUrl: user.avatarUrl,
+    backsplashUrl: user.backsplashUrl,
+    location: user.location,
+    role: user.role,
+    amountRaised: seedUser?.amountRaised ?? 0,
+    followerCount: seedUser?.followerCount ?? 0,
+    fundraiserCount: seedUser?.fundraiserCount ?? 0,
+    donationCount: seedUser?.donationCount ?? 0,
+  };
+}
+
+async function getProfileUserById(id: string): Promise<SeedUser | null> {
+  try {
+    const response = await fetch(`${API_BASE}/api/auth/users/${id}`, { cache: "no-store" });
+    if (response.ok) {
+      const payload = (await response.json()) as { user: ApiProfileUser };
+      return mergeUserWithSeedStats(payload.user);
+    }
+  } catch {
+    // Fall back to local seed data when the API is unavailable.
+  }
+
+  return SEED_USERS.find((candidate) => candidate.id === id) ?? null;
+}
+
 async function getUserBadges(userId: string): Promise<Badge[]> {
   try {
     const response = await fetch(`${API_BASE}/api/badges/${userId}`, { cache: "no-store" });
@@ -107,11 +148,10 @@ async function getUserBadges(userId: string): Promise<Badge[]> {
 export default async function ProfilePage({ params, searchParams }: ProfilePageProps) {
   const { id } = await params;
   const { tab } = await searchParams;
-  const seedUser = SEED_USERS.find((u) => u.id === id);
-  const authenticatedUser = seedUser ? null : await getAuthenticatedUser();
-  const user = seedUser ?? (authenticatedUser?.id === id ? authenticatedUser : null);
+  const authenticatedUser = await getAuthenticatedUser();
+  const user = await getProfileUserById(id);
   if (!user) notFound();
-  const isOwnProfile = user.id === CURRENT_USER_ID || authenticatedUser?.id === user.id;
+  const isOwnProfile = authenticatedUser?.id === user.id;
   const badges = await getUserBadges(user.id);
 
   let hasCharityRequest = false;

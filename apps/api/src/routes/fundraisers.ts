@@ -79,7 +79,7 @@ export async function fundraisersRoutes(app: FastifyInstance): Promise<void> {
         [id]
       ),
       db.query(
-        `SELECT d.id, d.amount_cents, d.is_anonymous, d.message, d.created_at,
+        `SELECT d.id, d.donor_user_id, d.amount_cents, d.is_anonymous, d.message, d.created_at,
                 u.name as donor_name, u.avatar_url as donor_avatar
          FROM donations d
          LEFT JOIN users u ON u.id = d.donor_user_id

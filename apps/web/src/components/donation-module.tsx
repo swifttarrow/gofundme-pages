@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ProgressBar } from "@/components/fundraiser/progress-bar";
@@ -193,11 +195,43 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
             <div className="mt-2 space-y-2">
               {recentDonations.map((donation) => (
                 <div key={donation.id} className="rounded-md border border-border-light bg-bg-faint px-3 py-2">
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="font-medium text-text-primary truncate">{donation.donorName}</span>
+                  <div className="flex items-start justify-between gap-3 text-sm">
+                    <div className="min-w-0 flex items-center gap-2">
+                      <div className="relative h-9 w-9 flex-shrink-0 overflow-hidden rounded-full bg-bg-gray">
+                        {donation.donorAvatar && !donation.isAnonymous ? (
+                          <Image
+                            src={donation.donorAvatar}
+                            alt={donation.donorName}
+                            fill
+                            className="object-cover"
+                            sizes="36px"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-white text-text-muted">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                              <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        {donation.isAnonymous || !donation.donorUserId ? (
+                          <span className="block truncate font-medium text-text-primary">
+                            {donation.donorName}
+                          </span>
+                        ) : (
+                          <Link
+                            href={`/profile/${donation.donorUserId}`}
+                            className="block truncate font-medium text-text-primary hover:text-primary hover:underline"
+                          >
+                            {donation.donorName}
+                          </Link>
+                        )}
+                        <p className="mt-0.5 text-xs text-text-muted">{timeAgo(donation.createdAt)}</p>
+                      </div>
+                    </div>
                     <span className="font-semibold text-primary">{formatCents(donation.amountCents)}</span>
                   </div>
-                  <p className="mt-0.5 text-xs text-text-muted">{timeAgo(donation.createdAt)}</p>
                 </div>
               ))}
             </div>

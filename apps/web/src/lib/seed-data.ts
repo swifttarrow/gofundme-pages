@@ -44,6 +44,7 @@ export interface SeedCommunity {
 export interface SeedDonation {
   id: string;
   fundraiserId: string;
+  donorUserId?: string | null;
   donorName: string;
   donorAvatar: string | null;
   amountCents: number;
@@ -345,7 +346,7 @@ Without surgery, Eli's doctors say he has less than a year. Please help give Eli
     organizerAvatar: "https://i.pravatar.cc/150?img=1",
     title: "College Fund for Displaced Students",
     story: `Students who lost their homes in the wildfire now face losing their education too. Three students had to withdraw from college when their families became homeless. Help us keep their college dreams alive with emergency scholarships.`,
-    coverImageUrl: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&auto=format&fit=crop",
+    coverImageUrl: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&auto=format&fit=crop",
     goalCents: 4000000,
     raisedCents: 4068000,
     category: "Education",

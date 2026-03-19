@@ -37,6 +37,10 @@ const UpdateProfileSchema = z
     message: "At least one field is required",
   });
 
+const UserIdParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
 type SessionClaims = {
   sub: string;
   email: string;
@@ -129,6 +133,18 @@ function serializeUser(user: UserRow) {
   return {
     id: user.id,
     email: user.email,
+    name: user.name,
+    role: user.role,
+    bio: user.bio,
+    avatarUrl: user.avatarUrl,
+    backsplashUrl: user.backsplashUrl,
+    location: user.location,
+  };
+}
+
+function serializePublicUser(user: UserRow) {
+  return {
+    id: user.id,
     name: user.name,
     role: user.role,
     bio: user.bio,
@@ -251,6 +267,21 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }
 
     return reply.send({ user: serializeUser(user) });
+  });
+
+  /** GET /api/auth/users/:id */
+  app.get("/api/auth/users/:id", async (request: FastifyRequest, reply: FastifyReply) => {
+    const parse = UserIdParamsSchema.safeParse(request.params);
+    if (!parse.success) {
+      return reply.status(400).send({ error: "Validation failed", details: parse.error.flatten() });
+    }
+
+    const user = await getUserById(parse.data.id);
+    if (!user) {
+      return reply.status(404).send({ error: "User not found" });
+    }
+
+    return reply.send({ user: serializePublicUser(user) });
   });
 
   /** PATCH /api/auth/profile */

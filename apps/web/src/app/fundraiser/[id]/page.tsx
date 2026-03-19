@@ -39,6 +39,7 @@ type ApiFundraiserResponse = {
   progressPercent: number;
   recentDonations: Array<{
     id: string;
+    donor_user_id: string | null;
     amount_cents: number;
     is_anonymous: boolean;
     message: string | null;
@@ -111,6 +112,7 @@ function mapApiDonationToSeed(
   return {
     id: donation.id,
     fundraiserId,
+    donorUserId: donation.donor_user_id,
     donorName: donation.donor_name,
     donorAvatar: donation.donor_avatar,
     amountCents: Number(donation.amount_cents ?? 0),
@@ -204,7 +206,11 @@ export default async function FundraiserPage({ params }: FundraiserPageProps) {
             </div>
 
             <div className="mt-8">
-              <DonationFeed donations={donations} totalCount={fundraiser.donorCount} />
+              <DonationFeed
+                donations={donations}
+                totalCount={fundraiser.donorCount}
+                currentUserId={currentUserId ?? undefined}
+              />
             </div>
 
             <TrustSafety />
