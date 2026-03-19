@@ -11,6 +11,7 @@ const PublishFundraiserSchema = z.object({
   category: z.string().trim().min(2).max(80),
   location: z.string().trim().min(2).max(120),
   breakdown: z.array(z.string().trim().min(2).max(300)).default([]),
+  coverImageUrl: z.string().url().max(2_000_000).optional(),
   distribution: z
     .object({
       shareToCommunity: z.boolean(),
@@ -123,13 +124,16 @@ export async function fundraisersRoutes(app: FastifyInstance): Promise<void> {
 
     const data = parse.data;
     const insert = await db.query(
-      `INSERT INTO fundraisers (organizer_id, title, story, goal_cents, category, location, status)
-       VALUES ($1, $2, $3, $4, $5, $6, 'active')
-       RETURNING id, title, story, goal_cents, category, location, status, created_at`,
+      `INSERT INTO fundraisers (
+         organizer_id, title, story, cover_image_url, goal_cents, category, location, status
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
+       RETURNING id, title, story, cover_image_url, goal_cents, category, location, status, created_at`,
       [
         data.organizerId,
         data.title,
         `${data.summary}\n\n${data.story}\n\n${data.breakdown.map((item) => `- ${item}`).join("\n")}`.trim(),
+        data.coverImageUrl ?? null,
         data.goalAmountCents,
         data.category,
         data.location,
@@ -140,6 +144,7 @@ export async function fundraisersRoutes(app: FastifyInstance): Promise<void> {
       id: string;
       title: string;
       story: string;
+      cover_image_url: string | null;
       goal_cents: number;
       category: string;
       location: string;
@@ -152,6 +157,7 @@ export async function fundraisersRoutes(app: FastifyInstance): Promise<void> {
         id: created.id,
         title: created.title,
         story: created.story,
+        coverImageUrl: created.cover_image_url,
         goalAmountCents: created.goal_cents,
         category: created.category,
         location: created.location,
