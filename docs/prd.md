@@ -128,14 +128,18 @@ Example event payload:
 
 ```json
 {
-  "eventId": "evt_01JX...",
-  "timestamp": "2026-03-17T20:10:12Z",
-  "eventType": "donation.created",
-  "actorUserId": "usr_123",
-  "fundraiserId": "fr_456",
+  "eventId": "550e8400-e29b-41d4-a716-446655440000",
+  "occurredAt": "2026-03-17T20:10:12Z",
+  "type": "donation.created",
   "payload": {
     "amountCents": 5000,
-    "tipPercent": 10
+    "tipCents": 500,
+    "totalCents": 5500,
+    "donationId": "5b7b1b60-7d70-4c7d-a6b7-b9e5d0a2e8c8",
+    "fundraiserId": "8eaf4c52-4c5b-4a10-8f65-5a72d63c4d20",
+    "donorUserId": "d2c7e38e-5e6a-4527-a6e5-9a3be6d9f3c2",
+    "isAnonymous": false,
+    "message": null
   }
 }
 ```
@@ -145,10 +149,8 @@ Required API/interface definitions:
 ```ts
 type PlatformEvent = {
   eventId: string
-  timestamp: string
-  eventType: "donation.created" | "fundraiser.update_posted" | "fundraiser.followed" | "profile.updated"
-  actorUserId: string
-  fundraiserId?: string
+  occurredAt: string
+  type: "donation.created" | "fundraiser.update_posted" | "fundraiser.followed" | "profile.updated"
   payload: Record<string, unknown>
 }
 
@@ -186,12 +188,14 @@ Deep-section performance targets:
 
 ## AI Cost Analysis (Required)
 
+Status note: the current shipped application does not include production AI endpoints. Treat this section as guidance for future optional AI work, not as a description of current runtime behavior.
+
 ### Development & Testing Costs
 
 Track the following during development:
 
-- LLM token spend for AI-generated content summaries and charity advice prompts.
-- Model/API call volume by feature (`summary`, `trust-check`, `classification`, optional recommendation explanation).
+- LLM token spend for any future AI-generated content summaries or charity guidance features.
+- Model/API call volume by feature if AI endpoints are introduced.
 - Prompt and completion token sizes by endpoint and success/failure class.
 - Retries/timeouts and fallback frequency when AI calls fail.
 - Synthetic evaluation run costs for prompt changes and regression tests.
@@ -200,28 +204,30 @@ Track the following during development:
 
 | Cost Category | 100 users | 1K users | 10K users | 100K users |
 | --- | --- | --- | --- | --- |
-| Campaign summary generation | $5-15/mo | $40-120/mo | $400-1,200/mo | $4,000-12,000/mo |
-| Charity advice assist | $8-20/mo | $70-200/mo | $700-2,000/mo | $7,000-20,000/mo |
-| Optional auto-tag/classification | $3-10/mo | $30-80/mo | $300-800/mo | $3,000-8,000/mo |
-| Evaluation/test harness usage | $10-25/mo | $20-60/mo | $80-250/mo | $200-800/mo |
-| **Estimated total AI spend** | **$26-70/mo** | **$160-460/mo** | **$1,480-4,250/mo** | **$14,200-40,800/mo** |
+| Campaign summary generation | Optional future feature | Optional future feature | Optional future feature | Optional future feature |
+| Charity advice assist | Optional future feature | Optional future feature | Optional future feature | Optional future feature |
+| Optional auto-tag/classification | Optional future feature | Optional future feature | Optional future feature | Optional future feature |
+| Evaluation/test harness usage | Optional future feature | Optional future feature | Optional future feature | Optional future feature |
+| **Estimated total AI spend** | **Currently $0 in shipped runtime** | **Currently $0 in shipped runtime** | **Currently $0 in shipped runtime** | **Currently $0 in shipped runtime** |
 
 Include assumptions:
 
 - Daily active ratio, creation/update rates, and recommendation refresh frequency per user cohort.
-- Average prompt/response token footprint per AI endpoint and cache hit rate.
+- Average prompt/response token footprint per AI endpoint and cache hit rate, if added.
 - Fallback policy for budget caps (degrade to deterministic summaries/heuristics when limits are hit).
 
 ## Technical Stack
 
+Current implementation choices are listed here rather than the earlier decision matrix options.
+
 | Layer | Technology |
 | --- | --- |
-| Backend | Node.js + Fastify, Node.js + NestJS, Go + Fiber |
-| Frontend | Next.js (App Router), Remix, React + Vite |
-| AI/LLM | OpenAI Responses API, Anthropic Messages API, local fallback heuristics |
-| Database/Storage | Postgres, Redis, S3-compatible object storage, optional vector store (pgvector/FAISS/Pinecone) |
-| Framework | tRPC or REST + OpenAPI, Zod for runtime contracts, event bus via Redis streams/Kafka |
-| Deployment | Railway, Fly.io, Render, Vercel (frontend) |
+| Backend | Node.js + Fastify |
+| Frontend | Next.js (App Router) |
+| AI/LLM | Not implemented in current runtime; deterministic heuristics only |
+| Database/Storage | Postgres, Redis |
+| Framework | REST + Zod runtime contracts, BullMQ for queueing |
+| Deployment | Railway (backend and state services), frontend hosted separately |
 
 Use whatever stack helps you ship. Complete the Pre-Search process to make informed decisions.
 

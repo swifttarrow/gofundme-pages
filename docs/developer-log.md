@@ -27,13 +27,13 @@ Use this format for new entries:
 **Context:** Pre-search checklist (docs/pre-search.md) and architecture document (docs/architecture.md) completed. All PRD appendix prompts answered. Ready to begin M1 implementation.
 **Options considered:** See pre-search.md for full decision matrix.
 **Decision:** Proceed with Node.js + Fastify API, Next.js App Router, Postgres + BullMQ + Redis, deployed on Vercel + Railway.
-**Rationale:** Fastest iteration path with strong TypeScript throughout. BullMQ chosen over Redis Streams for simpler worker management. ULID event IDs for sortability. Integer cents for all money.
+**Rationale:** Fastest iteration path with strong TypeScript throughout. BullMQ chosen over Redis Streams for simpler worker management. Integer cents chosen for all money. Event ID format later settled on UUIDs during implementation.
 **Impact:** M1 implementation begins: monorepo bootstrap, core contracts, initial schema.
 **Owner:** Agent + developer confirmed
 
 **Key invariants locked:**
 - All money: integer cents (no floats)
-- Event IDs: ULIDs with `evt_` prefix
+- Event IDs: UUIDs
 - Notifications: idempotent by `UNIQUE(userId, dedupeKey)`
 - Badges: idempotent by `UNIQUE(userId, type)`
 - Donation: exactly one canonical event per successful submission
@@ -81,3 +81,30 @@ Use this format for new entries:
 **Rationale:** This split gives strong DX and autoscaling defaults while keeping core backend services managed and close together.
 **Impact:** API/worker remain stateless, queue retries are managed through BullMQ, and rollback paths are defined independently for frontend and backend.
 **Owner:** Agent + developer confirmed
+
+## [2026-03-19] Session auth standardized on signed cookie JWTs
+
+**Context:** The app now has working sign-up, sign-in, sign-out, current-user lookup, and profile editing flows. Those paths needed one consistent auth transport across browser pages and API routes.
+**Options considered:** (A) Bearer tokens stored in client state vs (B) signed JWT session cookies validated on the API.
+**Decision:** Use a signed `gosupportme_session` cookie as the primary auth mechanism.
+**Rationale:** Cookie-based auth fits the Next.js browser flow well, avoids custom client-side token persistence, and keeps the API stateless while still using Fastify JWT.
+**Impact:** Auth and profile routes read/write the same session cookie, and protected actions such as charity request decisions can verify the acting user against the current session.
+**Owner:** Agent (documented from implemented code)
+
+## [2026-03-19] Charity creation moved to review-gated request workflow
+
+**Context:** The code now supports charity onboarding, but trust and abuse controls require more oversight than direct self-serve community creation.
+**Options considered:** (A) Immediate `POST /api/charities` self-service creation vs (B) submission, review, and approval before a community becomes active.
+**Decision:** Ship a request-review-approval workflow and disable direct charity creation.
+**Rationale:** The review gate limits duplicate or fraudulent charities, allows admin adjudication with recorded reasons, and keeps organizer eligibility rules explicit.
+**Impact:** Users submit `POST /api/charities/requests`, admins decide via `POST /api/charities/requests/:id/decision`, approved requests create `communities` transactionally, and direct `POST /api/charities` returns `410 Gone`.
+**Owner:** Agent (documented from implemented code)
+
+## [2026-03-19] E2E validation baseline added for core donor and organizer flows
+
+**Context:** The product now spans auth, fundraiser, profile, and charity request flows across both frontend and backend, making manual verification increasingly fragile.
+**Options considered:** (A) Rely on unit tests and manual smoke checks vs (B) add Playwright coverage that boots the full stack against seeded data.
+**Decision:** Add Playwright-based end-to-end coverage with isolated local servers and a reset/seed cycle per run.
+**Rationale:** Full-stack tests catch regressions across routing, session auth, API wiring, and seeded user journeys that are difficult to cover with unit tests alone.
+**Impact:** `playwright.config.ts` now boots the API on `3101` and the web app on `3100`, runs `db:reset` and `db:seed`, and covers fundraiser, profile, and charity request flows in `e2e/`.
+**Owner:** Agent (documented from implemented code)

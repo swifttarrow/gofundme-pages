@@ -40,11 +40,9 @@ redis-cli -u $REDIS_URL TTL "rec:<user_id>"
 ```
 
 ### Check recommendation queue
-```sql
-SELECT * FROM failed_events
-WHERE queue_name = 'recommendation-queue'
-ORDER BY failed_at DESC
-LIMIT 10;
+```bash
+# Check BullMQ-related logs and queue metrics; there is no `failed_events` table
+curl https://api.gosupportme.com/metrics | rg "jobs_processed_total|worker_queue_depth"
 ```
 
 ### Check if fundraisers table has active data
@@ -59,10 +57,7 @@ ORDER BY COUNT(*) DESC;
 ## Mitigation Options
 
 ### Option 1: Fallback to chronological feed (immediate)
-```bash
-# Set Redis flag to bypass recommendation scoring
-redis-cli -u $REDIS_URL SET "feature:recommendations_enabled" "false" EX 3600
-```
+Fallback behavior should be handled in application code or by rolling back the last recommendation change. There is no shipped Redis feature flag for `recommendations_enabled`.
 
 ### Option 2: Invalidate stale recommendation cache
 ```bash
@@ -75,7 +70,7 @@ redis-cli -u $REDIS_URL --scan --pattern "rec:*" | xargs redis-cli -u $REDIS_URL
 # Via API — replay all recent engagement events
 curl -X POST https://api.gosupportme.com/api/replay \
   -H "Content-Type: application/json" \
-  -d '{"eventIds": ["evt_...", "evt_..."], "processor": "recommendation"}'
+  -d '{"eventIds": ["550e8400-e29b-41d4-a716-446655440000", "f47ac10b-58cc-4372-a567-0e02b2c3d479"]}'
 ```
 
 ### Option 4: Postgres query performance degradation

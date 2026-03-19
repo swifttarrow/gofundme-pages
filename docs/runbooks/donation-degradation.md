@@ -20,7 +20,7 @@ Covers incidents affecting the donation submission flow — the highest-trust cr
 ### Check recent donation errors
 ```bash
 # Check API logs for donation errors
-curl https://api.gosupportme.com/metrics | grep http_errors_total | grep donations
+curl https://api.gosupportme.com/metrics | rg "http_requests_total|http_request_duration_ms|donations_total"
 ```
 
 ### Verify donation integrity
@@ -83,7 +83,7 @@ railway redeploy --service=api
 # Then replay via API
 curl -X POST https://api.gosupportme.com/api/replay \
   -H "Content-Type: application/json" \
-  -d '{"eventIds": ["evt_orphaned_1", "evt_orphaned_2"]}'
+  -d '{"eventIds": ["550e8400-e29b-41d4-a716-446655440000", "f47ac10b-58cc-4372-a567-0e02b2c3d479"]}'
 ```
 
 ### Option 3: Fundraiser total drift (raised_cents mismatch)
@@ -106,8 +106,8 @@ WHERE f.id IN (<affected_ids>);
 ### Option 4: Total validation rejection spike
 ```bash
 # Check if client is sending wrong totalCents values
-# Review API logs for 400 validation errors
-curl https://api.gosupportme.com/metrics | grep http_errors_total | grep 400
+# Review API logs and request metrics for 400 spikes on `/api/donations`
+curl https://api.gosupportme.com/metrics | rg "http_requests_total|http_request_duration_ms"
 ```
 
 ## Rollback Strategy

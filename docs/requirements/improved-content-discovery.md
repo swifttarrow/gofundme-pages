@@ -55,7 +55,7 @@ Score =
 - Cards with:
   - Title
   - Image/video
-  - Short AI-generated summary (<=120 words)
+  - Short story excerpt or summary text (<=120 words)
   - Progress bar (goal vs raised)
   - Cause tag (badge)
 
@@ -236,9 +236,9 @@ Track:
 
 ## AI Enhancements (Optional for MVP+)
 
-- AI-generated summaries for campaigns
+- AI-generated summaries for campaigns, if a production AI path is added later
 - Cause classification (auto-tagging)
-- “Why this was recommended” explanations
+- “Why this was recommended” explanations beyond the current heuristic labels
 
 ---
 

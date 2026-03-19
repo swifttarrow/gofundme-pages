@@ -24,12 +24,10 @@ redis-cli LLEN "bull:notification-queue:failed"
 ```
 
 ### Check recent failed jobs
-```sql
-SELECT event_id, error_message, failed_at
-FROM failed_events
-WHERE queue_name = 'notification-queue'
-ORDER BY failed_at DESC
-LIMIT 20;
+```bash
+# There is no `failed_events` table in the current implementation.
+# Inspect queue health via metrics and service logs instead.
+curl https://api.gosupportme.com/metrics | rg "jobs_processed_total|worker_queue_depth|notifications_created_total"
 ```
 
 ### Check notification delivery rate
@@ -64,11 +62,8 @@ LIMIT 20;
 
 ### Option 1: Restart worker (most common fix)
 ```bash
-# Railway
-railway run --service=api npm run worker:restart
-
-# Or redeploy the service
-railway up --service=api
+# Redeploy the API service, which also starts workers in the current runtime
+railway redeploy --service=api
 ```
 
 ### Option 2: Drain and replay stuck jobs
@@ -76,7 +71,7 @@ railway up --service=api
 # Via API endpoint
 curl -X POST https://api.gosupportme.com/api/replay \
   -H "Content-Type: application/json" \
-  -d '{"eventIds": ["evt_...", "evt_..."]}'
+  -d '{"eventIds": ["550e8400-e29b-41d4-a716-446655440000", "f47ac10b-58cc-4372-a567-0e02b2c3d479"]}'
 ```
 
 ### Option 3: Redis connection issues
@@ -84,19 +79,20 @@ curl -X POST https://api.gosupportme.com/api/replay \
 # Check Redis connectivity
 redis-cli -u $REDIS_URL ping
 
-# If Redis is overloaded, flush dedupe keys (safe — only affects 72h deduplication window)
-redis-cli -u $REDIS_URL --scan --pattern "notif:dedupe:*" | xargs redis-cli -u $REDIS_URL del
+# If Redis is overloaded, prefer restarting the service or scaling Redis.
+# Do not assume a specific dedupe-key naming convention unless verified in the deployed environment.
 ```
 
 ### Option 4: Postgres connectivity issues
 ```bash
-# Check pg pool status via metrics endpoint
-curl https://api.gosupportme.com/metrics | grep pg_pool
+# Check overall API metrics and health
+curl https://api.gosupportme.com/health
+curl https://api.gosupportme.com/metrics | rg "http_requests_total|http_request_duration_ms"
 ```
 
 ## Rollback Strategy
 - If worker code introduced the regression: redeploy previous Railway deployment
-- If schema migration caused the issue: check `failed_events` for error messages, revert migration if needed
+- If schema migration caused the issue: inspect service logs and recent queue failures, then revert the migration if needed
 
 ## Verification Steps
 1. Post a test donation via the API

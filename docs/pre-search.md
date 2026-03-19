@@ -87,7 +87,7 @@
 - Traces: PII fields excluded from span attributes
 
 **Audit trails required:**
-- Donations: immutable event record with `eventId`, `timestamp`, `actorUserId`
+- Donations: immutable event record with `eventId`, `occurredAt`, and donation payload data
 - Notification preference changes: logged in events table
 - No payouts in MVP (no payout audit trail needed)
 
@@ -132,14 +132,14 @@
 
 **Canonical entities:**
 - `User`: id, name, email, avatar, bio, interests[], joinedAt
-- `Fundraiser`: id, title, story, goalCents, raisedCents, organizerId, charityId?, category, status
+- `Fundraiser`: id, title, story, goalCents, raisedCents, organizerId, category, status
 - `Donation`: id, fundraiserId, donorUserId, amountCents, tipCents, totalCents, eventId, createdAt
 - `Notification`: id, userId, type, reason, dedupeKey, fundraiserId?, read, bundledCount, createdAt
 - `Badge`: id, type, criteria, earnedAt, userId, visible
 - `Follow`: userId, fundraiserId, role (donor/organizer/beneficiary/manual), createdAt
-- `PlatformEvent`: eventId, timestamp, eventType, actorUserId, fundraiserId?, payload
+- `PlatformEvent`: eventId, occurredAt, type, payload
 - `Recommendation`: userId, fundraiserId, score, reasons[], updatedAt
-- `Charity`: id, name, description, organizerId, transparencyNote, fundingMilestones[]
+- `Charity`: implemented as a review-gated community/charity request flow plus approved `communities`
 
 **Event naming convention:**
 - Format: `{domain}.{action}` in past tense
@@ -147,11 +147,10 @@
 - Versioning: include `schemaVersion: "1"` in payload for future compatibility
 
 **Every event contains:**
-- `eventId`: ULID (sortable, unique) — `evt_01JX...`
-- `timestamp`: ISO 8601 UTC
-- `actorUserId`: who performed the action
-- `fundraiserId`: optional, contextual
+- `eventId`: UUID
+- `occurredAt`: ISO 8601 UTC
 - `payload`: action-specific data
+- `type`: domain event name
 
 **Command vs fact events:**
 - Facts (immutable domain events): `donation.created`, `fundraiser.update_posted`
@@ -261,17 +260,17 @@ score = (interest_match × 0.4) + (donation_similarity × 0.3) + (trending_boost
 - No logo/media required at launch (can add later)
 
 **Charity–fundraiser linkage:**
-- `fundraisers.charityId` FK to `charities.id` — set when creating fundraiser or retroactively
-- UI: "Link to charity" step in fundraiser creation flow
-- API: `PATCH /api/fundraisers/:id` to set charityId (organizer auth required)
+- Approved charity requests create `communities`
+- Fundraisers can be linked to a community via `PATCH /api/charities/:id/fundraisers/:fid`
+- UI should treat charity linking as a post-approval community action, not a direct fundraiser field
 
 **Mandatory legal disclaimer:**
-- "GoSupportMe is not a registered charity. Donations are at donor's discretion. Charities are user-created entities."
-- Shown on charity creation screen and charity public page
+- "GoSupportMe is not a registered charity. Donations are at donor's discretion. Charity requests are reviewed before approval."
+- Shown on charity request screens and approved charity/community surfaces
 
 **AI advice endpoints:**
-- `POST /api/charities/advice` — optional, behind `ai_enabled` flag
-- Fallback: static tips based on category selection
+- No AI advice endpoint is currently implemented
+- If added later, keep it optional and fall back to static tips based on the request data
 
 ---
 
@@ -280,9 +279,9 @@ score = (interest_match × 0.4) + (donation_similarity × 0.3) + (trending_boost
 ### 1) Security and Failure Modes
 
 **Event store write succeeds but processor fails:**
-- Processors read from events table in polling loop (not in-memory queue)
-- Failed processor: event remains unprocessed, picked up on next poll (within 30s)
-- Dead letter: after 3 failures, event moved to `failed_events` table with error context
+- New events are enqueued to BullMQ queues after storage
+- Failed processor jobs retry with exponential backoff
+- No `failed_events` table is implemented today; failure investigation happens through queue state, logs, and replay
 
 **Retry without duplicate notifications/badge grants:**
 - Notification: dedupe key checked before insert (`ON CONFLICT DO NOTHING`)
