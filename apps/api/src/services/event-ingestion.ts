@@ -1,4 +1,5 @@
 import { Queue } from "bullmq";
+import { QueryResult, QueryResultRow } from "pg";
 import { PlatformEvent } from "@gosupportme/contracts";
 import { db } from "../db/client";
 import { createBullMQConnection } from "../db/redis";
@@ -19,8 +20,18 @@ interface StoredEvent {
   ingested_at: Date;
 }
 
-export async function insertEvent(event: PlatformEvent): Promise<{ stored: StoredEvent; isNew: boolean }> {
-  const result = await db.query<StoredEvent>(
+interface Queryable {
+  query: <T extends QueryResultRow = QueryResultRow>(
+    text: string,
+    params?: unknown[]
+  ) => Promise<QueryResult<T>>;
+}
+
+export async function storeEvent(
+  event: PlatformEvent,
+  client: Queryable = db
+): Promise<{ stored: StoredEvent; isNew: boolean }> {
+  const result = await client.query<StoredEvent>(
     `INSERT INTO platform_events (event_id, type, payload, occurred_at)
      VALUES ($1, $2, $3, $4)
      ON CONFLICT (event_id) DO NOTHING
@@ -30,16 +41,17 @@ export async function insertEvent(event: PlatformEvent): Promise<{ stored: Store
 
   if (result.rowCount === 0) {
     // Event already exists — return existing
-    const existing = await db.query<StoredEvent>(
+    const existing = await client.query<StoredEvent>(
       "SELECT * FROM platform_events WHERE event_id = $1",
       [event.eventId]
     );
     return { stored: existing.rows[0], isNew: false };
   }
 
-  const stored = result.rows[0];
-  eventsIngestedTotal.inc({ event_type: event.type });
+  return { stored: result.rows[0], isNew: true };
+}
 
+export async function fanOutEvent(event: PlatformEvent): Promise<void> {
   // Fan-out to queues (fire-and-forget, idempotent via jobId = eventId)
   const jobOptions = {
     jobId: event.eventId,
@@ -54,8 +66,15 @@ export async function insertEvent(event: PlatformEvent): Promise<{ stored: Store
     badgeQueue.add(event.type, { event }, jobOptions),
     recommendationQueue.add(event.type, { event }, jobOptions),
   ]);
+  eventsIngestedTotal.inc({ event_type: event.type });
+}
 
-  return { stored, isNew: true };
+export async function insertEvent(event: PlatformEvent): Promise<{ stored: StoredEvent; isNew: boolean }> {
+  const result = await storeEvent(event);
+  if (result.isNew) {
+    await fanOutEvent(event);
+  }
+  return result;
 }
 
 export async function getEvent(eventId: string): Promise<StoredEvent | null> {

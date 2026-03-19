@@ -1,8 +1,9 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { randomUUID } from "crypto";
+import { PlatformEvent } from "@gosupportme/contracts";
 import { z } from "zod";
 import { db } from "../db/client";
-import { insertEvent } from "../services/event-ingestion";
+import { fanOutEvent, storeEvent } from "../services/event-ingestion";
 
 const DonationRequestSchema = z
   .object({
@@ -50,9 +51,26 @@ export async function donationsRoutes(app: FastifyInstance): Promise<void> {
     const donationId = randomUUID();
     const eventId = randomUUID();
     const now = new Date().toISOString();
+    const event: PlatformEvent = {
+      eventId,
+      type: "donation.created",
+      occurredAt: now,
+      payload: {
+        donationId,
+        fundraiserId: data.fundraiserId,
+        donorUserId: data.donorUserId,
+        amountCents: data.amountCents,
+        tipCents: data.tipCents,
+        totalCents: data.totalCents,
+        isAnonymous: data.isAnonymous,
+        message: data.message,
+      },
+    };
 
-    // Insert donation + emit event in a transaction
+    // Persist the event row before the donation insert so the FK is valid.
     await db.transaction(async (client) => {
+      await storeEvent(event, client);
+
       await client.query(
         `INSERT INTO donations (id, fundraiser_id, donor_user_id, amount_cents, tip_cents, total_cents, tip_percent, is_anonymous, message, event_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
@@ -79,22 +97,7 @@ export async function donationsRoutes(app: FastifyInstance): Promise<void> {
       );
     });
 
-    // Emit platform event
-    await insertEvent({
-      eventId,
-      type: "donation.created",
-      occurredAt: now,
-      payload: {
-        donationId,
-        fundraiserId: data.fundraiserId,
-        donorUserId: data.donorUserId,
-        amountCents: data.amountCents,
-        tipCents: data.tipCents,
-        totalCents: data.totalCents,
-        isAnonymous: data.isAnonymous,
-        message: data.message,
-      },
-    });
+    await fanOutEvent(event);
 
     return reply.status(201).send({ donationId, eventId, totalCents: data.totalCents });
   });
