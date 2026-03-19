@@ -24,7 +24,7 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
   const { showToast } = useToast();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(50);
   const [customAmount, setCustomAmount] = useState("");
-  const [tipPercent, setTipPercent] = useState<number>(12);
+  const [tipPercent, setTipPercent] = useState<number>(10);
   const [isDonationModalOpen, setIsDonationModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState<1 | 2>(1);
   const [isFollowing, setIsFollowing] = useState(false);
