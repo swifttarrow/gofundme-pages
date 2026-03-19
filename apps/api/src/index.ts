@@ -17,6 +17,7 @@ import { authRoutes } from "./routes/auth";
 import { registerTelemetry } from "./services/telemetry";
 import { startWorkers } from "./worker/index";
 import { db } from "./db/client";
+import requestIdPlugin from "./middleware/request-id";
 
 const PORT = parseInt(process.env.PORT ?? "3001", 10);
 const HOST = process.env.HOST ?? "0.0.0.0";
@@ -51,6 +52,8 @@ async function buildApp() {
   await app.register(jwt, {
     secret: process.env.JWT_SECRET ?? "gosupportme-dev-secret-change-in-production",
   });
+
+  await app.register(requestIdPlugin);
 
   // ─── Telemetry ───────────────────────────────────────────────────────────────
   registerTelemetry(app);

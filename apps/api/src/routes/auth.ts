@@ -5,6 +5,7 @@ import { promisify } from "node:util";
 import { z } from "zod";
 import { db } from "../db/client";
 import { insertEvent } from "../services/event-ingestion";
+import { structuredLog } from "../services/telemetry";
 
 const SESSION_COOKIE_NAME = "gosupportme_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
@@ -411,6 +412,12 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         userId: user.id,
         fields: changedFields,
       },
+    }, { requestId: request.id });
+
+    structuredLog("info", "profile.updated", {
+      request_id: request.id,
+      user_id: user.id,
+      changed_fields: changedFields,
     });
 
     const stats = await getUserStats(user.id);

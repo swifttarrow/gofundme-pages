@@ -3,6 +3,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { z } from "zod";
 import { db } from "../db/client";
 import { insertEvent } from "../services/event-ingestion";
+import { structuredLog } from "../services/telemetry";
 
 const FollowBodySchema = z.object({
   followerUserId: z.string().uuid(),
@@ -138,8 +139,15 @@ export async function followsRoutes(app: FastifyInstance): Promise<void> {
           fundraiserId,
           followerUserId,
         },
-      });
+      }, { requestId: request.id });
     }
+
+    structuredLog("info", "fundraiser.followed", {
+      request_id: request.id,
+      fundraiser_id: fundraiserId,
+      follower_user_id: followerUserId,
+      created,
+    });
 
     return reply.status(created ? 201 : 200).send({ isFollowing: true, created });
   });

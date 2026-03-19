@@ -4,6 +4,7 @@ import { PlatformEvent } from "@gosupportme/contracts";
 import { db } from "../db/client";
 import { createBullMQConnection } from "../db/redis";
 import { eventsIngestedTotal } from "../observability/metrics";
+import { structuredLog } from "./telemetry";
 
 const bullConnection = createBullMQConnection();
 
@@ -51,7 +52,10 @@ export async function storeEvent(
   return { stored: result.rows[0], isNew: true };
 }
 
-export async function fanOutEvent(event: PlatformEvent): Promise<void> {
+export async function fanOutEvent(
+  event: PlatformEvent,
+  context?: { requestId?: string }
+): Promise<void> {
   // Fan-out to queues (fire-and-forget, idempotent via jobId = eventId)
   const jobOptions = {
     jobId: event.eventId,
@@ -67,12 +71,20 @@ export async function fanOutEvent(event: PlatformEvent): Promise<void> {
     recommendationQueue.add(event.type, { event }, jobOptions),
   ]);
   eventsIngestedTotal.inc({ event_type: event.type });
+  structuredLog("info", "event.fanned_out", {
+    request_id: context?.requestId ?? null,
+    event_id: event.eventId,
+    event_type: event.type,
+  });
 }
 
-export async function insertEvent(event: PlatformEvent): Promise<{ stored: StoredEvent; isNew: boolean }> {
+export async function insertEvent(
+  event: PlatformEvent,
+  context?: { requestId?: string }
+): Promise<{ stored: StoredEvent; isNew: boolean }> {
   const result = await storeEvent(event);
   if (result.isNew) {
-    await fanOutEvent(event);
+    await fanOutEvent(event, context);
   }
   return result;
 }

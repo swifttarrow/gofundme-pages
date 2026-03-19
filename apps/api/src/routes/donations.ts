@@ -3,7 +3,8 @@ import { randomUUID } from "crypto";
 import { PlatformEvent } from "@gosupportme/contracts";
 import { z } from "zod";
 import { db } from "../db/client";
-import { fanOutEvent, storeEvent } from "../services/event-ingestion";
+import { fanOutEvent, insertEvent, storeEvent } from "../services/event-ingestion";
+import { structuredLog } from "../services/telemetry";
 
 const DonationRequestSchema = z
   .object({
@@ -81,7 +82,7 @@ export async function donationsRoutes(app: FastifyInstance): Promise<void> {
     };
 
     // Persist the event row before the donation insert so the FK is valid.
-    await db.transaction(async (client) => {
+    const autoFollowed = await db.transaction(async (client) => {
       await storeEvent(event, client);
 
       await client.query(
@@ -108,11 +109,62 @@ export async function donationsRoutes(app: FastifyInstance): Promise<void> {
          WHERE id = $2`,
         [data.amountCents, data.fundraiserId]
       );
+
+      if (!data.donorUserId) {
+        return false;
+      }
+
+      const followInsert = await client.query(
+        `INSERT INTO follows (follower_id, fundraiser_id)
+         VALUES ($1, $2)
+         ON CONFLICT (follower_id, fundraiser_id) DO NOTHING
+         RETURNING id`,
+        [data.donorUserId, data.fundraiserId]
+      );
+
+      if (followInsert.rowCount === 0) {
+        return false;
+      }
+
+      await client.query(
+        `UPDATE fundraisers
+         SET follower_count = follower_count + 1, updated_at = NOW()
+         WHERE id = $1`,
+        [data.fundraiserId]
+      );
+
+      return true;
     });
 
-    await fanOutEvent(event);
+    await fanOutEvent(event, { requestId: request.id });
 
-    return reply.status(201).send({ donationId, eventId, totalCents: data.totalCents });
+    if (autoFollowed && data.donorUserId) {
+      await insertEvent(
+        {
+          eventId: randomUUID(),
+          type: "fundraiser.followed",
+          occurredAt: now,
+          payload: {
+            fundraiserId: data.fundraiserId,
+            followerUserId: data.donorUserId,
+          },
+        },
+        { requestId: request.id }
+      );
+    }
+
+    structuredLog("info", "donation.created", {
+      request_id: request.id,
+      donation_id: donationId,
+      event_id: eventId,
+      fundraiser_id: data.fundraiserId,
+      donor_user_id: data.donorUserId,
+      amount_cents: data.amountCents,
+      total_cents: data.totalCents,
+      auto_followed: autoFollowed,
+    });
+
+    return reply.status(201).send({ donationId, eventId, totalCents: data.totalCents, autoFollowed });
   });
 
   /** GET /api/donations?fundraiserId=<uuid>&limit=10&cursor=<iso> */

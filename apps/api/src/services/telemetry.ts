@@ -26,6 +26,14 @@ export function registerTelemetry(app: FastifyInstance): void {
     if (typeof duration === "number" && Number.isFinite(duration) && duration >= 0) {
       httpRequestDurationMs.observe(labels, duration);
     }
+
+    structuredLog("info", "request.completed", {
+      request_id: request.id,
+      method: request.method,
+      route,
+      status_code: reply.statusCode,
+      duration_ms: typeof duration === "number" ? duration : null,
+    });
   });
 
   // Prometheus metrics endpoint

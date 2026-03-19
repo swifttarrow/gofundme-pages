@@ -11,7 +11,7 @@ export async function eventsRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: "Validation failed", details: parse.error.flatten() });
     }
 
-    const { stored, isNew } = await insertEvent(parse.data);
+    const { stored, isNew } = await insertEvent(parse.data, { requestId: request.id });
 
     return reply.status(isNew ? 201 : 200).send({
       eventId: stored.event_id,
