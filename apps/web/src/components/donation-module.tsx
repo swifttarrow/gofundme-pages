@@ -137,7 +137,6 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
         />
 
         <div className="mt-3 mb-4">
-          <p className="text-sm text-text-secondary">{fundraiser.donorCount.toLocaleString()} donations</p>
           {recentDonations.length === 0 ? (
             <p className="mt-2 rounded-md border border-dashed border-border-medium bg-bg-faint px-3 py-2 text-xs text-text-secondary">
               Waiting for the first mock donation.

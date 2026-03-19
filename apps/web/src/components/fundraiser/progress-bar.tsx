@@ -9,6 +9,9 @@ interface ProgressBarProps {
 
 export function ProgressBar({ raisedCents, goalCents, donorCount, progressPercent }: ProgressBarProps) {
   const clampedPercent = Math.min(progressPercent, 100);
+  const radius = 28;
+  const circumference = 2 * Math.PI * radius;
+  const dashOffset = circumference - (clampedPercent / 100) * circumference;
 
   return (
     <div>
@@ -22,23 +25,48 @@ export function ProgressBar({ raisedCents, goalCents, donorCount, progressPercen
         </span>
       </div>
 
-      {/* Progress bar */}
-      <div className="h-2 bg-border-light rounded-full overflow-hidden mb-2">
+      <div className="mt-3 flex items-center gap-4">
         <div
-          className="h-full bg-primary rounded-full transition-all duration-500"
-          style={{ width: `${clampedPercent}%` }}
+          className="relative h-[72px] w-[72px] flex-shrink-0"
           role="progressbar"
-          aria-valuenow={progressPercent}
+          aria-label="Fundraiser progress"
+          aria-valuenow={clampedPercent}
           aria-valuemin={0}
           aria-valuemax={100}
-        />
-      </div>
+        >
+          <svg className="h-full w-full -rotate-90" viewBox="0 0 72 72" aria-hidden="true">
+            <circle
+              cx="36"
+              cy="36"
+              r={radius}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="8"
+              className="text-border-light"
+            />
+            <circle
+              cx="36"
+              cy="36"
+              r={radius}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="8"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={dashOffset}
+              className="text-primary transition-all duration-500"
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-sm font-bold text-text-primary">{Math.round(clampedPercent)}%</span>
+          </div>
+        </div>
 
-      {/* Donor count */}
-      <p className="text-sm text-text-secondary">
-        <span className="font-semibold text-text-primary">{donorCount.toLocaleString()}</span>
-        {" "}donations
-      </p>
+        <p className="text-sm text-text-secondary">
+          <span className="font-semibold text-text-primary">{donorCount.toLocaleString()}</span>
+          {" "}donations
+        </p>
+      </div>
     </div>
   );
 }

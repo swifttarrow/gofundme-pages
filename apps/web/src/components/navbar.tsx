@@ -144,8 +144,8 @@ export function Navbar() {
           <div className="relative" ref={createMenuRef}>
             <button
               type="button"
-              className="bg-primary text-white text-sm font-semibold px-4 py-2 rounded-md
-                         hover:bg-primary-dark transition-colors whitespace-nowrap inline-flex items-center gap-1.5"
+              className="border border-border-medium bg-white text-text-primary text-sm font-semibold px-4 py-2 rounded-md
+                         hover:border-primary hover:text-primary hover:bg-bg-faint transition-colors whitespace-nowrap inline-flex items-center gap-1.5"
               aria-label={isCreateMenuOpen ? "Close create menu" : "Open create menu"}
               aria-expanded={isCreateMenuOpen}
               onClick={() => setIsCreateMenuOpen((open) => !open)}
