@@ -1,8 +1,12 @@
 node_modules/
 apps/**/node_modules/
+.next/
 apps/web/.next/
 apps/web/.next-e2e/
+apps/api/dist/
 packages/contracts/dist/
 *.tsbuildinfo
 .env.local
 .vercel
+playwright-report/
+test-results/
