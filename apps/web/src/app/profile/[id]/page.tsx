@@ -12,6 +12,7 @@ import {
 } from "@/lib/seed-data";
 import { ProfileHeader } from "@/components/profile/header";
 import { FundraiserList } from "@/components/profile/fundraiser-list";
+import { Badge } from "@/lib/api";
 
 type ProfileTab = "fundraisers" | "donations" | "following";
 const CURRENT_USER_ID = "a1b2c3d4-0002-0002-0002-000000000002";
@@ -21,6 +22,15 @@ interface ProfilePageProps {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ tab?: string }>;
 }
+
+type ApiBadge = {
+  type: string;
+  label: string;
+  description: string;
+  icon: string;
+  priority: number;
+  earned_at?: string;
+};
 
 export async function generateStaticParams() {
   return SEED_USERS.map((u) => ({ id: u.id }));
@@ -76,6 +86,24 @@ async function getAuthenticatedUser(): Promise<SeedUser | null> {
   }
 }
 
+async function getUserBadges(userId: string): Promise<Badge[]> {
+  try {
+    const response = await fetch(`${API_BASE}/api/badges/${userId}`, { cache: "no-store" });
+    if (!response.ok) return [];
+    const payload = (await response.json()) as { badges: ApiBadge[] };
+    return payload.badges.map((badge) => ({
+      type: badge.type,
+      label: badge.label,
+      description: badge.description,
+      icon: badge.icon,
+      priority: badge.priority,
+      earnedAt: badge.earned_at,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export default async function ProfilePage({ params, searchParams }: ProfilePageProps) {
   const { id } = await params;
   const { tab } = await searchParams;
@@ -84,6 +112,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
   const user = seedUser ?? (authenticatedUser?.id === id ? authenticatedUser : null);
   if (!user) notFound();
   const isOwnProfile = user.id === CURRENT_USER_ID || authenticatedUser?.id === user.id;
+  const badges = await getUserBadges(user.id);
 
   let hasCharityRequest = false;
   if (isOwnProfile) {
@@ -144,7 +173,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <ProfileHeader user={user} isOwnProfile={isOwnProfile} />
+        <ProfileHeader user={user} badges={badges} isOwnProfile={isOwnProfile} />
         {isOwnProfile && hasCharityRequest ? (
           <div className="mt-4 rounded-lg border border-border-light bg-white p-4 flex flex-wrap items-center justify-between gap-3">
             <div>

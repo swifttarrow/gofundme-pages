@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ProgressBar } from "@/components/fundraiser/progress-bar";
 import { SeedDonation, SeedFundraiser, formatCents, timeAgo } from "@/lib/seed-data";
-import { followFundraiser, getFollowStatus, unfollowFundraiser } from "@/lib/api";
+import { createDonation, followFundraiser, getFollowStatus, unfollowFundraiser } from "@/lib/api";
+import { useToast } from "@/components/providers/toast-provider";
+import { evaluateBadgesAndToast } from "@/lib/badge-awards";
+import { emitAppDataRefresh } from "@/lib/client-events";
 
 const SUGGESTED_AMOUNTS = [25, 50, 100, 250];
 const MAX_TIP_PERCENT = 30;
@@ -16,6 +20,8 @@ interface DonationModuleProps {
 }
 
 export function DonationModule({ fundraiser, donations, currentUserId, onDonate }: DonationModuleProps) {
+  const router = useRouter();
+  const { showToast } = useToast();
   const [selectedAmount, setSelectedAmount] = useState<number | null>(50);
   const [customAmount, setCustomAmount] = useState("");
   const [tipPercent, setTipPercent] = useState<number>(12);
@@ -24,7 +30,9 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(fundraiser.followerCount);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [isDonationLoading, setIsDonationLoading] = useState(false);
   const [followError, setFollowError] = useState<string | null>(null);
+  const [donationError, setDonationError] = useState<string | null>(null);
   const recentDonations = donations.slice(0, 3);
 
   const amountDollars = selectedAmount ?? (parseFloat(customAmount) || 0);
@@ -84,16 +92,48 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
     setSelectedAmount(null);
   }
 
-  function handleDonate() {
+  async function handleDonate() {
+    if (isDonationLoading) return;
     if (amountCents <= 0) return;
-    if (onDonate) {
-      onDonate(amountCents, tipPercent);
-    } else {
-      alert(
-        `Donation of ${formatCents(amountCents)} + tip ${formatCents(tipCents)} = ${formatCents(totalCents)} submitted!`
-      );
+    setDonationError(null);
+    setIsDonationLoading(true);
+
+    try {
+      if (onDonate) {
+        onDonate(amountCents, tipPercent);
+      } else {
+        await createDonation({
+          fundraiserId: fundraiser.id,
+          amountCents,
+          tipCents,
+          totalCents,
+          tipPercent: [0, 5, 10, 15, 20].includes(tipPercent) ? tipPercent : "custom",
+          isAnonymous: false,
+          message: null,
+          donorUserId: currentUserId ?? null,
+        });
+      }
+
+      if (currentUserId) {
+        try {
+          await evaluateBadgesAndToast(currentUserId, showToast);
+        } catch {
+          // The donation already succeeded, so don't block the success path on badge refresh.
+        }
+      }
+
+      showToast({
+        title: "Donation sent",
+        description: `Your donation of ${formatCents(amountCents)} was submitted successfully.`,
+      });
+      emitAppDataRefresh();
+      router.refresh();
+      setIsDonationModalOpen(false);
+    } catch {
+      setDonationError("Couldn't process your donation right now.");
+    } finally {
+      setIsDonationLoading(false);
     }
-    setIsDonationModalOpen(false);
   }
 
   async function handleToggleFollow() {
@@ -117,6 +157,14 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
         });
         setIsFollowing(result.isFollowing);
         if (result.created) setFollowerCount((count) => count + 1);
+        if (result.created) {
+          try {
+            await evaluateBadgesAndToast(currentUserId, showToast);
+          } catch {
+            // Following should still succeed even if badge evaluation is temporarily unavailable.
+          }
+          emitAppDataRefresh();
+        }
       }
     } catch {
       setFollowError("Couldn't update follow right now.");
@@ -327,21 +375,27 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setModalStep(1)}
+                    disabled={isDonationLoading}
                     className="w-1/3 border border-border-medium text-text-primary font-semibold py-3 rounded-md hover:bg-bg-faint transition-colors"
                   >
                     Back
                   </button>
                   <button
-                    onClick={handleDonate}
-                    disabled={amountCents <= 0}
+                    onClick={() => void handleDonate()}
+                    disabled={amountCents <= 0 || isDonationLoading}
                     className="w-2/3 bg-primary text-white font-bold py-3 rounded-md hover:bg-primary-dark
                    transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base"
                   >
-                    {amountCents > 0
-                      ? `Donate ${formatCents(totalCents)}`
-                      : "Donate now"}
+                    {isDonationLoading
+                      ? "Processing..."
+                      : amountCents > 0
+                        ? `Donate ${formatCents(totalCents)}`
+                        : "Donate now"}
                   </button>
                 </div>
+                {donationError ? (
+                  <p className="mt-3 text-xs text-accent-red">{donationError}</p>
+                ) : null}
               </>
             )}
           </div>

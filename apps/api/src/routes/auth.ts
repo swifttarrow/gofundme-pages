@@ -1,8 +1,10 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { randomUUID } from "node:crypto";
 import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import { z } from "zod";
 import { db } from "../db/client";
+import { insertEvent } from "../services/event-ingestion";
 
 const SESSION_COOKIE_NAME = "gosupportme_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
@@ -291,6 +293,13 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.send({ user: serializeUser(user) });
     }
 
+    const changedFields = [
+      parse.data.name !== undefined ? "name" : null,
+      parse.data.bio !== undefined ? "bio" : null,
+      parse.data.avatarUrl !== undefined ? "avatar" : null,
+      parse.data.location !== undefined ? "location" : null,
+    ].filter((field): field is "name" | "bio" | "avatar" | "location" => field !== null);
+
     values.push(user.id);
     const updated = await db.query<UserRow>(
       `UPDATE users
@@ -300,6 +309,16 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
                  backsplash_url AS "backsplashUrl", location, password_hash AS "passwordHash"`,
       values
     );
+
+    await insertEvent({
+      eventId: randomUUID(),
+      type: "profile.updated",
+      occurredAt: new Date().toISOString(),
+      payload: {
+        userId: user.id,
+        fields: changedFields,
+      },
+    });
 
     return reply.send({ user: serializeUser(updated.rows[0]) });
   });

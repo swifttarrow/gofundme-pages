@@ -5,8 +5,9 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { MeerkatMascot } from "@/components/meerkat-mascot";
-import { AuthUser, getCurrentUser, logout } from "@/lib/api";
-import { SEED_FAVORITES, SEED_FUNDRAISERS, SEED_NOTIFICATIONS, formatCents, timeAgo } from "@/lib/seed-data";
+import { AppNotification, AuthUser, getCurrentUser, getNotifications, logout } from "@/lib/api";
+import { SEED_FAVORITES, SEED_FUNDRAISERS, formatCents, timeAgo } from "@/lib/seed-data";
+import { APP_DATA_REFRESH_EVENT } from "@/lib/client-events";
 
 const NAV_DROPDOWN_LIMIT = 4;
 const FAVORITES_PREVIEW_LIMIT = 3;
@@ -21,14 +22,15 @@ export function Navbar() {
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [recentNotifications, setRecentNotifications] = useState<AppNotification[]>([]);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const favoritesRef = useRef<HTMLDivElement>(null);
   const createMenuRef = useRef<HTMLDivElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
-  const unreadCount = SEED_NOTIFICATIONS.filter((notification) => !notification.isRead).length;
-  const recentNotifications = SEED_NOTIFICATIONS.slice(0, NAV_DROPDOWN_LIMIT);
+  const unreadCount = recentNotifications.filter((notification) => !notification.isRead).length;
+  const previewNotifications = recentNotifications.slice(0, NAV_DROPDOWN_LIMIT);
   const favoriteFundraisers = SEED_FAVORITES
     .filter((favorite) => favorite.userId === CURRENT_USER_ID)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -75,6 +77,43 @@ export function Navbar() {
       isMounted = false;
     };
   }, [pathname]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadNotifications(userId: string) {
+      try {
+        const result = await getNotifications({
+          userId,
+          limit: 20,
+        });
+        if (!cancelled) {
+          setRecentNotifications(result.notifications);
+        }
+      } catch {
+        if (!cancelled) {
+          setRecentNotifications([]);
+        }
+      }
+    }
+
+    if (!currentUser) {
+      setRecentNotifications([]);
+      return;
+    }
+
+    void loadNotifications(currentUser.id);
+
+    const onRefresh = () => {
+      void loadNotifications(currentUser.id);
+    };
+
+    window.addEventListener(APP_DATA_REFRESH_EVENT, onRefresh);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(APP_DATA_REFRESH_EVENT, onRefresh);
+    };
+  }, [currentUser, pathname]);
 
   async function handleLogout() {
     if (isLoggingOut) return;
@@ -254,24 +293,30 @@ export function Navbar() {
                     </Link>
                   </div>
                   <div className="max-h-80 overflow-y-auto">
-                    {recentNotifications.map((notification) => (
-                      <Link
-                        key={notification.id}
-                        href={notification.deepLink}
-                        className="block rounded-md px-2 py-2 transition-colors hover:bg-primary/5"
-                        onClick={() => setIsNotificationsOpen(false)}
-                      >
-                        <p className="text-sm font-medium text-text-primary line-clamp-1">
-                          {notification.title}
-                        </p>
-                        <p className="text-xs text-text-secondary mt-0.5 line-clamp-1">
-                          {notification.body}
-                        </p>
-                        <p className="text-[11px] text-text-muted mt-1">
-                          {timeAgo(notification.createdAt)}
-                        </p>
-                      </Link>
-                    ))}
+                    {recentNotifications.length > 0 ? (
+                      previewNotifications.map((notification) => (
+                        <Link
+                          key={notification.id}
+                          href={notification.deepLink}
+                          className="block rounded-md px-2 py-2 transition-colors hover:bg-primary/5"
+                          onClick={() => setIsNotificationsOpen(false)}
+                        >
+                          <p className="text-sm font-medium text-text-primary line-clamp-1">
+                            {notification.title}
+                          </p>
+                          <p className="text-xs text-text-secondary mt-0.5 line-clamp-1">
+                            {notification.body}
+                          </p>
+                          <p className="text-[11px] text-text-muted mt-1">
+                            {timeAgo(notification.createdAt)}
+                          </p>
+                        </Link>
+                      ))
+                    ) : (
+                      <p className="mx-1 mt-1 rounded-md bg-bg-faint px-2 py-3 text-xs text-text-muted">
+                        No notifications yet.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { SeedNotification, timeAgo } from "@/lib/seed-data";
+import { AppNotification, markAllNotificationsRead, markNotificationRead } from "@/lib/api";
+import { timeAgo } from "@/lib/seed-data";
+import { emitAppDataRefresh } from "@/lib/client-events";
 
 const TABS = [
   { label: "All", value: "all" },
@@ -46,17 +48,31 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
       </svg>
     </div>
   ),
+  badge_earned: (
+    <div className="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#009E60" strokeWidth="2">
+        <circle cx="12" cy="8" r="3" />
+        <path d="M8 14h8" />
+        <path d="M10 11.5 8 22l4-2 4 2-2-10.5" />
+      </svg>
+    </div>
+  ),
 };
 
 interface NotificationListProps {
-  notifications: SeedNotification[];
+  currentUserId: string;
+  notifications: AppNotification[];
 }
 
-export function NotificationList({ notifications }: NotificationListProps) {
+export function NotificationList({ currentUserId, notifications }: NotificationListProps) {
   const [activeTab, setActiveTab] = useState("all");
   const [readIds, setReadIds] = useState<Set<string>>(
     new Set(notifications.filter((n) => n.isRead).map((n) => n.id))
   );
+
+  useEffect(() => {
+    setReadIds(new Set(notifications.filter((n) => n.isRead).map((n) => n.id)));
+  }, [notifications]);
 
   const filtered = notifications.filter((n) => {
     if (activeTab === "all") return true;
@@ -68,12 +84,30 @@ export function NotificationList({ notifications }: NotificationListProps) {
     return true;
   });
 
-  function markRead(id: string) {
+  async function markRead(id: string) {
+    if (readIds.has(id)) return;
     setReadIds((prev) => new Set([...prev, id]));
+    try {
+      await markNotificationRead(id, currentUserId);
+      emitAppDataRefresh();
+    } catch {
+      setReadIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
   }
 
-  function markAllRead() {
-    setReadIds(new Set(notifications.map((n) => n.id)));
+  async function markAllRead() {
+    const next = new Set(notifications.map((n) => n.id));
+    setReadIds(next);
+    try {
+      await markAllNotificationsRead(currentUserId);
+      emitAppDataRefresh();
+    } catch {
+      setReadIds(new Set(notifications.filter((n) => n.isRead).map((n) => n.id)));
+    }
   }
 
   const unreadCount = notifications.filter((n) => !readIds.has(n.id)).length;
@@ -122,7 +156,7 @@ export function NotificationList({ notifications }: NotificationListProps) {
               key={notification.id}
               notification={notification}
               isRead={readIds.has(notification.id)}
-              onRead={() => markRead(notification.id)}
+              onRead={() => void markRead(notification.id)}
             />
           ))
         )}
@@ -132,7 +166,7 @@ export function NotificationList({ notifications }: NotificationListProps) {
 }
 
 interface NotificationRowProps {
-  notification: SeedNotification;
+  notification: AppNotification;
   isRead: boolean;
   onRead: () => void;
 }

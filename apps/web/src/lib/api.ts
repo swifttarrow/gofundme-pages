@@ -1,5 +1,29 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+type ApiBadge = {
+  id?: string;
+  type: string;
+  label: string;
+  description: string;
+  icon: string;
+  priority: number;
+  earned_at?: string;
+};
+
+type ApiNotification = {
+  id: string;
+  user_id?: string;
+  type: string;
+  title: string;
+  body: string;
+  reason_text: string | null;
+  deep_link: string | null;
+  is_read: boolean;
+  is_bundled: boolean;
+  bundle_count: number;
+  created_at: string;
+};
+
 async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
@@ -28,6 +52,54 @@ export type AuthUser = {
   backsplashUrl: string | null;
   location: string | null;
 };
+
+export type Badge = {
+  type: string;
+  label: string;
+  description: string;
+  icon: string;
+  priority: number;
+  earnedAt?: string;
+};
+
+export type AppNotification = {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  reasonText: string;
+  deepLink: string;
+  isRead: boolean;
+  isBundled: boolean;
+  bundleCount: number;
+  createdAt: string;
+};
+
+function mapBadge(badge: ApiBadge): Badge {
+  return {
+    type: badge.type,
+    label: badge.label,
+    description: badge.description,
+    icon: badge.icon,
+    priority: badge.priority,
+    earnedAt: badge.earned_at,
+  };
+}
+
+function mapNotification(notification: ApiNotification): AppNotification {
+  return {
+    id: notification.id,
+    type: notification.type,
+    title: notification.title,
+    body: notification.body,
+    reasonText: notification.reason_text ?? "",
+    deepLink: notification.deep_link ?? "/notifications",
+    isRead: notification.is_read,
+    isBundled: notification.is_bundled,
+    bundleCount: notification.bundle_count,
+    createdAt: notification.created_at,
+  };
+}
 
 // ─── Fundraisers ─────────────────────────────────────────────────────────────
 export function getFundraisers(params?: {
@@ -161,13 +233,23 @@ export function getNotifications(params: {
   if (params.tab) qs.set("tab", params.tab);
   if (params.limit) qs.set("limit", String(params.limit));
   if (params.cursor) qs.set("cursor", params.cursor);
-  return apiFetch<{ notifications: unknown[]; nextCursor: string | null }>(
+  return apiFetch<{ notifications: ApiNotification[]; nextCursor: string | null }>(
     `/api/notifications?${qs}`
-  );
+  ).then((payload) => ({
+    notifications: payload.notifications.map(mapNotification),
+    nextCursor: payload.nextCursor,
+  }));
 }
 
 export function markNotificationRead(id: string, userId: string) {
   return apiFetch(`/api/notifications/${id}/read`, {
+    method: "PATCH",
+    body: JSON.stringify({ user_id: userId }),
+  });
+}
+
+export function markAllNotificationsRead(userId: string) {
+  return apiFetch<{ success: boolean }>("/api/notifications/mark-all-read", {
     method: "PATCH",
     body: JSON.stringify({ user_id: userId }),
   });
@@ -199,7 +281,19 @@ export function getFeed(params?: {
 
 // ─── Badges ──────────────────────────────────────────────────────────────────
 export function getBadges(userId: string) {
-  return apiFetch<{ badges: unknown[] }>(`/api/badges/${userId}`);
+  return apiFetch<{ badges: ApiBadge[] }>(`/api/badges/${userId}`).then((payload) => ({
+    badges: payload.badges.map(mapBadge),
+  }));
+}
+
+export function evaluateBadges(userId: string) {
+  return apiFetch<{ awarded: ApiBadge[]; eligible: string[] }>("/api/badges/evaluate", {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  }).then((payload) => ({
+    awarded: payload.awarded.map(mapBadge),
+    eligible: payload.eligible,
+  }));
 }
 
 // ─── Auth ────────────────────────────────────────────────────────────────────

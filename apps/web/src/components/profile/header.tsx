@@ -4,14 +4,17 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, type ChangeEvent } from "react";
 import { SeedUser, formatCents } from "@/lib/seed-data";
-import { Badges, MOCK_BADGES } from "@/components/badges";
-import { updateProfile } from "@/lib/api";
+import { Badges } from "@/components/badges";
+import { Badge, updateProfile } from "@/lib/api";
+import { useToast } from "@/components/providers/toast-provider";
+import { evaluateBadgesAndToast } from "@/lib/badge-awards";
 
 const DEFAULT_BACKSPLASH_IMAGE =
   "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&auto=format&fit=crop";
 
 interface ProfileHeaderProps {
   user: SeedUser;
+  badges: Badge[];
   isOwnProfile?: boolean;
 }
 
@@ -88,8 +91,9 @@ function readFileAsOptimizedDataUrl(
   });
 }
 
-export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps) {
+export function ProfileHeader({ user, badges, isOwnProfile = false }: ProfileHeaderProps) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [profile, setProfile] = useState<EditableProfileState>({
     name: user.name,
@@ -139,6 +143,11 @@ export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps
         avatarUrl: response.user.avatarUrl ?? "",
         backsplashUrl: response.user.backsplashUrl ?? DEFAULT_BACKSPLASH_IMAGE,
       });
+      try {
+        await evaluateBadgesAndToast(response.user.id, showToast);
+      } catch {
+        // Profile updates should still succeed even if badge evaluation is temporarily unavailable.
+      }
       setIsEditModalOpen(false);
       router.refresh();
     } catch (error) {
@@ -276,7 +285,7 @@ export function ProfileHeader({ user, isOwnProfile = false }: ProfileHeaderProps
 
       {/* Badges */}
       <div className="mt-4 px-4 sm:px-0">
-        <Badges badges={MOCK_BADGES} maxVisible={5} />
+        <Badges badges={badges} maxVisible={5} />
       </div>
 
       {isEditModalOpen ? (

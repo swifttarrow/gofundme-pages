@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import {
   SEED_FUNDRAISERS,
   type SeedDonation,
@@ -49,6 +50,26 @@ type ApiFundraiserResponse = {
 
 export async function generateStaticParams() {
   return SEED_FUNDRAISERS.map((f) => ({ id: f.id }));
+}
+
+async function getAuthenticatedUserId(): Promise<string | null> {
+  const sessionToken = (await cookies()).get("gosupportme_session")?.value;
+  if (!sessionToken) return null;
+
+  try {
+    const response = await fetch(`${API_BASE}/api/auth/me`, {
+      headers: {
+        Cookie: `gosupportme_session=${sessionToken}`,
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) return null;
+    const payload = (await response.json()) as { user: { id: string } };
+    return payload.user.id;
+  } catch {
+    return null;
+  }
 }
 
 async function getApiFundraiser(id: string): Promise<ApiFundraiserResponse | null> {
@@ -155,7 +176,7 @@ export default async function FundraiserPage({ params }: FundraiserPageProps) {
     ? mapApiFundraiserToSeed(apiFundraiser)
     : SEED_FUNDRAISERS.find((f) => f.id === id);
   if (!fundraiser) notFound();
-  const currentUserId = "a1b2c3d4-0002-0002-0002-000000000002";
+  const currentUserId = await getAuthenticatedUserId();
 
   const donations = apiFundraiser
     ? apiFundraiser.recentDonations.map((donation) => mapApiDonationToSeed(fundraiser.id, donation))
@@ -174,7 +195,7 @@ export default async function FundraiserPage({ params }: FundraiserPageProps) {
               <DonationModule
                 fundraiser={fundraiser}
                 donations={donations}
-                currentUserId={currentUserId}
+                currentUserId={currentUserId ?? undefined}
               />
             </div>
 
@@ -195,7 +216,7 @@ export default async function FundraiserPage({ params }: FundraiserPageProps) {
               <DonationModule
                 fundraiser={fundraiser}
                 donations={donations}
-                currentUserId={currentUserId}
+                currentUserId={currentUserId ?? undefined}
               />
             </div>
           </div>
