@@ -29,23 +29,6 @@ export type AuthUser = {
   location: string | null;
 };
 
-export type VoiceDraft = {
-  title: string;
-  summary: string;
-  story: string;
-  goalAmountCents: number;
-  category: string;
-  breakdown: string[];
-  entities: {
-    person: string | null;
-    cause: string | null;
-    urgency: string | null;
-    amountHintCents: number | null;
-  };
-  confidence: number;
-  lowConfidence: boolean;
-};
-
 // ─── Fundraisers ─────────────────────────────────────────────────────────────
 export function getFundraisers(params?: {
   cursor?: string;
@@ -65,35 +48,6 @@ export function getFundraisers(params?: {
 
 export function getFundraiser(id: string) {
   return apiFetch<Record<string, unknown>>(`/api/fundraisers/${id}`);
-}
-
-export function createVoiceDraft(data: {
-  inputType: "voice" | "typing";
-  transcript: string;
-  recordingSeconds?: number;
-  source?: string;
-}) {
-  return apiFetch<{
-    draftId: string;
-    status: "ready";
-    transcript: { raw: string; normalized: string };
-    draft: VoiceDraft;
-    checks: { moderationSafe: boolean; grounded: boolean; missingEvidence: string[] };
-  }>("/api/fundraisers/voice/draft", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-}
-
-export function regenerateVoiceDraft(data: {
-  draftId: string;
-  section: "title" | "summary" | "story" | "breakdown";
-  tone: "emotional" | "direct" | "detailed";
-}) {
-  return apiFetch<{ draftId: string; draft: VoiceDraft }>("/api/fundraisers/voice/regenerate", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
 }
 
 export function publishFundraiser(data: {
