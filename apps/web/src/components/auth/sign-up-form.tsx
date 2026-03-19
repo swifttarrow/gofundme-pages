@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { registerUser } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 
 const DEFAULT_REDIRECT = "/";
 
@@ -23,6 +24,7 @@ export function SignUpForm() {
     setIsSubmitting(true);
 
     try {
+      trackEvent("sign_up_submitted", { method: "password" });
       await registerUser({ name, email, password });
       router.push(DEFAULT_REDIRECT);
       router.refresh();

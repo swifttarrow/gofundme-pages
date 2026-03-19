@@ -7,6 +7,7 @@ import {
   getCurrentUser,
   getCharityRequestEligibility,
 } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 
 type Step = "loading" | "blocked" | "education" | "form" | "confirmation";
 type EligibilityState = "eligible" | "under_review" | "active_community";
@@ -80,6 +81,10 @@ export function CharityWizard() {
         location: location.trim(),
         coverImageUrl: coverImageUrl.trim() || undefined,
         idempotencyKey: crypto.randomUUID(),
+      });
+      trackEvent("charity_request_submitted", {
+        has_cover_image: Boolean(coverImageUrl.trim()),
+        location_entered: Boolean(location.trim()),
       });
       setStep("confirmation");
     } catch (cause) {

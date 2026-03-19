@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { login } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 
 const DEFAULT_REDIRECT = "/";
 
@@ -22,6 +23,7 @@ export function SignInForm() {
     setIsSubmitting(true);
 
     try {
+      trackEvent("sign_in_submitted", { method: "password" });
       await login({ email, password });
       router.push(DEFAULT_REDIRECT);
       router.refresh();
