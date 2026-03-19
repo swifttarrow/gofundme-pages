@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getMyCharityRequest, resubmitCharityRequest } from "@/lib/api";
-
-const CURRENT_USER_ID = "a1b2c3d4-0002-0002-0002-000000000002";
+import { getCurrentUser, getMyCharityRequest, resubmitCharityRequest } from "@/lib/api";
 
 export default function CharityRequestStatusPage() {
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [request, setRequest] = useState<{
     id: string;
     status: "under_review" | "approved" | "rejected";
@@ -21,7 +20,11 @@ export default function CharityRequestStatusPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    getMyCharityRequest(CURRENT_USER_ID)
+    getCurrentUser()
+      .then((response) => {
+        setCurrentUserId(response.user.id);
+        return getMyCharityRequest(response.user.id);
+      })
       .then((response) => setRequest(response))
       .catch((cause) =>
         setError(cause instanceof Error ? cause.message : "Unable to load your request.")
@@ -29,12 +32,12 @@ export default function CharityRequestStatusPage() {
   }, []);
 
   async function handleResubmit() {
-    if (!request) return;
+    if (!request || !currentUserId) return;
     setIsSubmitting(true);
     setError(null);
     try {
       await resubmitCharityRequest(request.id, {
-        userId: CURRENT_USER_ID,
+        userId: currentUserId,
         charityName: request.charity_name,
         mission: request.mission,
         beneficiaries: request.beneficiaries,
@@ -42,7 +45,7 @@ export default function CharityRequestStatusPage() {
         location: request.location,
         coverImageUrl: request.cover_image_url ?? undefined,
       });
-      const latest = await getMyCharityRequest(CURRENT_USER_ID);
+      const latest = await getMyCharityRequest(currentUserId);
       setRequest(latest);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Resubmission failed.");
@@ -56,7 +59,7 @@ export default function CharityRequestStatusPage() {
       <h1 className="text-2xl font-semibold text-text-primary mb-4">Your Charity Request</h1>
       {error ? <p className="text-sm text-accent-red mb-3">{error}</p> : null}
       {!request ? (
-        <p className="text-sm text-text-secondary">Loading status...</p>
+        <p className="text-sm text-text-secondary">{error ? "We couldn't load your request." : "Loading status..."}</p>
       ) : (
         <div className="rounded-lg border border-border-light bg-white p-5 space-y-4">
           <div>

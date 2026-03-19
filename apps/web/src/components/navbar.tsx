@@ -20,7 +20,6 @@ import { APP_DATA_REFRESH_EVENT } from "@/lib/client-events";
 
 const NAV_DROPDOWN_LIMIT = 4;
 const FAVORITES_PREVIEW_LIMIT = 3;
-const CURRENT_USER_ID = "a1b2c3d4-0002-0002-0002-000000000002";
 const SEARCH_SUGGESTION_LIMIT = 5;
 const SEARCH_DEBOUNCE_MS = 250;
 const MIN_SEARCH_CHARACTERS = 2;
@@ -74,7 +73,7 @@ export function Navbar() {
   const unreadCount = recentNotifications.filter((notification) => !notification.isRead).length;
   const previewNotifications = recentNotifications.slice(0, NAV_DROPDOWN_LIMIT);
   const favoriteFundraisers = SEED_FAVORITES
-    .filter((favorite) => favorite.userId === CURRENT_USER_ID)
+    .filter((favorite) => favorite.userId === currentUser?.id)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .map((favorite) => SEED_FUNDRAISERS.find((fundraiser) => fundraiser.id === favorite.fundraiserId))
     .filter((fundraiser): fundraiser is NonNullable<typeof fundraiser> => fundraiser !== undefined)

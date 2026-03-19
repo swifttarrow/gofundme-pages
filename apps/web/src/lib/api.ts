@@ -39,6 +39,38 @@ type ApiFundraiserSummary = {
   created_at: string;
 };
 
+type ApiRecommendation = {
+  fundraiserId: string;
+  score: number;
+  reasons: Array<{ type: string; label: string }>;
+  fundraiser: {
+    title: string;
+    coverImageUrl: string | null;
+    goalCents: number;
+    raisedCents: number;
+    category: string;
+    donorCount: number;
+  };
+};
+
+type ApiFeedItem = {
+  id: string;
+  organizer_name: string;
+  organizer_avatar: string | null;
+  title: string;
+  cover_image_url: string | null;
+  goal_cents: number;
+  raised_cents: number;
+  category: string;
+  location: string | null;
+  is_urgent: boolean;
+  donor_count: number;
+  follower_count: number;
+  created_at: string;
+  updated_at: string;
+  progress_percent: number | null;
+};
+
 async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
@@ -110,6 +142,38 @@ export type FundraiserSummary = {
   createdAt: string;
 };
 
+export type Recommendation = {
+  fundraiserId: string;
+  score: number;
+  reasons: Array<{ type: string; label: string }>;
+  fundraiser: {
+    title: string;
+    coverImageUrl: string | null;
+    goalCents: number;
+    raisedCents: number;
+    category: string;
+    donorCount: number;
+  };
+};
+
+export type FeedItem = {
+  id: string;
+  organizerName: string;
+  organizerAvatar: string | null;
+  title: string;
+  coverImageUrl: string | null;
+  goalCents: number;
+  raisedCents: number;
+  category: string;
+  location: string | null;
+  isUrgent: boolean;
+  donorCount: number;
+  followerCount: number;
+  createdAt: string;
+  updatedAt: string;
+  progressPercent: number;
+};
+
 function mapBadge(badge: ApiBadge): Badge {
   return {
     type: badge.type,
@@ -150,6 +214,35 @@ function mapFundraiserSummary(fundraiser: ApiFundraiserSummary): FundraiserSumma
     isUrgent: fundraiser.is_urgent,
     donorCount: fundraiser.donor_count,
     createdAt: fundraiser.created_at,
+  };
+}
+
+function mapRecommendation(recommendation: ApiRecommendation): Recommendation {
+  return {
+    fundraiserId: recommendation.fundraiserId,
+    score: recommendation.score,
+    reasons: recommendation.reasons,
+    fundraiser: recommendation.fundraiser,
+  };
+}
+
+function mapFeedItem(item: ApiFeedItem): FeedItem {
+  return {
+    id: item.id,
+    organizerName: item.organizer_name,
+    organizerAvatar: item.organizer_avatar,
+    title: item.title,
+    coverImageUrl: item.cover_image_url,
+    goalCents: item.goal_cents,
+    raisedCents: item.raised_cents,
+    category: item.category,
+    location: item.location,
+    isUrgent: item.is_urgent,
+    donorCount: item.donor_count,
+    followerCount: item.follower_count,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at,
+    progressPercent: Number(item.progress_percent ?? 0),
   };
 }
 
@@ -215,7 +308,7 @@ export function createDonation(data: {
   message: string | null;
   donorUserId: string | null;
 }) {
-  return apiFetch<{ donationId: string; eventId: string; totalCents: number }>(
+  return apiFetch<{ donationId: string; eventId: string; totalCents: number; autoFollowed: boolean }>(
     "/api/donations",
     { method: "POST", body: JSON.stringify(data) }
   );
@@ -316,7 +409,12 @@ export function markAllNotificationsRead(userId: string) {
 export function getRecommendations(userId: string, limit?: number) {
   const qs = new URLSearchParams({ user_id: userId });
   if (limit) qs.set("limit", String(limit));
-  return apiFetch<{ recommendations: unknown[] }>(`/api/recommendations?${qs}`);
+  return apiFetch<{ recommendations: ApiRecommendation[]; meta: { mainSlots: number; explorationSlots: number } }>(
+    `/api/recommendations?${qs}`
+  ).then((payload) => ({
+    recommendations: payload.recommendations.map(mapRecommendation),
+    meta: payload.meta,
+  }));
 }
 
 // ─── Feed ────────────────────────────────────────────────────────────────────
@@ -331,9 +429,12 @@ export function getFeed(params?: {
   if (params?.sort) qs.set("sort", params.sort);
   if (params?.cursor) qs.set("cursor", params.cursor);
   if (params?.limit) qs.set("limit", String(params.limit));
-  return apiFetch<{ items: unknown[]; nextCursor: string | null }>(
+  return apiFetch<{ items: ApiFeedItem[]; nextCursor: string | null }>(
     `/api/feed?${qs}`
-  );
+  ).then((payload) => ({
+    items: payload.items.map(mapFeedItem),
+    nextCursor: payload.nextCursor,
+  }));
 }
 
 // ─── Badges ──────────────────────────────────────────────────────────────────

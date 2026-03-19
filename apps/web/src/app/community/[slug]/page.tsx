@@ -4,7 +4,6 @@ import { SEED_COMMUNITIES, SEED_FUNDRAISERS } from "@/lib/seed-data";
 import { FeaturedCampaigns } from "@/components/community/featured-campaigns";
 import { CommunityFeed } from "@/components/community/feed";
 import { CommunitySidebar } from "@/components/community/sidebar";
-import { Filters } from "@/components/community/filters";
 import { CommunityFollowButton } from "@/components/community/follow-button";
 
 interface CommunityDetailPageProps {
@@ -88,10 +87,6 @@ export default async function CommunityDetailPage({ params }: CommunityDetailPag
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="mb-6">
-          <Filters />
-        </div>
-
         <div className="flex flex-col lg:flex-row gap-8">
           <div className="flex-1 min-w-0">
             <FeaturedCampaigns fundraisers={communityFundraisers} />

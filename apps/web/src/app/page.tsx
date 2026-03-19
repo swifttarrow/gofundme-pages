@@ -3,13 +3,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { SEED_COMMUNITIES, SEED_FUNDRAISERS, SEED_NETWORK_POSTS, SEED_USERS } from "@/lib/seed-data";
+import { SEED_COMMUNITIES, SEED_FUNDRAISERS, SEED_NETWORK_POSTS, SEED_USERS, SeedFundraiser } from "@/lib/seed-data";
 import { CampaignCard } from "@/components/community/campaign-card";
-import { AuthUser, getCurrentUser } from "@/lib/api";
+import { AuthUser, getCurrentUser, getFeed, getRecommendations } from "@/lib/api";
+import { toSeedFundraiser } from "@/lib/fundraiser-view";
 
 export default function HomePage() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
-  const featured = SEED_FUNDRAISERS.slice(0, 3);
+  const [featuredFundraisers, setFeaturedFundraisers] = useState<SeedFundraiser[]>(SEED_FUNDRAISERS.slice(0, 3));
   const featuredCommunities = SEED_COMMUNITIES.slice(0, 3);
   const fromNetwork = [...SEED_NETWORK_POSTS]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -43,6 +44,68 @@ export default function HomePage() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadFeatured() {
+      try {
+        if (currentUser) {
+          const result = await getRecommendations(currentUser.id, 3);
+          if (!cancelled && result.recommendations.length > 0) {
+            setFeaturedFundraisers(
+              result.recommendations.map((recommendation) =>
+                toSeedFundraiser({
+                  id: recommendation.fundraiserId,
+                  title: recommendation.fundraiser.title,
+                  coverImageUrl: recommendation.fundraiser.coverImageUrl,
+                  goalCents: recommendation.fundraiser.goalCents,
+                  raisedCents: recommendation.fundraiser.raisedCents,
+                  category: recommendation.fundraiser.category,
+                  donorCount: recommendation.fundraiser.donorCount,
+                })
+              )
+            );
+            return;
+          }
+        }
+
+        const result = await getFeed({ sort: "trending", limit: 3 });
+        if (!cancelled && result.items.length > 0) {
+          setFeaturedFundraisers(
+            result.items.map((item) =>
+              toSeedFundraiser({
+                id: item.id,
+                organizerName: item.organizerName,
+                organizerAvatar: item.organizerAvatar,
+                title: item.title,
+                coverImageUrl: item.coverImageUrl,
+                goalCents: item.goalCents,
+                raisedCents: item.raisedCents,
+                category: item.category,
+                location: item.location,
+                isUrgent: item.isUrgent,
+                donorCount: item.donorCount,
+                followerCount: item.followerCount,
+                createdAt: item.createdAt,
+                progressPercent: item.progressPercent,
+              })
+            )
+          );
+        }
+      } catch {
+        if (!cancelled) {
+          setFeaturedFundraisers(SEED_FUNDRAISERS.slice(0, 3));
+        }
+      }
+    }
+
+    void loadFeatured();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser]);
 
   return (
     <div className="min-h-screen">
@@ -83,13 +146,15 @@ export default function HomePage() {
       {/* Featured Fundraisers */}
       <section className="max-w-6xl mx-auto px-4 py-12">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-text-primary">Featured fundraisers</h2>
+          <h2 className="text-2xl font-bold text-text-primary">
+            {currentUser ? "Recommended for you" : "Trending fundraisers"}
+          </h2>
           <Link href="/fundraisers" className="text-primary font-medium hover:underline">
             See all
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {featured.map((f) => (
+          {featuredFundraisers.map((f) => (
             <CampaignCard key={f.id} fundraiser={f} />
           ))}
         </div>

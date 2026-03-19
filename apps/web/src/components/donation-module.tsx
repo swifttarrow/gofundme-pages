@@ -111,10 +111,12 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
     setIsDonationLoading(true);
 
     try {
+      let autoFollowed = false;
+
       if (onDonate) {
         onDonate(amountCents, tipPercent);
       } else {
-        await createDonation({
+        const donationResult = await createDonation({
           fundraiserId: fundraiser.id,
           amountCents,
           tipCents,
@@ -124,6 +126,12 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
           message: null,
           donorUserId: currentUserId ?? null,
         });
+        autoFollowed = donationResult.autoFollowed;
+      }
+
+      if (autoFollowed) {
+        setIsFollowing(true);
+        setFollowerCount((count) => count + 1);
       }
 
       if (currentUserId) {
@@ -136,7 +144,9 @@ export function DonationModule({ fundraiser, donations, currentUserId, onDonate 
 
       showToast({
         title: "Donation sent",
-        description: `Your donation of ${formatCents(amountCents)} was submitted successfully.`,
+        description: autoFollowed
+          ? `Your donation of ${formatCents(amountCents)} was submitted successfully. You're now following this fundraiser.`
+          : `Your donation of ${formatCents(amountCents)} was submitted successfully.`,
       });
       trackEvent("donation_submitted", {
         fundraiser_id: fundraiser.id,

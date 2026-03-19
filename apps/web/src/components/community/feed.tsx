@@ -1,126 +1,187 @@
-import Image from "next/image";
-import Link from "next/link";
-import { SEED_USERS, SEED_FUNDRAISERS } from "@/lib/seed-data";
+"use client";
 
-interface FeedPost {
-  id: string;
-  author: { id: string; name: string; avatar: string | null };
-  fundraiserTitle: string;
-  fundraiserId: string;
-  content: string;
-  likeCount: number;
-  timeAgo: string;
-}
+import { useCallback, useEffect, useRef, useState } from "react";
+import { CampaignCard } from "@/components/community/campaign-card";
+import { SeedFundraiser } from "@/lib/seed-data";
+import { getFeed } from "@/lib/api";
+import { toSeedFundraiser } from "@/lib/fundraiser-view";
 
-const MOCK_POSTS: FeedPost[] = [
-  {
-    id: "1",
-    author: {
-      id: SEED_USERS[0].id,
-      name: "Sarah Johnson",
-      avatar: "https://i.pravatar.cc/150?img=1",
-    },
-    fundraiserTitle: "Help the Martinez Family Rebuild After the Fire",
-    fundraiserId: SEED_FUNDRAISERS[0].id,
-    content:
-      "Thank you for your incredible support! The Martinez family has found temporary housing and the kids are back at school. We're overwhelmed by the generosity of this community. Every donation, share, and kind word has made a difference.",
-    likeCount: 34,
-    timeAgo: "4 hours ago",
-  },
-  {
-    id: "2",
-    author: {
-      id: SEED_USERS[2].id,
-      name: "Jessica Rivera",
-      avatar: "https://i.pravatar.cc/150?img=3",
-    },
-    fundraiserTitle: "Support Donna's Cancer Treatment Journey",
-    fundraiserId: SEED_FUNDRAISERS[1].id,
-    content:
-      "Donna had her second chemotherapy session today and is showing incredible strength. The funds you've raised are already covering her treatment costs. Your generosity is literally saving her life. Thank you from the bottom of our hearts.",
-    likeCount: 89,
-    timeAgo: "1 day ago",
-  },
-  {
-    id: "3",
-    author: {
-      id: SEED_USERS[3].id,
-      name: "Junisha Bhorman",
-      avatar: "https://i.pravatar.cc/150?img=5",
-    },
-    fundraiserTitle: "New Playground for Lincoln Elementary",
-    fundraiserId: SEED_FUNDRAISERS[2].id,
-    content:
-      "We've hit 25% of our goal in just one week! The kids at Lincoln Elementary are so excited. We broke ground today and the new playground equipment arrives next month. Thank you to all 214 donors!",
-    likeCount: 127,
-    timeAgo: "2 days ago",
-  },
-];
+const FILTER_TABS = [
+  { label: "All", value: "all" },
+  { label: "Urgent", value: "urgent" },
+  { label: "Trending", value: "trending" },
+  { label: "Recent", value: "recent" },
+] as const;
 
 export function CommunityFeed() {
+  const [activeFilter, setActiveFilter] = useState<(typeof FILTER_TABS)[number]["value"]>("all");
+  const [items, setItems] = useState<SeedFundraiser[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [isLoadingInitial, setIsLoadingInitial] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  const loadPage = useCallback(
+    async (cursor?: string | null) => {
+      const result = await getFeed({
+        sort: activeFilter === "all" ? undefined : activeFilter,
+        cursor: cursor ?? undefined,
+        limit: 6,
+      });
+
+      return {
+        items: result.items.map((item) =>
+          toSeedFundraiser({
+            id: item.id,
+            organizerName: item.organizerName,
+            organizerAvatar: item.organizerAvatar,
+            title: item.title,
+            coverImageUrl: item.coverImageUrl,
+            goalCents: item.goalCents,
+            raisedCents: item.raisedCents,
+            category: item.category,
+            location: item.location,
+            isUrgent: item.isUrgent,
+            donorCount: item.donorCount,
+            followerCount: item.followerCount,
+            createdAt: item.createdAt,
+            progressPercent: item.progressPercent,
+          })
+        ),
+        nextCursor: result.nextCursor,
+      };
+    },
+    [activeFilter]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadInitial() {
+      setIsLoadingInitial(true);
+      setError(null);
+
+      try {
+        const result = await loadPage();
+        if (!cancelled) {
+          setItems(result.items);
+          setNextCursor(result.nextCursor);
+        }
+      } catch {
+        if (!cancelled) {
+          setItems([]);
+          setNextCursor(null);
+          setError("Unable to load the community feed right now.");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingInitial(false);
+        }
+      }
+    }
+
+    void loadInitial();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadPage]);
+
+  useEffect(() => {
+    const node = loadMoreRef.current;
+    if (!node || !nextCursor || isLoadingInitial || isLoadingMore) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry?.isIntersecting) return;
+
+        setIsLoadingMore(true);
+        void loadPage(nextCursor)
+          .then((result) => {
+            setItems((current) => {
+              const seen = new Set(current.map((item) => item.id));
+              return [
+                ...current,
+                ...result.items.filter((item) => !seen.has(item.id)),
+              ];
+            });
+            setNextCursor(result.nextCursor);
+          })
+          .catch(() => {
+            setError("Unable to load more campaigns right now.");
+          })
+          .finally(() => {
+            setIsLoadingMore(false);
+          });
+      },
+      { rootMargin: "240px 0px" }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [isLoadingInitial, isLoadingMore, loadPage, nextCursor]);
+
   return (
-    <section>
-      <h2 className="text-lg font-bold text-text-primary mb-4">Community Feed</h2>
-      <div className="space-y-5">
-        {MOCK_POSTS.map((post) => (
-          <FeedPost key={post.id} post={post} />
+    <section className="mt-8">
+      <div className="flex items-center justify-between gap-4 mb-4">
+        <div>
+          <h2 className="text-lg font-bold text-text-primary">Community Feed</h2>
+          <p className="text-sm text-text-secondary mt-1">
+            Browse active fundraisers with live sorting and continuous loading.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar mb-4">
+        {FILTER_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            type="button"
+            onClick={() => setActiveFilter(tab.value)}
+            className={`px-4 py-1.5 text-sm font-medium rounded-full border whitespace-nowrap transition-all ${
+              activeFilter === tab.value
+                ? "bg-text-primary text-white border-text-primary"
+                : "border-border-medium text-text-secondary hover:border-text-primary hover:text-text-primary"
+            }`}
+          >
+            {tab.label}
+          </button>
         ))}
       </div>
-    </section>
-  );
-}
 
-function FeedPost({ post }: { post: FeedPost }) {
-  return (
-    <div className="border-b border-border-light pb-5 rounded-md transition-colors hover:bg-bg-faint/60">
-      {/* Author */}
-      <div className="flex items-center gap-2 mb-2">
-        <Link
-          href={`/profile/${post.author.id}`}
-          aria-label={`View ${post.author.name}'s profile`}
-          className="relative w-8 h-8 rounded-full overflow-hidden bg-bg-gray flex-shrink-0"
-        >
-          {post.author.avatar ? (
-            <Image
-              src={post.author.avatar}
-              alt={post.author.name}
-              fill
-              className="object-cover"
-              sizes="32px"
-            />
-          ) : (
-            <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
-              {post.author.name.charAt(0)}
-            </div>
-          )}
-        </Link>
-        <div>
-          <span className="text-sm font-semibold text-text-primary">{post.author.name}</span>
-          <span className="text-xs text-text-muted ml-1">posted an update</span>
+      {error ? (
+        <div className="rounded-lg border border-accent-red/20 bg-red-50 px-4 py-3 text-sm text-accent-red mb-4">
+          {error}
         </div>
-        <span className="text-xs text-text-muted ml-auto">{post.timeAgo}</span>
-      </div>
+      ) : null}
 
-      {/* Content */}
-      <p className="text-sm text-text-secondary leading-relaxed mb-2">{post.content}</p>
-
-      {/* Link to fundraiser */}
-      <Link
-        href={`/fundraiser/${post.fundraiserId}`}
-        className="inline-flex items-center text-xs text-primary font-medium hover:underline"
-      >
-        View fundraiser: {post.fundraiserTitle} →
-      </Link>
-
-      {/* Likes */}
-      <div className="flex items-center gap-1 mt-3">
-        <button className="flex items-center gap-1 text-xs text-text-muted hover:text-primary transition-colors">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-          </svg>
-          {post.likeCount.toLocaleString()}
-        </button>
-      </div>
-    </div>
+      {isLoadingInitial ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div key={index} className="h-72 rounded-lg border border-border-light bg-bg-faint animate-pulse" />
+          ))}
+        </div>
+      ) : items.length > 0 ? (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {items.map((item) => (
+              <CampaignCard key={item.id} fundraiser={item} />
+            ))}
+          </div>
+          <div ref={loadMoreRef} className="h-10" aria-hidden="true" />
+          {isLoadingMore ? (
+            <p className="text-sm text-text-muted mt-3">Loading more campaigns...</p>
+          ) : null}
+        </>
+      ) : (
+        <div className="rounded-lg border border-border-light bg-white px-4 py-6 text-sm text-text-secondary">
+          No campaigns match this filter yet.
+        </div>
+      )}
+    </section>
   );
 }

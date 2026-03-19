@@ -1,9 +1,8 @@
 "use client";
 
 import { type ChangeEvent, useEffect, useMemo, useState } from "react";
-import { ingestEvent, publishFundraiser } from "@/lib/api";
+import { getCurrentUser, ingestEvent, publishFundraiser } from "@/lib/api";
 
-const CURRENT_USER_ID = "a1b2c3d4-0002-0002-0002-000000000002";
 const DEFAULT_LOCATION = "Atlanta, GA";
 const DEFAULT_FUNDRAISER_IMAGE =
   "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&auto=format&fit=crop";
@@ -31,6 +30,7 @@ type FormState = {
 };
 
 export function FundraiserWizard() {
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [form, setForm] = useState<FormState>({
     title: "",
@@ -141,6 +141,12 @@ export function FundraiserWizard() {
   }
 
   useEffect(() => {
+    getCurrentUser()
+      .then((response) => setCurrentUserId(response.user.id))
+      .catch(() => setCurrentUserId(null));
+  }, []);
+
+  useEffect(() => {
     void track("fundraiser.creation.step_viewed", { step: currentStep.id });
   }, [currentStep.id]);
 
@@ -203,6 +209,11 @@ export function FundraiserWizard() {
   }
 
   async function publish() {
+    if (!currentUserId) {
+      setError("Sign in before publishing your fundraiser.");
+      return;
+    }
+
     const basicsError = getStepError(0);
     if (basicsError) {
       setError(basicsError);
@@ -221,7 +232,7 @@ export function FundraiserWizard() {
     setError(null);
     try {
       const result = await publishFundraiser({
-        organizerId: CURRENT_USER_ID,
+        organizerId: currentUserId,
         title: form.title.trim(),
         summary: form.summary.trim(),
         story: form.story.trim(),

@@ -1,17 +1,28 @@
 import Link from "next/link";
 import Image from "next/image";
 import { SEED_COMMUNITIES, SEED_FAVORITES, SEED_FUNDRAISERS } from "@/lib/seed-data";
-
-const CURRENT_USER_ID = "a1b2c3d4-0002-0002-0002-000000000002";
+import { serverApiFetch } from "@/lib/server-api";
 
 export const metadata = {
   title: "Communities | GoSupportMe",
   description: "Discover and join communities that support the causes you care about.",
 };
 
-export default function CommunityPage() {
+async function getAuthenticatedUserId(): Promise<string | null> {
+  try {
+    const response = await serverApiFetch("/api/auth/me", { cache: "no-store" });
+    if (!response.ok) return null;
+    const payload = (await response.json()) as { user: { id: string } };
+    return payload.user.id;
+  } catch {
+    return null;
+  }
+}
+
+export default async function CommunityPage() {
+  const currentUserId = await getAuthenticatedUserId();
   const followedCommunityIds = new Set(
-    SEED_FAVORITES.filter((favorite) => favorite.userId === CURRENT_USER_ID)
+    SEED_FAVORITES.filter((favorite) => favorite.userId === currentUserId)
       .map((favorite) => SEED_FUNDRAISERS.find((fundraiser) => fundraiser.id === favorite.fundraiserId)?.communityId)
       .filter((communityId): communityId is string => communityId !== null && communityId !== undefined)
   );
