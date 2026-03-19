@@ -3,19 +3,31 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MeerkatMascot } from "@/components/meerkat-mascot";
-import { AppNotification, AuthUser, getCurrentUser, getNotifications, logout } from "@/lib/api";
+import {
+  AppNotification,
+  AuthUser,
+  FundraiserSummary,
+  getCurrentUser,
+  getFundraisers,
+  getNotifications,
+  logout,
+} from "@/lib/api";
 import { SEED_FAVORITES, SEED_FUNDRAISERS, formatCents, timeAgo } from "@/lib/seed-data";
 import { APP_DATA_REFRESH_EVENT } from "@/lib/client-events";
 
 const NAV_DROPDOWN_LIMIT = 4;
 const FAVORITES_PREVIEW_LIMIT = 3;
 const CURRENT_USER_ID = "a1b2c3d4-0002-0002-0002-000000000002";
+const SEARCH_SUGGESTION_LIMIT = 5;
+const SEARCH_DEBOUNCE_MS = 250;
+const MIN_SEARCH_CHARACTERS = 2;
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [searchValue, setSearchValue] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileCreateMenuOpen, setIsMobileCreateMenuOpen] = useState(false);
@@ -23,9 +35,14 @@ export function Navbar() {
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState<FundraiserSummary[]>([]);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [recentNotifications, setRecentNotifications] = useState<AppNotification[]>([]);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const favoritesRef = useRef<HTMLDivElement>(null);
   const createMenuRef = useRef<HTMLDivElement>(null);
@@ -44,6 +61,10 @@ export function Navbar() {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      if (!searchRef.current?.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+        setIsSearchFocused(false);
+      }
       if (!notificationsRef.current?.contains(event.target as Node)) {
         setIsNotificationsOpen(false);
       }
@@ -77,7 +98,62 @@ export function Navbar() {
     setIsFavoritesOpen(false);
     setIsCreateMenuOpen(false);
     setIsProfileMenuOpen(false);
+    setIsSearchOpen(false);
+    setIsSearchFocused(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (pathname === "/search") {
+      setSearchValue(searchParams.get("q") ?? "");
+      return;
+    }
+
+    setSearchValue("");
+  }, [pathname, searchParams]);
+
+  useEffect(() => {
+    const query = searchValue.trim();
+
+    if (query.length < MIN_SEARCH_CHARACTERS) {
+      setSearchSuggestions([]);
+      setIsSearchLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsSearchLoading(true);
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const result = await getFundraisers({
+          search: query,
+          limit: SEARCH_SUGGESTION_LIMIT,
+        });
+        if (!cancelled) {
+          setSearchSuggestions(result.fundraisers);
+          if (isSearchFocused) {
+            setIsSearchOpen(true);
+          }
+        }
+      } catch {
+        if (!cancelled) {
+          setSearchSuggestions([]);
+          if (isSearchFocused) {
+            setIsSearchOpen(true);
+          }
+        }
+      } finally {
+        if (!cancelled) {
+          setIsSearchLoading(false);
+        }
+      }
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [isSearchFocused, searchValue]);
 
   useEffect(() => {
     let isMounted = true;
@@ -151,6 +227,37 @@ export function Navbar() {
     }
   }
 
+  function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const query = searchValue.trim();
+    setIsSearchOpen(false);
+    setIsSearchFocused(false);
+    if (!query) {
+      router.push("/search");
+      return;
+    }
+
+    const qs = new URLSearchParams({ q: query });
+    router.push(`/search?${qs.toString()}`);
+  }
+
+  function handleSearchFocus() {
+    setIsSearchFocused(true);
+    if (searchValue.trim().length >= MIN_SEARCH_CHARACTERS) {
+      setIsSearchOpen(true);
+    }
+  }
+
+  function handleSuggestionSelect(title: string) {
+    setSearchValue(title);
+    setIsSearchOpen(false);
+    setIsSearchFocused(false);
+  }
+
+  const showSearchDropdown =
+    isSearchOpen && searchValue.trim().length >= MIN_SEARCH_CHARACTERS;
+
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-border-light">
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-4">
@@ -163,8 +270,8 @@ export function Navbar() {
         </Link>
 
         {/* Search */}
-        <div className="flex-1 max-w-sm">
-          <div className="relative">
+        <div className="flex-1 max-w-sm" ref={searchRef}>
+          <form className="relative" onSubmit={handleSearchSubmit}>
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
               width="14"
@@ -178,15 +285,70 @@ export function Navbar() {
               <path d="m21 21-4.35-4.35" />
             </svg>
             <input
+              aria-label="Search fundraisers"
               type="text"
               placeholder="Search fundraisers..."
               value={searchValue}
+              onFocus={handleSearchFocus}
               onChange={(e) => setSearchValue(e.target.value)}
+              aria-expanded={showSearchDropdown}
+              aria-controls="navbar-search-suggestions"
+              aria-autocomplete="list"
+              autoComplete="off"
               className="w-full pl-9 pr-3 py-1.5 text-sm bg-bg-gray border border-border-light rounded-md
                          focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20
                          text-text-primary placeholder:text-text-muted"
             />
-          </div>
+            {showSearchDropdown ? (
+              <div
+                id="navbar-search-suggestions"
+                className="absolute left-0 right-0 mt-2 overflow-hidden rounded-xl border border-border-light bg-white shadow-[0_14px_32px_rgba(16,24,40,0.12)] z-50"
+                role="listbox"
+              >
+                {isSearchLoading ? (
+                  <p className="px-3 py-3 text-sm text-text-secondary">Searching...</p>
+                ) : searchSuggestions.length > 0 ? (
+                  <>
+                    <div className="max-h-80 overflow-y-auto p-1.5">
+                      {searchSuggestions.map((suggestion) => (
+                        <Link
+                          key={suggestion.id}
+                          href={`/fundraiser/${suggestion.id}`}
+                          className="block rounded-lg px-3 py-2.5 transition-colors hover:bg-primary/5"
+                          role="option"
+                          onClick={() => handleSuggestionSelect(suggestion.title)}
+                        >
+                          <p className="text-sm font-medium text-text-primary line-clamp-1">
+                            {suggestion.title}
+                          </p>
+                          <p className="mt-1 text-xs text-text-secondary line-clamp-1">
+                            {suggestion.organizerName}
+                            {suggestion.category ? ` · ${suggestion.category}` : ""}
+                            {suggestion.location ? ` · ${suggestion.location}` : ""}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                    <div className="border-t border-border-light px-3 py-2">
+                      <button
+                        type="submit"
+                        className="text-sm font-medium text-primary hover:underline"
+                      >
+                        See all results for "{searchValue.trim()}"
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="px-3 py-3">
+                    <p className="text-sm font-medium text-text-primary">No matches yet</p>
+                    <p className="mt-1 text-xs text-text-secondary">
+                      Try a fundraiser title, organizer name, category, or location.
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </form>
         </div>
 
         {/* Nav links */}

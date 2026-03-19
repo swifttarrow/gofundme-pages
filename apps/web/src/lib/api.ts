@@ -24,6 +24,21 @@ type ApiNotification = {
   created_at: string;
 };
 
+type ApiFundraiserSummary = {
+  id: string;
+  organizer_name: string;
+  organizer_avatar: string | null;
+  title: string;
+  cover_image_url: string | null;
+  goal_cents: number;
+  raised_cents: number;
+  category: string;
+  location: string | null;
+  is_urgent: boolean;
+  donor_count: number;
+  created_at: string;
+};
+
 async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
@@ -80,6 +95,21 @@ export type AppNotification = {
   createdAt: string;
 };
 
+export type FundraiserSummary = {
+  id: string;
+  organizerName: string;
+  organizerAvatar: string | null;
+  title: string;
+  coverImageUrl: string | null;
+  goalCents: number;
+  raisedCents: number;
+  category: string;
+  location: string | null;
+  isUrgent: boolean;
+  donorCount: number;
+  createdAt: string;
+};
+
 function mapBadge(badge: ApiBadge): Badge {
   return {
     type: badge.type,
@@ -106,21 +136,43 @@ function mapNotification(notification: ApiNotification): AppNotification {
   };
 }
 
+function mapFundraiserSummary(fundraiser: ApiFundraiserSummary): FundraiserSummary {
+  return {
+    id: fundraiser.id,
+    organizerName: fundraiser.organizer_name,
+    organizerAvatar: fundraiser.organizer_avatar,
+    title: fundraiser.title,
+    coverImageUrl: fundraiser.cover_image_url,
+    goalCents: fundraiser.goal_cents,
+    raisedCents: fundraiser.raised_cents,
+    category: fundraiser.category,
+    location: fundraiser.location,
+    isUrgent: fundraiser.is_urgent,
+    donorCount: fundraiser.donor_count,
+    createdAt: fundraiser.created_at,
+  };
+}
+
 // ─── Fundraisers ─────────────────────────────────────────────────────────────
 export function getFundraisers(params?: {
   cursor?: string;
   limit?: number;
   category?: string;
   sort?: string;
+  search?: string;
 }) {
   const qs = new URLSearchParams();
   if (params?.cursor) qs.set("cursor", params.cursor);
   if (params?.limit) qs.set("limit", String(params.limit));
   if (params?.category) qs.set("category", params.category);
   if (params?.sort) qs.set("sort", params.sort);
-  return apiFetch<{ fundraisers: unknown[]; nextCursor: string | null }>(
+  if (params?.search) qs.set("search", params.search);
+  return apiFetch<{ fundraisers: ApiFundraiserSummary[]; nextCursor: string | null }>(
     `/api/fundraisers?${qs}`
-  );
+  ).then((payload) => ({
+    fundraisers: payload.fundraisers.map(mapFundraiserSummary),
+    nextCursor: payload.nextCursor,
+  }));
 }
 
 export function getFundraiser(id: string) {

@@ -20,18 +20,27 @@ const PublishFundraiserSchema = z.object({
     .default({ shareToCommunity: true, notifyFriends: false }),
 });
 
+const FundraiserListQuerySchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.string().optional(),
+  category: z.string().trim().min(1).max(80).optional(),
+  sort: z.enum(["recent", "trending", "urgent"]).optional(),
+  search: z.string().trim().max(120).optional(),
+});
+
 export async function fundraisersRoutes(app: FastifyInstance): Promise<void> {
   /** GET /api/fundraisers?cursor=<iso>&limit=12&category=Medical&sort=trending */
   app.get("/api/fundraisers", async (request: FastifyRequest, reply: FastifyReply) => {
-    const query = request.query as {
-      cursor?: string;
-      limit?: string;
-      category?: string;
-      sort?: string;
-    };
+    const parse = FundraiserListQuerySchema.safeParse(request.query);
+    if (!parse.success) {
+      return reply.status(400).send({ error: "Validation failed", details: parse.error.flatten() });
+    }
+
+    const query = parse.data;
 
     const limit = Math.min(parseInt(query.limit ?? "12", 10), 48);
-    const cursor = query.cursor ? new Date(query.cursor) : new Date();
+    const requestedCursor = query.cursor ? new Date(query.cursor) : new Date();
+    const cursor = Number.isNaN(requestedCursor.getTime()) ? new Date() : requestedCursor;
 
     let orderBy = "f.created_at DESC";
     if (query.sort === "trending") orderBy = "f.raised_cents DESC";
@@ -44,13 +53,26 @@ export async function fundraisersRoutes(app: FastifyInstance): Promise<void> {
       categoryClause = `AND f.category = $${params.length}`;
     }
 
+    let searchClause = "";
+    if (query.search) {
+      params.push(`%${query.search}%`);
+      const searchParamIndex = params.length;
+      searchClause = `AND (
+        f.title ILIKE $${searchParamIndex}
+        OR f.story ILIKE $${searchParamIndex}
+        OR f.category ILIKE $${searchParamIndex}
+        OR COALESCE(f.location, '') ILIKE $${searchParamIndex}
+        OR u.name ILIKE $${searchParamIndex}
+      )`;
+    }
+
     const result = await db.query(
       `SELECT f.id, f.title, f.cover_image_url, f.goal_cents, f.raised_cents,
               f.category, f.location, f.is_urgent, f.donor_count, f.created_at,
               u.name as organizer_name, u.avatar_url as organizer_avatar
        FROM fundraisers f
        JOIN users u ON u.id = f.organizer_id
-       WHERE f.status = 'active' AND f.created_at < $1 ${categoryClause}
+       WHERE f.status = 'active' AND f.created_at < $1 ${categoryClause} ${searchClause}
        ORDER BY ${orderBy}
        LIMIT $2`,
       params
