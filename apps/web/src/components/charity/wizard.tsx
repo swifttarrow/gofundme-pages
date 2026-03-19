@@ -1,17 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   createCharityRequest,
+  getCurrentUser,
   getCharityRequestEligibility,
 } from "@/lib/api";
 
-const CURRENT_USER_ID = "a1b2c3d4-0002-0002-0002-000000000002";
-
 type Step = "loading" | "blocked" | "education" | "form" | "confirmation";
+type EligibilityState = "eligible" | "under_review" | "active_community";
 
 export function CharityWizard() {
   const [step, setStep] = useState<Step>("loading");
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [eligibilityState, setEligibilityState] = useState<EligibilityState | null>(null);
+  const [isContinuing, setIsContinuing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [charityName, setCharityName] = useState("");
   const [mission, setMission] = useState("");
@@ -21,21 +25,41 @@ export function CharityWizard() {
   const [coverImageUrl, setCoverImageUrl] = useState("");
 
   useEffect(() => {
-    getCharityRequestEligibility(CURRENT_USER_ID)
+    getCurrentUser()
+      .then((auth) => {
+        setCurrentUserId(auth.user.id);
+        return getCharityRequestEligibility(auth.user.id);
+      })
       .then((result) => {
-        if (result.state === "eligible") {
-          setStep("education");
-        } else {
-          setStep("blocked");
-        }
+        setEligibilityState(result.state);
+        setStep(result.state === "eligible" ? "education" : "blocked");
       })
       .catch(() => {
+        setEligibilityState(null);
         setStep("education");
+        setError("We could not verify your charity eligibility right now.");
       });
   }, []);
 
   async function submit() {
     setError(null);
+    if (!currentUserId) {
+      setError("We could not verify your account. Please refresh and try again.");
+      return;
+    }
+
+    try {
+      const result = await getCharityRequestEligibility(currentUserId);
+      setEligibilityState(result.state);
+      if (result.state !== "eligible") {
+        setStep("blocked");
+        return;
+      }
+    } catch {
+      setError("We could not verify your eligibility right now. Please try again.");
+      return;
+    }
+
     if (
       !charityName.trim() ||
       !mission.trim() ||
@@ -48,7 +72,7 @@ export function CharityWizard() {
     }
     try {
       await createCharityRequest({
-        userId: CURRENT_USER_ID,
+        userId: currentUserId,
         charityName: charityName.trim(),
         mission: mission.trim(),
         beneficiaries: beneficiaries.trim(),
@@ -63,6 +87,31 @@ export function CharityWizard() {
     }
   }
 
+  async function handleContinue() {
+    if (isContinuing) return;
+    if (!currentUserId) {
+      setError("We could not verify your account. Please refresh and try again.");
+      return;
+    }
+
+    setError(null);
+    setIsContinuing(true);
+
+    try {
+      const result = await getCharityRequestEligibility(currentUserId);
+      setEligibilityState(result.state);
+      if (result.state !== "eligible") {
+        setStep("blocked");
+        return;
+      }
+      setStep("form");
+    } catch {
+      setError("We could not verify your eligibility right now. Please try again.");
+    } finally {
+      setIsContinuing(false);
+    }
+  }
+
   if (step === "loading") {
     return (
       <div className="max-w-2xl mx-auto py-16 px-4 text-center">
@@ -72,13 +121,28 @@ export function CharityWizard() {
   }
 
   if (step === "blocked") {
+    const title =
+      eligibilityState === "active_community"
+        ? "Your community is already active"
+        : "Request already in progress";
+    const description =
+      eligibilityState === "active_community"
+        ? "You already have an active community, so you cannot submit another charity request from this page."
+        : "You already have a charity request under review. To prevent duplicate reviews, you cannot submit another request until this one is completed.";
+
     return (
       <div className="max-w-2xl mx-auto py-12 px-4">
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-5">
-          <h2 className="text-xl font-semibold text-amber-900 mb-2">Request already in progress</h2>
-          <p className="text-sm text-amber-800">
-            You can only create one charity at a time. Your current request is still in progress.
-          </p>
+          <h2 className="text-xl font-semibold text-amber-900 mb-2">{title}</h2>
+          <p className="text-sm text-amber-800">{description}</p>
+          <div className="mt-4">
+            <Link
+              href="/charity/request"
+              className="inline-flex rounded-md border border-amber-300 bg-white px-3 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100 transition-colors"
+            >
+              View your charity request
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -101,6 +165,11 @@ export function CharityWizard() {
   }
 
   if (step === "education") {
+    const isContinueDisabled =
+      !currentUserId || eligibilityState !== "eligible" || isContinuing;
+    console.log("currentUserId: ", currentUserId);
+    console.log("eligibilityState: ", eligibilityState);
+    console.log("isContinuing: ", isContinuing);
     return (
       <div className="max-w-2xl mx-auto py-10 px-4">
         <div className="rounded-xl border border-border-light bg-white p-6">
@@ -116,11 +185,13 @@ export function CharityWizard() {
           </div>
           <button
             type="button"
-            onClick={() => setStep("form")}
-            className="mt-5 px-4 py-2 rounded-md bg-primary text-white text-sm font-semibold"
+            onClick={() => void handleContinue()}
+            disabled={isContinueDisabled}
+            className="mt-5 px-4 py-2 rounded-md bg-primary text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Continue
+            {isContinuing ? "Checking eligibility..." : "Continue"}
           </button>
+          {error ? <p className="mt-3 text-sm text-accent-red">{error}</p> : null}
         </div>
       </div>
     );

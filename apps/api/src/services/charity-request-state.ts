@@ -25,9 +25,9 @@ export function nextStatus(
 
 export function normalizeEligibilityState(params: {
   hasUnderReviewRequest: boolean;
-  hasActiveCharity: boolean;
-}): "eligible" | "under_review" | "active_charity" {
+  hasActiveCommunity: boolean;
+}): "eligible" | "under_review" | "active_community" {
   if (params.hasUnderReviewRequest) return "under_review";
-  if (params.hasActiveCharity) return "active_charity";
+  if (params.hasActiveCommunity) return "active_community";
   return "eligible";
 }

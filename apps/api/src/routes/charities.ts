@@ -7,23 +7,6 @@ import {
   normalizeEligibilityState,
 } from "../services/charity-request-state";
 
-const CreateCharitySchema = z.object({
-  organizerId: z.string().uuid(),
-  name: z.string().min(2).max(200),
-  description: z.string().min(10).max(5000),
-  ein: z.string().optional(),
-  websiteUrl: z.string().url().optional(),
-  fundAllocation: z.string().max(1000).optional(),
-  milestones: z
-    .array(
-      z.object({
-        amount: z.number().int().positive(),
-        label: z.string().max(200),
-      })
-    )
-    .default([]),
-});
-
 const SESSION_COOKIE_NAME = "gosupportme_session";
 
 const EligibilityQuerySchema = z.object({
@@ -97,7 +80,7 @@ export async function charitiesRoutes(app: FastifyInstance): Promise<void> {
       }
 
       const userId = parse.data.userId;
-      const [reviewRow, activeCharity] = await Promise.all([
+      const [reviewRow, activeCommunity] = await Promise.all([
         db.query(
           `SELECT id
            FROM charity_requests
@@ -107,7 +90,7 @@ export async function charitiesRoutes(app: FastifyInstance): Promise<void> {
         ),
         db.query(
           `SELECT id
-           FROM charities
+           FROM communities
            WHERE organizer_id = $1 AND status = 'active'
            LIMIT 1`,
           [userId]
@@ -116,7 +99,7 @@ export async function charitiesRoutes(app: FastifyInstance): Promise<void> {
 
       const state = normalizeEligibilityState({
         hasUnderReviewRequest: (reviewRow.rowCount ?? 0) > 0,
-        hasActiveCharity: (activeCharity.rowCount ?? 0) > 0,
+        hasActiveCommunity: (activeCommunity.rowCount ?? 0) > 0,
       });
 
       return reply.send({ state });
@@ -139,7 +122,7 @@ export async function charitiesRoutes(app: FastifyInstance): Promise<void> {
         [data.userId]
       ),
       db.query(
-        `SELECT id FROM charities
+        `SELECT id FROM communities
          WHERE organizer_id = $1 AND status = 'active'
          LIMIT 1`,
         [data.userId]
@@ -333,8 +316,8 @@ export async function charitiesRoutes(app: FastifyInstance): Promise<void> {
         const updated = updatedResult.rows[0];
 
         if (decision === "approve") {
-          const charityResult = await client.query(
-            `INSERT INTO charities (organizer_id, name, description, fund_allocation, status)
+          const communityResult = await client.query(
+            `INSERT INTO communities (organizer_id, name, description, fund_allocation, status)
              VALUES ($1, $2, $3, $4, 'active')
              RETURNING id`,
             [requestRow.user_id, requestRow.charity_name, requestRow.mission, requestRow.fund_usage]
@@ -343,14 +326,14 @@ export async function charitiesRoutes(app: FastifyInstance): Promise<void> {
           return {
             type: "ok" as const,
             request: updated,
-            charityId: (charityResult.rows[0] as { id: string }).id,
+            communityId: (communityResult.rows[0] as { id: string }).id,
           };
         }
 
         return {
           type: "ok" as const,
           request: updated,
-          charityId: null,
+          communityId: null,
         };
       });
 
@@ -363,49 +346,17 @@ export async function charitiesRoutes(app: FastifyInstance): Promise<void> {
 
       return reply.send({
         request: result.request,
-        charityId: result.charityId,
+        communityId: result.communityId,
       });
     }
   );
 
   /** POST /api/charities */
-  app.post("/api/charities", async (request: FastifyRequest, reply: FastifyReply) => {
-    const parse = CreateCharitySchema.safeParse(request.body);
-    if (!parse.success) {
-      return reply.status(400).send({ error: "Validation failed", details: parse.error.flatten() });
-    }
-
-    const data = parse.data;
-
-    // Verify organizer exists and has organizer/admin role
-    const user = await db.query(
-      "SELECT id, role FROM users WHERE id = $1",
-      [data.organizerId]
-    );
-    if (user.rowCount === 0) {
-      return reply.status(404).send({ error: "User not found" });
-    }
-    const userRow = user.rows[0] as Record<string, unknown>;
-    if (!["organizer", "admin"].includes(String(userRow.role ?? ""))) {
-      return reply.status(403).send({ error: "Only organizers can create charities" });
-    }
-
-    const result = await db.query(
-      `INSERT INTO charities (organizer_id, name, description, ein, website_url, fund_allocation, milestones)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING *`,
-      [
-        data.organizerId,
-        data.name,
-        data.description,
-        data.ein ?? null,
-        data.websiteUrl ?? null,
-        data.fundAllocation ?? null,
-        JSON.stringify(data.milestones),
-      ]
-    );
-
-    return reply.status(201).send(result.rows[0]);
+  app.post("/api/charities", async (_request: FastifyRequest, reply: FastifyReply) => {
+    return reply.status(410).send({
+      error:
+        "Direct charity creation is disabled. Submit /api/charities/requests and wait for approval.",
+    });
   });
 
   /** GET /api/charities/:id */
@@ -415,16 +366,16 @@ export async function charitiesRoutes(app: FastifyInstance): Promise<void> {
     const [charityResult, fundraisersResult] = await Promise.all([
       db.query(
         `SELECT c.*, u.name as organizer_name, u.avatar_url as organizer_avatar
-         FROM charities c
+         FROM communities c
          JOIN users u ON u.id = c.organizer_id
          WHERE c.id = $1`,
         [id]
       ),
       db.query(
         `SELECT f.id, f.title, f.cover_image_url, f.raised_cents, f.goal_cents, f.donor_count
-         FROM charity_fundraisers cf
+         FROM community_fundraisers cf
          JOIN fundraisers f ON f.id = cf.fundraiser_id
-         WHERE cf.charity_id = $1
+         WHERE cf.community_id = $1
          LIMIT 20`,
         [id]
       ),
@@ -453,7 +404,7 @@ export async function charitiesRoutes(app: FastifyInstance): Promise<void> {
 
       // Verify charity belongs to this organizer
       const charity = await db.query(
-        "SELECT id, organizer_id FROM charities WHERE id = $1",
+        "SELECT id, organizer_id FROM communities WHERE id = $1",
         [id]
       );
       if (charity.rowCount === 0) {
@@ -464,13 +415,13 @@ export async function charitiesRoutes(app: FastifyInstance): Promise<void> {
       }
 
       await db.query(
-        `INSERT INTO charity_fundraisers (charity_id, fundraiser_id)
+        `INSERT INTO community_fundraisers (community_id, fundraiser_id)
          VALUES ($1, $2)
          ON CONFLICT DO NOTHING`,
         [id, fid]
       );
 
-      return reply.send({ charityId: id, fundraiserId: fid, linked: true });
+      return reply.send({ communityId: id, fundraiserId: fid, linked: true });
     }
   );
 }

@@ -23,26 +23,26 @@ describe("charity request state machine", () => {
 });
 
 describe("charity request eligibility", () => {
-  it("returns under_review priority over active charity", () => {
+  it("returns under_review priority over active community", () => {
     const state = normalizeEligibilityState({
       hasUnderReviewRequest: true,
-      hasActiveCharity: true,
+      hasActiveCommunity: true,
     });
     expect(state).toBe("under_review");
   });
 
-  it("returns active_charity when no pending request", () => {
+  it("returns active_community when no pending request", () => {
     const state = normalizeEligibilityState({
       hasUnderReviewRequest: false,
-      hasActiveCharity: true,
+      hasActiveCommunity: true,
     });
-    expect(state).toBe("active_charity");
+    expect(state).toBe("active_community");
   });
 
   it("returns eligible when both constraints are absent", () => {
     const state = normalizeEligibilityState({
       hasUnderReviewRequest: false,
-      hasActiveCharity: false,
+      hasActiveCommunity: false,
     });
     expect(state).toBe("eligible");
   });
