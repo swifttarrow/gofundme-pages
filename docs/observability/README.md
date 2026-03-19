@@ -60,6 +60,10 @@ Alert rule examples: [prometheus-alerts.yml](./prometheus-alerts.yml).
 
 Import [grafana-dashboard.json](./grafana-dashboard.json) and point panels at your Prometheus datasource (dashboard assumes UID `prometheus`; change in Grafana if needed).
 
+### Grafana Cloud
+
+Step-by-step: [grafana-cloud-setup.md](./grafana-cloud-setup.md) (scrape Railway + `remote_write`, import dashboard). Example config: [prometheus-grafana-cloud.example.yml](./prometheus-grafana-cloud.example.yml).
+
 ## Runbooks
 
 - [Donation failures](./runbooks/donation-failures.md)

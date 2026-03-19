@@ -1,0 +1,33 @@
+# Prometheus: scrape Railway API + remote_write to Grafana Cloud Metrics.
+#
+# 1. Copy to prometheus.local.yml (gitignored) — do not commit secrets.
+# 2. In Grafana Cloud Portal → stack → Prometheus → Details:
+#    - Set REMOTE_WRITE_URL to the remote_write URL (ends with /api/prom/push)
+#    - Set METRICS_INSTANCE_ID to the username / instance id shown there
+# 3. Create a Cloud Access Policy token with metrics write scope; save to a file:
+#       echo 'YOUR_TOKEN' > grafana-cloud-token.txt && chmod 600 grafana-cloud-token.txt
+# 4. Run Docker (see grafana-cloud-setup.md).
+#
+# Docs: https://grafana.com/docs/grafana-cloud/send-data/metrics/metrics-prometheus/
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    # Identifies this Prometheus in Grafana Cloud (change if you run several)
+    origin_prometheus: gosupportme-railway-scraper
+
+scrape_configs:
+  - job_name: gosupportme-api-production
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - api-production-4b9f4.up.railway.app
+
+remote_write:
+  - url: REMOTE_WRITE_URL
+    basic_auth:
+      username: METRICS_INSTANCE_ID
+      # Prefer file over inline password (never commit the token file)
+      password_file: /run/secrets/grafana-cloud-token
