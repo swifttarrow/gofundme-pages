@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import {
   SEED_FUNDRAISERS,
   type SeedDonation,
@@ -12,6 +11,7 @@ import { TrustSafety } from "@/components/fundraiser/trust-safety";
 import { DonationModule } from "@/components/donation-module";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const DEFAULT_FUNDRAISER_IMAGE =
   "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&auto=format&fit=crop";
 
@@ -99,6 +99,17 @@ function mapApiDonationToSeed(
   };
 }
 
+function buildFundraiserDescription(fundraiser: SeedFundraiser) {
+  const normalizedStory = fundraiser.story.replace(/\s+/g, " ").trim();
+  const summary = normalizedStory.slice(0, 140).trim();
+
+  if (summary.length > 0) {
+    return `${summary}${normalizedStory.length > 140 ? "..." : ""}`;
+  }
+
+  return `Support ${fundraiser.organizerName}'s fundraiser on GoSupportMe.`;
+}
+
 export async function generateMetadata({ params }: FundraiserPageProps) {
   const { id } = await params;
   const apiFundraiser = await getApiFundraiser(id);
@@ -106,10 +117,32 @@ export async function generateMetadata({ params }: FundraiserPageProps) {
     ? mapApiFundraiserToSeed(apiFundraiser)
     : SEED_FUNDRAISERS.find((f) => f.id === id);
   if (!fundraiser) return { title: "Fundraiser Not Found" };
+  const description = buildFundraiserDescription(fundraiser);
+  const fundraiserUrl = `${APP_URL}/fundraiser/${fundraiser.id}`;
+
   return {
     title: `${fundraiser.title} | GoSupportMe`,
-    description: fundraiser.story.slice(0, 160),
+    description,
+    alternates: {
+      canonical: `/fundraiser/${fundraiser.id}`,
+    },
     openGraph: {
+      title: fundraiser.title,
+      description,
+      url: fundraiserUrl,
+      siteName: "GoSupportMe",
+      type: "article",
+      images: [
+        {
+          url: fundraiser.coverImageUrl,
+          alt: fundraiser.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: fundraiser.title,
+      description,
       images: [fundraiser.coverImageUrl],
     },
   };
@@ -164,20 +197,6 @@ export default async function FundraiserPage({ params }: FundraiserPageProps) {
                 donations={donations}
                 currentUserId={currentUserId}
               />
-              <div className="mt-4 rounded-lg border border-border-light bg-white p-4 space-y-2">
-                <Link
-                  href="/fundraiser/new?source=post_donation_upsell"
-                  className="block text-sm font-semibold text-primary hover:underline"
-                >
-                  Start one yourself
-                </Link>
-                <Link
-                  href="/charity/new?source=fundraiser_page"
-                  className="block text-sm font-semibold text-primary hover:underline"
-                >
-                  Turn this into a charity
-                </Link>
-              </div>
             </div>
           </div>
         </div>

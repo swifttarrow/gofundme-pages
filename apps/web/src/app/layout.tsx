@@ -9,7 +9,10 @@ const inter = Inter({
   display: "swap",
 });
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(APP_URL),
   title: "GoSupportMe - Fundraise for What Matters",
   description:
     "Start a fundraiser or donate to causes that matter. GoSupportMe connects people who need support with those who want to give.",
