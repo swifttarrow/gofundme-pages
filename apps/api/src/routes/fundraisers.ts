@@ -1,6 +1,9 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import { randomUUID } from "crypto";
+import { PlatformEvent } from "@gosupportme/contracts";
 import { z } from "zod";
 import { db } from "../db/client";
+import { fanOutEvent, storeEvent } from "../services/event-ingestion";
 
 const PublishFundraiserSchema = z.object({
   organizerId: z.string().uuid(),
@@ -152,34 +155,64 @@ export async function fundraisersRoutes(app: FastifyInstance): Promise<void> {
     }
 
     const data = parse.data;
-    const insert = await db.query(
-      `INSERT INTO fundraisers (
-         organizer_id, title, story, cover_image_url, goal_cents, category, location, status
-       )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
-       RETURNING id, title, story, cover_image_url, goal_cents, category, location, status, created_at`,
-      [
-        data.organizerId,
-        data.title,
-        `${data.summary}\n\n${data.story}\n\n${data.breakdown.map((item) => `- ${item}`).join("\n")}`.trim(),
-        data.coverImageUrl ?? null,
-        data.goalAmountCents,
-        data.category,
-        data.location,
-      ]
-    );
+    const eventId = randomUUID();
+    const occurredAt = new Date().toISOString();
+    const created = await db.transaction(async (client) => {
+      const insert = await client.query(
+        `INSERT INTO fundraisers (
+           organizer_id, title, story, cover_image_url, goal_cents, category, location, status
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active')
+         RETURNING id, title, story, cover_image_url, goal_cents, category, location, status, created_at`,
+        [
+          data.organizerId,
+          data.title,
+          `${data.summary}\n\n${data.story}\n\n${data.breakdown.map((item) => `- ${item}`).join("\n")}`.trim(),
+          data.coverImageUrl ?? null,
+          data.goalAmountCents,
+          data.category,
+          data.location,
+        ]
+      );
 
-    const created = insert.rows[0] as {
-      id: string;
-      title: string;
-      story: string;
-      cover_image_url: string | null;
-      goal_cents: number;
-      category: string;
-      location: string;
-      status: string;
-      created_at: string;
+      const created = insert.rows[0] as {
+        id: string;
+        title: string;
+        story: string;
+        cover_image_url: string | null;
+        goal_cents: number;
+        category: string;
+        location: string;
+        status: string;
+        created_at: string;
+      };
+
+      const event: PlatformEvent = {
+        eventId,
+        type: "fundraiser.created",
+        occurredAt,
+        payload: {
+          fundraiserId: created.id,
+          organizerUserId: data.organizerId,
+        },
+      };
+
+      await storeEvent(event, client);
+
+      return created;
+    });
+
+    const event: PlatformEvent = {
+      eventId,
+      type: "fundraiser.created",
+      occurredAt,
+      payload: {
+        fundraiserId: created.id,
+        organizerUserId: data.organizerId,
+      },
     };
+
+    await fanOutEvent(event);
 
     return reply.status(201).send({
       fundraiser: {

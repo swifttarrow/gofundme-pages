@@ -15,7 +15,10 @@ export async function processBadge(job: Job<BadgeJob>): Promise<void> {
 
   for (const userId of userIds) {
     try {
-      await evaluateAndAwardBadges(userId, { sourceEventId: event.eventId });
+      await evaluateAndAwardBadges(userId, {
+        sourceEventId: event.eventId,
+        trigger: event.type,
+      });
     } catch (err) {
       console.error(`Badge evaluation failed for user ${userId}:`, err);
     }
@@ -26,6 +29,8 @@ export async function processBadge(job: Job<BadgeJob>): Promise<void> {
 
 async function extractRelevantUserIds(event: PlatformEvent): Promise<string[]> {
   switch (event.type) {
+    case "fundraiser.created":
+      return [event.payload.organizerUserId];
     case "donation.created": {
       const fundraiser = await db.query<{ organizer_id: string }>(
         "SELECT organizer_id FROM fundraisers WHERE id = $1 LIMIT 1",

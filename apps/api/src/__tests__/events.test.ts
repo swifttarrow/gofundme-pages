@@ -43,6 +43,18 @@ describe("PlatformEventSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts fundraiser.created event", () => {
+    const result = PlatformEventSchema.safeParse({
+      ...baseEvent,
+      type: "fundraiser.created",
+      payload: {
+        fundraiserId: "123e4567-e89b-12d3-a456-426614174002",
+        organizerUserId: "123e4567-e89b-12d3-a456-426614174003",
+      },
+    });
+    expect(result.success).toBe(true);
+  });
+
   it("accepts fundraiser.followed event", () => {
     const result = PlatformEventSchema.safeParse({
       ...baseEvent,

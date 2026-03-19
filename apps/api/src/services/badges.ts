@@ -1,4 +1,5 @@
 import { PoolClient } from "pg";
+import { PlatformEvent } from "@gosupportme/contracts";
 import { db } from "../db/client";
 
 export const BADGE_DEFINITIONS = [
@@ -63,12 +64,14 @@ interface DonationStatsRow {
 
 interface EvaluateBadgesOptions {
   sourceEventId?: string;
+  trigger?: PlatformEvent["type"] | "manual";
 }
 
 export async function evaluateAndAwardBadges(
   userId: string,
   options: EvaluateBadgesOptions = {}
 ): Promise<BadgeDefinition[]> {
+  const trigger = options.trigger ?? "manual";
   const [fundraiserStats, donationStats] = await Promise.all([
     db.query<BadgeStatsRow>(
       `SELECT
@@ -98,7 +101,10 @@ export async function evaluateAndAwardBadges(
 
   const eligibleBadgeTypes: BadgeType[] = [];
 
-  if (parseInt(fundraiser.fundraiser_count, 10) > 0) {
+  if (
+    (trigger === "fundraiser.created" || trigger === "manual") &&
+    parseInt(fundraiser.fundraiser_count, 10) > 0
+  ) {
     eligibleBadgeTypes.push("trust_pioneer");
   }
   if (parseInt(fundraiser.has_momentum ?? "0", 10) > 0) {

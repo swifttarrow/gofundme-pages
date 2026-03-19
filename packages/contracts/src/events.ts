@@ -11,6 +11,11 @@ export const DonationCreatedPayloadSchema = z.object({
   message: z.string().max(500).nullable(),
 });
 
+export const FundraiserCreatedPayloadSchema = z.object({
+  fundraiserId: z.string().uuid(),
+  organizerUserId: z.string().uuid(),
+});
+
 export const FundraiserUpdatePostedPayloadSchema = z.object({
   fundraiserId: z.string().uuid(),
   updateId: z.string().uuid(),
@@ -38,6 +43,12 @@ export const PlatformEventSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     eventId: z.string().uuid(),
+    type: z.literal("fundraiser.created"),
+    occurredAt: z.string().datetime(),
+    payload: FundraiserCreatedPayloadSchema,
+  }),
+  z.object({
+    eventId: z.string().uuid(),
     type: z.literal("fundraiser.update_posted"),
     occurredAt: z.string().datetime(),
     payload: FundraiserUpdatePostedPayloadSchema,
@@ -58,6 +69,7 @@ export const PlatformEventSchema = z.discriminatedUnion("type", [
 
 export type PlatformEvent = z.infer<typeof PlatformEventSchema>;
 export type DonationCreatedPayload = z.infer<typeof DonationCreatedPayloadSchema>;
+export type FundraiserCreatedPayload = z.infer<typeof FundraiserCreatedPayloadSchema>;
 export type FundraiserUpdatePostedPayload = z.infer<typeof FundraiserUpdatePostedPayloadSchema>;
 export type FundraiserFollowedPayload = z.infer<typeof FundraiserFollowedPayloadSchema>;
 export type ProfileUpdatedPayload = z.infer<typeof ProfileUpdatedPayloadSchema>;
