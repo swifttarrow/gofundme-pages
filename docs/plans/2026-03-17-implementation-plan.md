@@ -228,8 +228,8 @@ Complete trust surface and creator workflows while preserving idempotent, explai
 **File**: `apps/api/src/routes/badges-evaluate.ts`  
 **Changes**: Implement `POST /api/badges/evaluate` for explicit evaluation trigger/testing.
 
-**File**: `apps/web/src/app/fundraiser/new/page.tsx`
-**Changes**: Add charity starter wizard with minimum launch fields and fundraiser linking flow.
+**File**: `apps/web/src/app/charity/new/page.tsx`
+**Changes**: Add charity request wizard with eligibility gating, education, submission, and fundraiser linking flow.
 
 **File**: `apps/api/src/routes/charities.ts`  
 **Changes**: Persist charity entity and parent-child fundraiser linkage with auth checks.

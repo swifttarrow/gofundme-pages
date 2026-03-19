@@ -1,8 +1,10 @@
-# Milestones: Implementation Plan
+# Milestones Index
 
-**Source plan:** `docs/plans/2026-03-17-implementation-plan.md`
+**Primary plan:** `docs/plans/2026-03-17-implementation-plan.md`
 
-## Milestone Order
+This index reflects the current milestone order after removing the mobile voice transcription scope.
+
+## Current Milestone Order
 
 | # | Milestone | Status |
 |---|-----------|--------|
@@ -13,40 +15,16 @@
 | 4 | [m4-community-discovery-and-notification-center](./m4-community-discovery-and-notification-center/) | Pending |
 | 5 | [m5-profile-badges-and-charity-starter-kit](./m5-profile-badges-and-charity-starter-kit/) | Pending |
 | 6 | [m6-reliability-operations-and-final-submission-hardening](./m6-reliability-operations-and-final-submission-hardening/) | Pending |
-
-## Quick Links
-- [Plan](../2026-03-17-implementation-plan.md)
-# Milestones: GoSupportMe Implementation Plan
-
-**Source plan:** `docs/plans/implementation-plan.md`
-
-## Milestone Order
-
-| # | Milestone | Status |
-|---|-----------|--------|
-| 1 | [m1-foundation-build-checkpoint-skeleton](./m1-foundation-build-checkpoint-skeleton/) | Pending |
-| 2 | [m2-graph-event-data-model-read-apis](./m2-graph-event-data-model-read-apis/) | Pending |
-| 3 | [m3-fundraiser-page-creation-flows](./m3-fundraiser-page-creation-flows/) | Pending |
-| 4 | [m4-community-profile-pages-graph-surfaces](./m4-community-profile-pages-graph-surfaces/) | Pending |
-| 5 | [m5-badges-charity-starter-reliability-hardening](./m5-badges-charity-starter-reliability-hardening/) | Pending |
-| 6 | [m6-final-validation-submission-demo-readiness](./m6-final-validation-submission-demo-readiness/) | Pending |
-
-## Quick Links
-- [Plan](../implementation-plan.md)
-- [PRD](../../prd.md)
-- [Pre-search](../../pre-search.md)
-
-# Milestones: Charity Starter Kit Request Flow (MVP)
-
-**Source requirement:** `docs/requirements/charity-starter-kit.md`
-
-## Milestone Order
-
-| # | Milestone | Status |
-|---|-----------|--------|
 | 7 | [m12-charity-request-intake-and-submission](./m12-charity-request-intake-and-submission/) | Complete |
 | 8 | [m13-review-decisioning-and-status-tracking](./m13-review-decisioning-and-status-tracking/) | Complete |
 | 9 | [m14-trust-safety-ops-and-success-metrics](./m14-trust-safety-ops-and-success-metrics/) | Complete |
 
+## Notes
+
+- Milestones `7` through `9` intentionally point to legacy folder names `m12-*`, `m13-*`, and `m14-*`.
+- The displayed milestone numbers are the current source of truth; the folder names remain unchanged to avoid unnecessary path churn.
+
 ## Quick Links
-- [Requirement](../../requirements/charity-starter-kit.md)
+
+- [Current plan](../2026-03-17-implementation-plan.md)
+- [Charity starter requirement](../../requirements/charity-starter-kit.md)

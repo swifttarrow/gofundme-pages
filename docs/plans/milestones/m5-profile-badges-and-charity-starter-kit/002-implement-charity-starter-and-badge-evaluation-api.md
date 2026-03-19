@@ -5,7 +5,7 @@ Enable organizers to create charities and link fundraisers while exposing explic
 
 ## Deliverables
 - [ ] `apps/api/src/routes/badges-evaluate.ts` implements `POST /api/badges/evaluate` for trigger/testing
-- [ ] `apps/web/src/app/fundraiser/new/page.tsx` adds starter wizard with minimum launch fields and linkage flow
+- [ ] `apps/web/src/app/charity/new/page.tsx` adds charity request wizard with minimum launch fields and linkage flow
 - [ ] `apps/api/src/routes/charities.ts` persists charity entity and parent-child fundraiser linkage with auth checks
 
 ## Notes
