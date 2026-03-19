@@ -1,0 +1,30 @@
+# Runnable minimal Prometheus config scraping the GoSupportMe API on Railway.
+# Usage (from repo root):
+#   docker run -d --name prometheus -p 9090:9090 \
+#     -v "$PWD/docs/observability/prometheus-scrape-production.example.yml:/etc/prometheus/prometheus.yml:ro" \
+#     prom/prometheus:latest \
+#     --config.file=/etc/prometheus/prometheus.yml
+#
+# Then open http://localhost:9090 → Status → Targets (job: gosupportme-api-production).
+#
+# Host: https://api-production-4b9f4.up.railway.app/metrics
+#
+# Security: /metrics may be sensitive on the public internet. Consider Railway
+# private networking, IP allowlists, or protecting /metrics with auth.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: gosupportme-api-production
+    scheme: https
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - api-production-4b9f4.up.railway.app
+    # tls_config:
+    #   insecure_skip_verify: false
+    # authorization:
+    #   type: Bearer
+    #   credentials: "<token-if-required>"

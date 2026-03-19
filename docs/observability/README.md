@@ -33,7 +33,7 @@ Queue backlog gauges are refreshed from BullMQ on the **API process** (every 15s
 
 ## Prometheus
 
-Example scrape config:
+**Local API** (Prometheus in Docker, API on your machine):
 
 ```yaml
 scrape_configs:
@@ -41,6 +41,17 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets: ["host.docker.internal:3001"]
+```
+
+**Production (Railway)** — ready-made config scraping  
+`https://api-production-4b9f4.up.railway.app/metrics`:  
+[prometheus-scrape-production.example.yml](./prometheus-scrape-production.example.yml)  
+(run with Docker as documented in the file header, or copy the `scrape_configs` job into your existing `prometheus.yml`).
+
+Verify from your laptop:
+
+```bash
+curl -sS "https://api-production-4b9f4.up.railway.app/metrics" | head
 ```
 
 Alert rule examples: [prometheus-alerts.yml](./prometheus-alerts.yml).
