@@ -201,7 +201,6 @@ export default async function FundraiserPage({ params }: FundraiserPageProps) {
             <div className="mt-8">
               <DonationFeed
                 donations={donations}
-                totalCount={fundraiser.donorCount}
                 currentUserId={currentUserId ?? undefined}
               />
             </div>

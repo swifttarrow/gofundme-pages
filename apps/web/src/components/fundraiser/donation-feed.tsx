@@ -2,12 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { SeedDonation, formatCents, timeAgo } from "@/lib/seed-data";
 
 interface DonationFeedProps {
   donations: SeedDonation[];
-  totalCount: number;
   currentUserId?: string;
 }
 
@@ -20,8 +19,7 @@ type SuggestedDonor = {
   createdAt: string;
 };
 
-export function DonationFeed({ donations, totalCount, currentUserId }: DonationFeedProps) {
-  const carouselRef = useRef<HTMLDivElement>(null);
+export function DonationFeed({ donations, currentUserId }: DonationFeedProps) {
   const [followedDonors, setFollowedDonors] = useState<Record<string, boolean>>({});
 
   const suggestedDonors = useMemo<SuggestedDonor[]>(() => {
@@ -43,13 +41,6 @@ export function DonationFeed({ donations, totalCount, currentUserId }: DonationF
     return Array.from(donors.values());
   }, [donations]);
 
-  function scrollCarousel(direction: "prev" | "next") {
-    const node = carouselRef.current;
-    if (!node) return;
-    const distance = Math.max(node.clientWidth * 0.85, 280);
-    node.scrollBy({ left: direction === "next" ? distance : -distance, behavior: "smooth" });
-  }
-
   function toggleFollow(donorUserId: string) {
     setFollowedDonors((prev) => ({ ...prev, [donorUserId]: !prev[donorUserId] }));
   }
@@ -60,33 +51,12 @@ export function DonationFeed({ donations, totalCount, currentUserId }: DonationF
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3">
         <h2 className="text-lg font-bold text-text-primary">
-          Donors you may know ({totalCount.toLocaleString()})
+          Donors you may know ({suggestedDonors.length.toLocaleString()})
         </h2>
         {suggestedDonors.length > 1 ? (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => scrollCarousel("prev")}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-medium text-text-secondary transition-colors hover:border-primary hover:text-primary"
-              aria-label="Scroll donors left"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="m15 18-6-6 6-6" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollCarousel("next")}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border-medium text-text-secondary transition-colors hover:border-primary hover:text-primary"
-              aria-label="Scroll donors right"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="m9 18 6-6-6-6" />
-              </svg>
-            </button>
-          </div>
+          <p className="mt-1 text-xs text-text-muted">Scroll horizontally to see more donors.</p>
         ) : null}
       </div>
 
@@ -95,7 +65,7 @@ export function DonationFeed({ donations, totalCount, currentUserId }: DonationF
           Visible donor profiles will show up here after supporters contribute without donating anonymously.
         </div>
       ) : (
-        <div ref={carouselRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 no-scrollbar">
+        <div className="flex gap-4 overflow-x-auto pb-3">
           {suggestedDonors.map((donor) => {
             const isSelf = donor.donorUserId === currentUserId;
             const isFollowed = Boolean(followedDonors[donor.donorUserId]);
@@ -103,7 +73,7 @@ export function DonationFeed({ donations, totalCount, currentUserId }: DonationF
             return (
               <article
                 key={donor.donorUserId}
-                className="min-w-[270px] max-w-[270px] snap-start rounded-2xl border border-border-light bg-white p-4 shadow-sm"
+                className="min-w-[270px] max-w-[270px] flex-shrink-0 rounded-2xl border border-border-light bg-white p-4 shadow-sm"
               >
                 <Link href={`/profile/${donor.donorUserId}`} className="block">
                   <div className="flex items-start gap-3">
