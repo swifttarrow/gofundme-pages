@@ -21,7 +21,8 @@
     "db:migrate": "node infra/scripts/migrate.js",
     "db:reset": "node infra/scripts/reset-and-migrate.js",
     "db:seed": "node infra/scripts/seed.js",
-    "db:seed:random-donations": "node infra/scripts/create-random-donations.js"
+    "db:seed:random-donations": "node infra/scripts/create-random-donations.js",
+    "db:seed:kevin-account": "node infra/scripts/seed-kevin-account.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",

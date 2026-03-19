@@ -14,6 +14,10 @@ const FollowQuerySchema = z.object({
   fundraiser_id: z.string().uuid(),
 });
 
+const FollowListQuerySchema = z.object({
+  follower_id: z.string().uuid(),
+});
+
 export async function followsRoutes(app: FastifyInstance): Promise<void> {
   /** GET /api/follows/status?follower_id=<uuid>&fundraiser_id=<uuid> */
   app.get("/api/follows/status", async (request: FastifyRequest, reply: FastifyReply) => {
@@ -30,6 +34,57 @@ export async function followsRoutes(app: FastifyInstance): Promise<void> {
     );
 
     return reply.send({ isFollowing: followResult.rows.length > 0 });
+  });
+
+  /** GET /api/follows?follower_id=<uuid> */
+  app.get("/api/follows", async (request: FastifyRequest, reply: FastifyReply) => {
+    const parse = FollowListQuerySchema.safeParse(request.query);
+    if (!parse.success) {
+      return reply.status(400).send({ error: "Validation failed", details: parse.error.flatten() });
+    }
+
+    const { follower_id } = parse.data;
+
+    const result = await db.query<{
+      id: string;
+      name: string;
+      bio: string | null;
+      avatarUrl: string | null;
+      location: string | null;
+      followerCount: number | string | null;
+      fundraiserCount: number | string | null;
+    }>(
+      `SELECT
+         u.id,
+         u.name,
+         u.bio,
+         u.avatar_url AS "avatarUrl",
+         u.location,
+         COUNT(DISTINCT fo2.follower_id) AS "followerCount",
+         COUNT(DISTINCT fr2.id) AS "fundraiserCount"
+       FROM follows fo
+       JOIN fundraisers fr ON fr.id = fo.fundraiser_id
+       JOIN users u ON u.id = fr.organizer_id
+       LEFT JOIN fundraisers fr2 ON fr2.organizer_id = u.id AND fr2.status = 'active'
+       LEFT JOIN follows fo2 ON fo2.fundraiser_id = fr2.id
+       WHERE fo.follower_id = $1
+         AND fr.organizer_id <> $1
+       GROUP BY u.id, u.name, u.bio, u.avatar_url, u.location
+       ORDER BY u.name ASC`,
+      [follower_id]
+    );
+
+    return reply.send({
+      followedUsers: result.rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        bio: row.bio,
+        avatarUrl: row.avatarUrl,
+        location: row.location,
+        followerCount: Number(row.followerCount ?? 0),
+        fundraiserCount: Number(row.fundraiserCount ?? 0),
+      })),
+    });
   });
 
   /** POST /api/follows */

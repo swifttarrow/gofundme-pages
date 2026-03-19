@@ -24,6 +24,7 @@ const FundraiserListQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z.string().optional(),
   category: z.string().trim().min(1).max(80).optional(),
+  organizerId: z.string().uuid().optional(),
   sort: z.enum(["recent", "trending", "urgent"]).optional(),
   search: z.string().trim().max(120).optional(),
 });
@@ -53,6 +54,12 @@ export async function fundraisersRoutes(app: FastifyInstance): Promise<void> {
       categoryClause = `AND f.category = $${params.length}`;
     }
 
+    let organizerClause = "";
+    if (query.organizerId) {
+      params.push(query.organizerId);
+      organizerClause = `AND f.organizer_id = $${params.length}`;
+    }
+
     let searchClause = "";
     if (query.search) {
       params.push(`%${query.search}%`);
@@ -72,7 +79,7 @@ export async function fundraisersRoutes(app: FastifyInstance): Promise<void> {
               u.name as organizer_name, u.avatar_url as organizer_avatar
        FROM fundraisers f
        JOIN users u ON u.id = f.organizer_id
-       WHERE f.status = 'active' AND f.created_at < $1 ${categoryClause} ${searchClause}
+       WHERE f.status = 'active' AND f.created_at < $1 ${categoryClause} ${organizerClause} ${searchClause}
        ORDER BY ${orderBy}
        LIMIT $2`,
       params

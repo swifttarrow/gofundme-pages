@@ -58,6 +58,13 @@ type UserRow = {
   passwordHash: string | null;
 };
 
+type UserStats = {
+  amountRaised: number;
+  followerCount: number;
+  fundraiserCount: number;
+  donationCount: number;
+};
+
 function parseCookieValue(cookieHeader: string | undefined, cookieName: string): string | null {
   if (!cookieHeader) return null;
 
@@ -90,6 +97,48 @@ async function getUserById(id: string): Promise<UserRow | null> {
     [id]
   );
   return result.rows[0] ?? null;
+}
+
+async function getUserStats(userId: string): Promise<UserStats> {
+  const result = await db.query<{
+    amountRaised: number | string | null;
+    followerCount: number | string | null;
+    fundraiserCount: number | string | null;
+    donationCount: number | string | null;
+  }>(
+    `SELECT
+       COALESCE((
+         SELECT SUM(f.raised_cents)
+         FROM fundraisers f
+         WHERE f.organizer_id = $1
+       ), 0) AS "amountRaised",
+       COALESCE((
+         SELECT COUNT(DISTINCT fo.follower_id)
+         FROM fundraisers f
+         LEFT JOIN follows fo ON fo.fundraiser_id = f.id
+         WHERE f.organizer_id = $1
+       ), 0) AS "followerCount",
+       COALESCE((
+         SELECT COUNT(*)
+         FROM fundraisers f
+         WHERE f.organizer_id = $1
+       ), 0) AS "fundraiserCount",
+       COALESCE((
+         SELECT COUNT(*)
+         FROM donations d
+         WHERE d.donor_user_id = $1
+       ), 0) AS "donationCount"`,
+    [userId]
+  );
+
+  const row = result.rows[0];
+
+  return {
+    amountRaised: Number(row?.amountRaised ?? 0),
+    followerCount: Number(row?.followerCount ?? 0),
+    fundraiserCount: Number(row?.fundraiserCount ?? 0),
+    donationCount: Number(row?.donationCount ?? 0),
+  };
 }
 
 async function hashPassword(password: string): Promise<string> {
@@ -129,7 +178,7 @@ async function authenticateRequest(
   }
 }
 
-function serializeUser(user: UserRow) {
+function serializeUser(user: UserRow, stats?: UserStats) {
   return {
     id: user.id,
     email: user.email,
@@ -139,10 +188,14 @@ function serializeUser(user: UserRow) {
     avatarUrl: user.avatarUrl,
     backsplashUrl: user.backsplashUrl,
     location: user.location,
+    amountRaised: stats?.amountRaised ?? 0,
+    followerCount: stats?.followerCount ?? 0,
+    fundraiserCount: stats?.fundraiserCount ?? 0,
+    donationCount: stats?.donationCount ?? 0,
   };
 }
 
-function serializePublicUser(user: UserRow) {
+function serializePublicUser(user: UserRow, stats?: UserStats) {
   return {
     id: user.id,
     name: user.name,
@@ -151,6 +204,10 @@ function serializePublicUser(user: UserRow) {
     avatarUrl: user.avatarUrl,
     backsplashUrl: user.backsplashUrl,
     location: user.location,
+    amountRaised: stats?.amountRaised ?? 0,
+    followerCount: stats?.followerCount ?? 0,
+    fundraiserCount: stats?.fundraiserCount ?? 0,
+    donationCount: stats?.donationCount ?? 0,
   };
 }
 
@@ -207,7 +264,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     );
 
     reply.header("Set-Cookie", buildSessionCookie(token));
-    return reply.status(201).send({ user: serializeUser(user) });
+    const stats = await getUserStats(user.id);
+    return reply.status(201).send({ user: serializeUser(user, stats) });
   });
 
   /** POST /api/auth/login */
@@ -256,7 +314,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     reply.header("Set-Cookie", buildSessionCookie(token));
 
-    return reply.send({ user: serializeUser(user) });
+    const stats = await getUserStats(user.id);
+    return reply.send({ user: serializeUser(user, stats) });
   });
 
   /** GET /api/auth/me */
@@ -266,7 +325,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(401).send({ error: "Not authenticated" });
     }
 
-    return reply.send({ user: serializeUser(user) });
+    const stats = await getUserStats(user.id);
+    return reply.send({ user: serializeUser(user, stats) });
   });
 
   /** GET /api/auth/users/:id */
@@ -281,7 +341,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(404).send({ error: "User not found" });
     }
 
-    return reply.send({ user: serializePublicUser(user) });
+    const stats = await getUserStats(user.id);
+    return reply.send({ user: serializePublicUser(user, stats) });
   });
 
   /** PATCH /api/auth/profile */
@@ -321,7 +382,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     }
 
     if (updates.length === 0) {
-      return reply.send({ user: serializeUser(user) });
+      const stats = await getUserStats(user.id);
+      return reply.send({ user: serializeUser(user, stats) });
     }
 
     const changedFields = [
@@ -351,7 +413,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       },
     });
 
-    return reply.send({ user: serializeUser(updated.rows[0]) });
+    const stats = await getUserStats(user.id);
+    return reply.send({ user: serializeUser(updated.rows[0], stats) });
   });
 
   /** POST /api/auth/logout */

@@ -38,6 +38,10 @@ type ApiProfileUser = {
   avatarUrl: string | null;
   backsplashUrl: string | null;
   location: string | null;
+  amountRaised?: number;
+  followerCount?: number;
+  fundraiserCount?: number;
+  donationCount?: number;
 };
 
 type ApiDonation = {
@@ -48,6 +52,26 @@ type ApiDonation = {
   message: string | null;
   created_at: string;
 };
+
+type ApiFundraiser = {
+  id: string;
+  organizer_name: string;
+  organizer_avatar: string | null;
+  title: string;
+  cover_image_url: string | null;
+  goal_cents: number;
+  raised_cents: number;
+  category: string;
+  location: string | null;
+  is_urgent: boolean;
+  donor_count: number;
+  created_at: string;
+};
+
+type FollowedUser = Pick<
+  SeedUser,
+  "id" | "name" | "bio" | "avatarUrl" | "location" | "followerCount" | "fundraiserCount"
+>;
 
 export async function generateStaticParams() {
   return SEED_USERS.map((u) => ({ id: u.id }));
@@ -74,6 +98,10 @@ async function getAuthenticatedUser(): Promise<SeedUser | null> {
         backsplashUrl: string | null;
         location: string | null;
         role: SeedUser["role"];
+        amountRaised?: number;
+        followerCount?: number;
+        fundraiserCount?: number;
+        donationCount?: number;
       };
     };
 
@@ -85,10 +113,10 @@ async function getAuthenticatedUser(): Promise<SeedUser | null> {
       backsplashUrl: payload.user.backsplashUrl,
       location: payload.user.location,
       role: payload.user.role,
-      amountRaised: 0,
-      followerCount: 0,
-      fundraiserCount: 0,
-      donationCount: 0,
+      amountRaised: payload.user.amountRaised ?? 0,
+      followerCount: payload.user.followerCount ?? 0,
+      fundraiserCount: payload.user.fundraiserCount ?? 0,
+      donationCount: payload.user.donationCount ?? 0,
     };
   } catch {
     return null;
@@ -106,10 +134,10 @@ function mergeUserWithSeedStats(user: ApiProfileUser): SeedUser {
     backsplashUrl: user.backsplashUrl,
     location: user.location,
     role: user.role,
-    amountRaised: seedUser?.amountRaised ?? 0,
-    followerCount: seedUser?.followerCount ?? 0,
-    fundraiserCount: seedUser?.fundraiserCount ?? 0,
-    donationCount: seedUser?.donationCount ?? 0,
+    amountRaised: user.amountRaised ?? seedUser?.amountRaised ?? 0,
+    followerCount: user.followerCount ?? seedUser?.followerCount ?? 0,
+    fundraiserCount: user.fundraiserCount ?? seedUser?.fundraiserCount ?? 0,
+    donationCount: user.donationCount ?? seedUser?.donationCount ?? 0,
   };
 }
 
@@ -184,6 +212,85 @@ async function getUserDonations(userId: string, includeAnonymous: boolean): Prom
   }
 }
 
+async function getUserFundraisers(userId: string): Promise<(typeof SEED_FUNDRAISERS)> {
+  try {
+    const qs = new URLSearchParams({
+      organizerId: userId,
+      limit: "50",
+    });
+    const response = await serverApiFetch(`/api/fundraisers?${qs}`, {
+      cache: "no-store",
+    });
+    if (!response.ok) return [];
+
+    const payload = (await response.json()) as { fundraisers: ApiFundraiser[] };
+    return payload.fundraisers.map((fundraiser) => {
+      const goalCents = fundraiser.goal_cents;
+      const raisedCents = fundraiser.raised_cents;
+      const progressPercent =
+        goalCents > 0 ? Math.round((raisedCents / goalCents) * 100) : 0;
+
+      return {
+        id: fundraiser.id,
+        communityId: null,
+        organizerId: userId,
+        organizerName: fundraiser.organizer_name,
+        organizerAvatar: fundraiser.organizer_avatar,
+        title: fundraiser.title,
+        story: "",
+        coverImageUrl: fundraiser.cover_image_url ?? "",
+        goalCents,
+        raisedCents,
+        category: fundraiser.category,
+        location: fundraiser.location ?? "",
+        isUrgent: fundraiser.is_urgent,
+        donorCount: fundraiser.donor_count,
+        followerCount: 0,
+        createdAt: fundraiser.created_at,
+        progressPercent,
+      };
+    });
+  } catch {
+    return SEED_FUNDRAISERS.filter((fundraiser) => fundraiser.organizerId === userId);
+  }
+}
+
+async function getFollowedUsers(userId: string): Promise<FollowedUser[]> {
+  try {
+    const qs = new URLSearchParams({ follower_id: userId });
+    const response = await serverApiFetch(`/api/follows?${qs}`, {
+      cache: "no-store",
+    });
+    if (!response.ok) return [];
+
+    const payload = (await response.json()) as { followedUsers: FollowedUser[] };
+    return payload.followedUsers;
+  } catch {
+    const followedFundraiserIds = new Set(
+      SEED_FAVORITES.filter((favorite) => favorite.userId === userId).map(
+        (favorite) => favorite.fundraiserId
+      )
+    );
+    const followedUserIds = Array.from(
+      new Set(
+        SEED_FUNDRAISERS.filter((fundraiser) =>
+          followedFundraiserIds.has(fundraiser.id)
+        )
+          .map((fundraiser) => fundraiser.organizerId)
+          .filter((organizerId) => organizerId !== userId)
+      )
+    );
+
+    return followedUserIds
+      .map((followedUserId) =>
+        SEED_USERS.find((candidateUser) => candidateUser.id === followedUserId)
+      )
+      .filter((candidateUser): candidateUser is (typeof SEED_USERS)[number] =>
+        Boolean(candidateUser)
+      );
+  }
+}
+
 export default async function ProfilePage({ params, searchParams }: ProfilePageProps) {
   const { id } = await params;
   const { tab } = await searchParams;
@@ -193,6 +300,8 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
   const isOwnProfile = authenticatedUser?.id === user.id;
   const badges = await getUserBadges(user.id);
   const userDonations = await getUserDonations(user.id, isOwnProfile);
+  const userFundraisers = await getUserFundraisers(user.id);
+  const followedUsers = await getFollowedUsers(user.id);
 
   let hasCharityRequest = false;
   if (isOwnProfile) {
@@ -211,33 +320,12 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
 
   const activeTab: ProfileTab =
     tab === "donations" || tab === "following" ? tab : "fundraisers";
-  const userFundraisers = SEED_FUNDRAISERS.filter(
-    (f) => f.organizerId === user.id
-  );
   const fundraiserTitleById = new Map(
-    SEED_FUNDRAISERS.map((fundraiser) => [fundraiser.id, fundraiser.title])
+    [...SEED_FUNDRAISERS, ...userFundraisers].map((fundraiser) => [
+      fundraiser.id,
+      fundraiser.title,
+    ])
   );
-  const followedFundraiserIds = new Set(
-    SEED_FAVORITES.filter((favorite) => favorite.userId === user.id).map(
-      (favorite) => favorite.fundraiserId
-    )
-  );
-  const followedUserIds = Array.from(
-    new Set(
-      SEED_FUNDRAISERS.filter((fundraiser) =>
-        followedFundraiserIds.has(fundraiser.id)
-      )
-        .map((fundraiser) => fundraiser.organizerId)
-        .filter((organizerId) => organizerId !== user.id)
-    )
-  );
-  const followedUsers = followedUserIds
-    .map((followedUserId) =>
-      SEED_USERS.find((candidateUser) => candidateUser.id === followedUserId)
-    )
-    .filter((candidateUser): candidateUser is (typeof SEED_USERS)[number] =>
-      Boolean(candidateUser)
-    );
 
   return (
     <div className="min-h-screen bg-white">
