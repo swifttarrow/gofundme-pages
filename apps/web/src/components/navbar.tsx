@@ -17,6 +17,8 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileCreateMenuOpen, setIsMobileCreateMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
@@ -28,6 +30,8 @@ export function Navbar() {
   const favoritesRef = useRef<HTMLDivElement>(null);
   const createMenuRef = useRef<HTMLDivElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
 
   const unreadCount = recentNotifications.filter((notification) => !notification.isRead).length;
   const previewNotifications = recentNotifications.slice(0, NAV_DROPDOWN_LIMIT);
@@ -52,11 +56,28 @@ export function Navbar() {
       if (!profileMenuRef.current?.contains(event.target as Node)) {
         setIsProfileMenuOpen(false);
       }
+      const clickTarget = event.target as Node;
+      if (
+        !mobileMenuRef.current?.contains(clickTarget) &&
+        !mobileMenuButtonRef.current?.contains(clickTarget)
+      ) {
+        setIsMobileMenuOpen(false);
+        setIsMobileCreateMenuOpen(false);
+      }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsMobileCreateMenuOpen(false);
+    setIsNotificationsOpen(false);
+    setIsFavoritesOpen(false);
+    setIsCreateMenuOpen(false);
+    setIsProfileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     let isMounted = true;
@@ -121,6 +142,8 @@ export function Navbar() {
     try {
       await logout();
       setCurrentUser(null);
+      setIsMobileMenuOpen(false);
+      setIsMobileCreateMenuOpen(false);
       router.push("/sign-in");
       router.refresh();
     } finally {
@@ -387,8 +410,16 @@ export function Navbar() {
 
         {/* Mobile menu button */}
         <button
+          type="button"
+          ref={mobileMenuButtonRef}
           className="md:hidden ml-auto p-2 text-text-secondary hover:text-text-primary"
-          aria-label="Menu"
+          aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="mobile-navigation-menu"
+          onClick={() => {
+            setIsMobileMenuOpen((open) => !open);
+            setIsMobileCreateMenuOpen(false);
+          }}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="3" y1="6" x2="21" y2="6" />
@@ -397,6 +428,124 @@ export function Navbar() {
           </svg>
         </button>
       </div>
+      {isMobileMenuOpen && (
+        <div
+          id="mobile-navigation-menu"
+          ref={mobileMenuRef}
+          className="md:hidden border-t border-border-light bg-white"
+        >
+          <nav className="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-1">
+            <Link
+              href="/"
+              className="rounded-md px-3 py-2 text-sm font-medium text-text-primary hover:bg-bg-faint transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Discover
+            </Link>
+            <Link
+              href="/community"
+              className="rounded-md px-3 py-2 text-sm font-medium text-text-primary hover:bg-bg-faint transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Communities
+            </Link>
+            <div className="rounded-md border border-border-light bg-bg-gray/40">
+              <button
+                type="button"
+                className="flex w-full items-center justify-between px-3 py-2 text-sm font-semibold text-text-primary"
+                aria-label={isMobileCreateMenuOpen ? "Close create menu" : "Open create menu"}
+                aria-expanded={isMobileCreateMenuOpen}
+                onClick={() => setIsMobileCreateMenuOpen((open) => !open)}
+              >
+                <span>Create +</span>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className={isMobileCreateMenuOpen ? "rotate-180 transition-transform" : "transition-transform"}
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+              {isMobileCreateMenuOpen && (
+                <div className="border-t border-border-light px-2 py-2">
+                  <Link
+                    href={currentUser ? "/fundraiser/new?source=primary_cta" : "/sign-in"}
+                    className="block rounded-md px-3 py-2 text-sm text-text-primary hover:bg-bg-faint transition-colors"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      setIsMobileCreateMenuOpen(false);
+                    }}
+                  >
+                    Create fundraiser
+                  </Link>
+                  <Link
+                    href={currentUser ? "/charity/new?source=primary_cta" : "/sign-in"}
+                    className="block rounded-md px-3 py-2 text-sm text-text-primary hover:bg-bg-faint transition-colors"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      setIsMobileCreateMenuOpen(false);
+                    }}
+                  >
+                    Create charity
+                  </Link>
+                </div>
+              )}
+            </div>
+            {currentUser ? (
+              <>
+                <Link
+                  href="/favorites"
+                  className="rounded-md px-3 py-2 text-sm font-medium text-text-primary hover:bg-bg-faint transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Favorites
+                </Link>
+                <Link
+                  href="/notifications"
+                  className="flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium text-text-primary hover:bg-bg-faint transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <span>Notifications</span>
+                  {unreadCount > 0 ? (
+                    <span className="min-w-5 rounded-full bg-primary px-1.5 py-0.5 text-center text-[11px] font-semibold text-white">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  ) : null}
+                </Link>
+                <Link
+                  href={`/profile/${currentUser.id}`}
+                  className="rounded-md px-3 py-2 text-sm font-medium text-text-primary hover:bg-bg-faint transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Profile
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleLogout();
+                  }}
+                  disabled={isLoggingOut}
+                  className="rounded-md px-3 py-2 text-left text-sm font-medium text-text-primary hover:bg-bg-faint transition-colors disabled:opacity-60"
+                >
+                  {isLoggingOut ? "Signing out..." : "Log out"}
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/sign-in"
+                className="rounded-md px-3 py-2 text-sm font-medium text-text-primary hover:bg-bg-faint transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Sign in
+              </Link>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
