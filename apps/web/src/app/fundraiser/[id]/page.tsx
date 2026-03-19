@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
 import {
   SEED_FUNDRAISERS,
   type SeedDonation,
@@ -10,8 +9,8 @@ import { Story } from "@/components/fundraiser/story";
 import { DonationFeed } from "@/components/fundraiser/donation-feed";
 import { TrustSafety } from "@/components/fundraiser/trust-safety";
 import { DonationModule } from "@/components/donation-module";
+import { serverApiFetch } from "@/lib/server-api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 const DEFAULT_FUNDRAISER_IMAGE =
   "https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&auto=format&fit=crop";
@@ -54,16 +53,8 @@ export async function generateStaticParams() {
 }
 
 async function getAuthenticatedUserId(): Promise<string | null> {
-  const sessionToken = (await cookies()).get("gosupportme_session")?.value;
-  if (!sessionToken) return null;
-
   try {
-    const response = await fetch(`${API_BASE}/api/auth/me`, {
-      headers: {
-        Cookie: `gosupportme_session=${sessionToken}`,
-      },
-      cache: "no-store",
-    });
+    const response = await serverApiFetch("/api/auth/me", { cache: "no-store" });
 
     if (!response.ok) return null;
     const payload = (await response.json()) as { user: { id: string } };
@@ -75,7 +66,9 @@ async function getAuthenticatedUserId(): Promise<string | null> {
 
 async function getApiFundraiser(id: string): Promise<ApiFundraiserResponse | null> {
   try {
-    const response = await fetch(`${API_BASE}/api/fundraisers/${id}`, { cache: "no-store" });
+    const response = await serverApiFetch(`/api/fundraisers/${id}`, {
+      cache: "no-store",
+    });
     if (!response.ok) return null;
     return (await response.json()) as ApiFundraiserResponse;
   } catch {

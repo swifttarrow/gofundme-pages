@@ -1,5 +1,7 @@
 node_modules/
 apps/**/node_modules/
 apps/web/.next/
+packages/contracts/dist/
 *.tsbuildinfo
 .env.local
+.vercel

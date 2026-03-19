@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -13,9 +12,9 @@ import {
 import { ProfileHeader } from "@/components/profile/header";
 import { FundraiserList } from "@/components/profile/fundraiser-list";
 import { Badge } from "@/lib/api";
+import { serverApiFetch } from "@/lib/server-api";
 
 type ProfileTab = "fundraisers" | "donations" | "following";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 interface ProfilePageProps {
   params: Promise<{ id: string }>;
@@ -53,16 +52,8 @@ export async function generateMetadata({ params }: ProfilePageProps) {
 }
 
 async function getAuthenticatedUser(): Promise<SeedUser | null> {
-  const sessionToken = (await cookies()).get("gosupportme_session")?.value;
-  if (!sessionToken) return null;
-
   try {
-    const response = await fetch(`${API_BASE}/api/auth/me`, {
-      headers: {
-        Cookie: `gosupportme_session=${sessionToken}`,
-      },
-      cache: "no-store",
-    });
+    const response = await serverApiFetch("/api/auth/me", { cache: "no-store" });
 
     if (!response.ok) return null;
     const payload = (await response.json()) as {
@@ -115,7 +106,9 @@ function mergeUserWithSeedStats(user: ApiProfileUser): SeedUser {
 
 async function getProfileUserById(id: string): Promise<SeedUser | null> {
   try {
-    const response = await fetch(`${API_BASE}/api/auth/users/${id}`, { cache: "no-store" });
+    const response = await serverApiFetch(`/api/auth/users/${id}`, {
+      cache: "no-store",
+    });
     if (response.ok) {
       const payload = (await response.json()) as { user: ApiProfileUser };
       return mergeUserWithSeedStats(payload.user);
@@ -129,7 +122,9 @@ async function getProfileUserById(id: string): Promise<SeedUser | null> {
 
 async function getUserBadges(userId: string): Promise<Badge[]> {
   try {
-    const response = await fetch(`${API_BASE}/api/badges/${userId}`, { cache: "no-store" });
+    const response = await serverApiFetch(`/api/badges/${userId}`, {
+      cache: "no-store",
+    });
     if (!response.ok) return [];
     const payload = (await response.json()) as { badges: ApiBadge[] };
     return payload.badges.map((badge) => ({
@@ -156,20 +151,16 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
 
   let hasCharityRequest = false;
   if (isOwnProfile) {
-    const sessionToken = (await cookies()).get("gosupportme_session")?.value;
-    if (sessionToken) {
-      try {
-        const res = await fetch(
-          `${API_BASE}/api/charities/requests/mine?userId=${encodeURIComponent(user.id)}`,
-          {
-            headers: { Cookie: `gosupportme_session=${sessionToken}` },
-            cache: "no-store",
-          }
-        );
-        hasCharityRequest = res.ok;
-      } catch {
-        // leave false
-      }
+    try {
+      const res = await serverApiFetch(
+        `/api/charities/requests/mine?userId=${encodeURIComponent(user.id)}`,
+        {
+          cache: "no-store",
+        }
+      );
+      hasCharityRequest = res.ok;
+    } catch {
+      // leave false
     }
   }
 

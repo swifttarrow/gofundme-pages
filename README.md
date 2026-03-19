@@ -32,7 +32,7 @@ gosupportme/
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20.9+
 - PostgreSQL 15+
 - Redis 7+
 
@@ -47,6 +47,7 @@ npm install
 ```bash
 cp .env.example .env
 # Edit .env with your database and Redis URLs
+# Keep API_ORIGIN pointed at the Fastify service for the Next.js proxy
 ```
 
 ### 3. Database setup
