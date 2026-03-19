@@ -68,7 +68,14 @@ async function run() {
       ('a1b2c3d4-0003-0003-0003-000000000003', 'jessica@example.com', 'Jessica Rivera', 'Social worker and fundraising champion.', 'https://i.pravatar.cc/150?img=3', 'Berkeley, CA', 'organizer', '${seedPasswordHash}'),
       ('a1b2c3d4-0004-0004-0004-000000000004', 'anonymous@example.com', 'Anonymous Donor', NULL, NULL, NULL, 'donor', '${seedPasswordHash}'),
       ('a1b2c3d4-0005-0005-0005-000000000005', 'junisha@example.com', 'Junisha Bhorman', 'Passionate about education and community resilience.', 'https://i.pravatar.cc/150?img=5', 'Los Angeles, CA', 'organizer', '${seedPasswordHash}')
-    ON CONFLICT (id) DO NOTHING
+    ON CONFLICT (id) DO UPDATE
+    SET email = EXCLUDED.email,
+        name = EXCLUDED.name,
+        bio = EXCLUDED.bio,
+        avatar_url = EXCLUDED.avatar_url,
+        location = EXCLUDED.location,
+        role = EXCLUDED.role,
+        password_hash = EXCLUDED.password_hash
     RETURNING id;
   `);
   console.log(`  ✓ ${users.rowCount} users`);
@@ -116,8 +123,18 @@ async function run() {
       ('b1b2c3d4-0010-0010-0010-000000000010', 'a1b2c3d4-0001-0001-0001-000000000001',
        'College Fund for Displaced Students',
        'Students who lost their homes in the wildfire now face losing their education too. Help us keep their college dreams alive.',
-       'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800', 4000000, 4068000, 'Education', 'Santa Barbara, CA', false, 'active', 567)
-    ON CONFLICT (id) DO NOTHING
+      'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800', 4000000, 4068000, 'Education', 'Santa Barbara, CA', false, 'active', 567)
+    ON CONFLICT (id) DO UPDATE
+    SET title = EXCLUDED.title,
+        story = EXCLUDED.story,
+        cover_image_url = EXCLUDED.cover_image_url,
+        goal_cents = EXCLUDED.goal_cents,
+        raised_cents = EXCLUDED.raised_cents,
+        category = EXCLUDED.category,
+        location = EXCLUDED.location,
+        is_urgent = EXCLUDED.is_urgent,
+        status = EXCLUDED.status,
+        donor_count = EXCLUDED.donor_count
     RETURNING id;
   `);
   console.log(`  ✓ ${fundraisers.rowCount} fundraisers`);

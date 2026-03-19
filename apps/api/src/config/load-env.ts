@@ -15,6 +15,7 @@ function loadEnvFromFile(filePath: string): void {
     const key = line.slice(0, equalsIndex).trim();
     let value = line.slice(equalsIndex + 1).trim();
     if (!key) continue;
+    if (process.env[key] !== undefined) continue;
 
     if (
       (value.startsWith("\"") && value.endsWith("\"")) ||

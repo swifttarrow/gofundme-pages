@@ -5,19 +5,24 @@
   "engines": {
     "node": ">=20.9.0"
   },
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "concurrently \"npm run dev --workspace=apps/web\" \"npm run dev --workspace=apps/api\"",
     "build": "npm run build --workspace=packages/contracts && npm run build --workspace=apps/web && npm run build --workspace=apps/api",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
+    "test:e2e": "playwright test",
     "db:migrate": "node infra/scripts/migrate.js",
     "db:reset": "node infra/scripts/reset-and-migrate.js",
     "db:seed": "node infra/scripts/seed.js",
     "db:seed:random-donations": "node infra/scripts/create-random-donations.js"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "concurrently": "^8.2.2",
     "typescript": "^5.3.3"
   }

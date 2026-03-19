@@ -202,16 +202,28 @@ export function CharityWizard() {
       <div className="rounded-xl border border-border-light bg-white p-6 space-y-4">
         <h1 className="text-2xl font-semibold text-text-primary">Submit your charity request</h1>
         <div>
-          <label className="block text-sm font-medium text-text-primary mb-1">Charity name *</label>
+          <label
+            htmlFor="charity-request-name"
+            className="block text-sm font-medium text-text-primary mb-1"
+          >
+            Charity name *
+          </label>
           <input
+            id="charity-request-name"
             value={charityName}
             onChange={(event) => setCharityName(event.target.value)}
             className="w-full border border-border-medium rounded-md px-3 py-2 text-sm"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-text-primary mb-1">Mission / purpose *</label>
+          <label
+            htmlFor="charity-request-mission"
+            className="block text-sm font-medium text-text-primary mb-1"
+          >
+            Mission / purpose *
+          </label>
           <textarea
+            id="charity-request-mission"
             value={mission}
             onChange={(event) => setMission(event.target.value)}
             rows={3}
@@ -220,20 +232,28 @@ export function CharityWizard() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-text-primary mb-1">
+          <label
+            htmlFor="charity-request-beneficiaries"
+            className="block text-sm font-medium text-text-primary mb-1"
+          >
             Who or what will be helped *
           </label>
           <input
+            id="charity-request-beneficiaries"
             value={beneficiaries}
             onChange={(event) => setBeneficiaries(event.target.value)}
             className="w-full border border-border-medium rounded-md px-3 py-2 text-sm"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-text-primary mb-1">
+          <label
+            htmlFor="charity-request-fund-usage"
+            className="block text-sm font-medium text-text-primary mb-1"
+          >
             How funds will be used *
           </label>
           <textarea
+            id="charity-request-fund-usage"
             value={fundUsage}
             onChange={(event) => setFundUsage(event.target.value)}
             rows={3}
@@ -242,8 +262,14 @@ export function CharityWizard() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-text-primary mb-1">Location *</label>
+          <label
+            htmlFor="charity-request-location"
+            className="block text-sm font-medium text-text-primary mb-1"
+          >
+            Location *
+          </label>
           <input
+            id="charity-request-location"
             value={location}
             onChange={(event) => setLocation(event.target.value)}
             className="w-full border border-border-medium rounded-md px-3 py-2 text-sm"
@@ -251,8 +277,14 @@ export function CharityWizard() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-text-primary mb-1">Cover image URL</label>
+          <label
+            htmlFor="charity-request-cover-image"
+            className="block text-sm font-medium text-text-primary mb-1"
+          >
+            Cover image URL
+          </label>
           <input
+            id="charity-request-cover-image"
             value={coverImageUrl}
             onChange={(event) => setCoverImageUrl(event.target.value)}
             className="w-full border border-border-medium rounded-md px-3 py-2 text-sm"
