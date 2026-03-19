@@ -106,5 +106,5 @@ jobs:
         run: npm run build --workspace=packages/contracts --if-present
       - name: Build web
         env:
-          NEXT_PUBLIC_API_URL: https://api.gosupportme.com
+          API_ORIGIN: https://api.gosupportme.com
         run: npm run build --workspace=apps/web
