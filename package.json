@@ -14,7 +14,8 @@
     "test": "npm run test --workspaces --if-present",
     "db:migrate": "node infra/scripts/migrate.js",
     "db:reset": "node infra/scripts/reset-and-migrate.js",
-    "db:seed": "node infra/scripts/seed.js"
+    "db:seed": "node infra/scripts/seed.js",
+    "db:seed:random-donations": "node infra/scripts/create-random-donations.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
