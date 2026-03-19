@@ -530,18 +530,34 @@ export function Navbar() {
                           <Link
                             key={notification.id}
                             href={notification.deepLink}
-                            className="block rounded-md px-2 py-2 transition-colors hover:bg-primary/5"
+                            className={`block rounded-md px-2 py-2 transition-colors ${
+                              !notification.isRead
+                                ? "bg-primary-light border border-primary/10 hover:bg-primary/10"
+                                : "hover:bg-primary/5"
+                            }`}
                             onClick={() => setIsNotificationsOpen(false)}
                           >
-                            <p className="text-sm font-medium text-text-primary line-clamp-1">
-                              {notification.title}
-                            </p>
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm font-medium text-text-primary line-clamp-1">
+                                {notification.title}
+                              </p>
+                              {!notification.isRead ? (
+                                <span className="mt-0.5 inline-flex flex-shrink-0 items-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                                  New
+                                </span>
+                              ) : null}
+                            </div>
                             <p className="text-xs text-text-secondary mt-0.5 line-clamp-1">
                               {notification.body}
                             </p>
-                            <p className="text-[11px] text-text-muted mt-1">
-                              {timeAgo(notification.createdAt)}
-                            </p>
+                            <div className="mt-1 flex items-center gap-2">
+                              {!notification.isRead ? (
+                                <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+                              ) : null}
+                              <p className="text-[11px] text-text-muted">
+                                {timeAgo(notification.createdAt)}
+                              </p>
+                            </div>
                           </Link>
                         ))
                       ) : (

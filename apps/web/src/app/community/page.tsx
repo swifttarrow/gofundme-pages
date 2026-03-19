@@ -18,6 +18,7 @@ export default function CommunityPage() {
 
   const followedCommunities = SEED_COMMUNITIES.filter((community) => followedCommunityIds.has(community.id));
   const discoverCommunities = SEED_COMMUNITIES.filter((community) => !followedCommunityIds.has(community.id));
+  const allCommunities = SEED_COMMUNITIES;
 
   return (
     <div className="min-h-screen bg-white">
@@ -98,6 +99,61 @@ export default function CommunityPage() {
           {discoverCommunities.length === 0 && (
             <div className="text-sm text-text-muted">No more communities to discover right now.</div>
           )}
+        </div>
+      </section>
+
+      <section className="max-w-6xl mx-auto px-4 py-4 pb-12">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-text-primary">All communities</h2>
+          <p className="text-text-secondary mt-2 max-w-3xl">
+            Browse every community in one place and jump directly into the groups that match your interests.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {allCommunities.map((community) => {
+            const isFollowed = followedCommunityIds.has(community.id);
+
+            return (
+              <Link
+                key={community.id}
+                href={`/community/${community.slug}`}
+                className="group flex gap-4 rounded-xl border border-border-light bg-white p-4 hover:border-primary/30 hover:shadow-sm transition-all"
+              >
+                <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-bg-gray">
+                  <Image
+                    src={community.coverImageUrl}
+                    alt={community.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    sizes="80px"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-base font-semibold text-text-primary line-clamp-2">
+                      {community.name}
+                    </h3>
+                    <span
+                      className={`inline-flex flex-shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                        isFollowed
+                          ? "bg-primary-light text-primary"
+                          : "bg-bg-faint text-text-muted"
+                      }`}
+                    >
+                      {isFollowed ? "Following" : "Explore"}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-text-muted">
+                    {community.memberCount.toLocaleString()} members
+                  </p>
+                  <p className="mt-2 text-sm text-text-secondary line-clamp-2">
+                    {community.description}
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
     </div>
