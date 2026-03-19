@@ -5,7 +5,11 @@ import { emitAppDataRefresh } from "@/lib/client-events";
 
 export async function evaluateBadgesAndToast(
   userId: string,
-  showToast: (toast: { title: string; description?: string }) => void
+  showToast: (toast: {
+    title: string;
+    description?: string;
+    variant?: "default" | "celebration";
+  }) => void
 ): Promise<Badge[]> {
   const result = await evaluateBadges(userId);
 
@@ -13,6 +17,7 @@ export async function evaluateBadgesAndToast(
     showToast({
       title: `Badge earned: ${badge.label}`,
       description: badge.description,
+      variant: "celebration",
     });
   }
 
