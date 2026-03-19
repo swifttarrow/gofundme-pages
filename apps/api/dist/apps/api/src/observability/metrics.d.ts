@@ -1,0 +1,15 @@
+import client from "prom-client";
+declare const register: client.Registry<"text/plain; version=0.0.4; charset=utf-8">;
+export declare const httpRequestsTotal: client.Counter<"method" | "route" | "status_code">;
+export declare const httpRequestDurationMs: client.Histogram<"method" | "route" | "status_code">;
+export declare const eventsIngestedTotal: client.Counter<"event_type">;
+export declare const jobsProcessedTotal: client.Counter<"status" | "queue">;
+export declare const notificationsCreatedTotal: client.Counter<"type">;
+export declare const donationsTotal: client.Counter<"status">;
+export declare const workerJobDurationMs: client.Histogram<"queue" | "processor">;
+export declare const workerQueueDepth: client.Gauge<"queue_name">;
+export declare const aiCallsTotal: client.Counter<"status" | "feature" | "model">;
+export declare const aiTokensUsedTotal: client.Counter<"type" | "feature">;
+export declare const recommendationCacheHitsTotal: client.Counter<"result">;
+export declare const notificationDedupeTotal: client.Counter<string>;
+export { register };

@@ -1,0 +1,8 @@
+{
+  "/charity/new/page": "app/charity/new/page.js",
+  "/charity/request/page": "app/charity/request/page.js",
+  "/fundraiser/[id]/page": "app/fundraiser/[id]/page.js",
+  "/page": "app/page.js",
+  "/profile/[id]/page": "app/profile/[id]/page.js",
+  "/sign-in/page": "app/sign-in/page.js"
+}
