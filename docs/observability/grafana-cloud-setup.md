@@ -72,12 +72,13 @@ You should see series with labels from your Railway scrape job.
 
 1. Grafana Cloud → **Dashboards → New → Import**.
 2. Upload [grafana-dashboard.json](./grafana-dashboard.json).
-3. On import, **choose your Grafana Cloud Prometheus** datasource for every panel (replace the placeholder UID `prometheus` if Grafana asks).
+3. On import, set the **Prometheus** datasource variable (**`DS_PROMETHEUS`**) to your Grafana Cloud Prometheus (e.g. `grafanacloud-swiftarrow-prom`). All panels use this variable.
 
 If panels are empty:
 
+- Open the **Basics** row at the top: `sum(http_requests_total)` and the **Top http_requests_total** table are the simplest checks.
 - Confirm Explore returns data for `http_requests_total`.
-- Check time range (try **Last 6 hours**).
+- Check time range (dashboard default is **Last 6 hours**).
 - Free tier **retention** is limited; old data disappears per [Grafana Cloud pricing](https://grafana.com/products/cloud/pricing/).
 
 ---
