@@ -25,8 +25,8 @@ Grafana Cloud **ingests** metrics via Prometheus **`remote_write`** (push from a
 2. Copy:
    - **Remote write endpoint** — URL ending in `/api/prom/push`
    - **Username** — numeric **instance / user id** (not your email)
-3. Create a **Cloud Access Policy** token with permission to **write metrics** (Grafana’s UI labels this in the Prometheus details flow — often “Generate token” / access policy with metrics write scope).  
-   Store the token somewhere safe; you won’t see it again.
+3. Create a **Cloud Access Policy** token whose policy includes the **`metrics:write`** scope (that is what Prometheus `remote_write` uses as the password). If a scope isn’t listed by default, use **Add scope** and pick metrics write / ingest.  
+   Store the token somewhere safe; you won’t see it again. (Use a dedicated policy with only `metrics:write` for least privilege.)
 
 ---
 
