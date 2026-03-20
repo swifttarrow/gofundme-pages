@@ -1,6 +1,6 @@
 # Observability (MVP)
 
-Implementation follows [Observability requirements](../requirements/observability.md).
+Implementation follows [Observability requirements](../requirements/add-observability.md).
 
 ## Quick checks (local)
 

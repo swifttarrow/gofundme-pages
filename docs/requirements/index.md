@@ -38,4 +38,4 @@ FR9. Mobile responsiveness requirements: [mobile-responsiveness.md](./mobile-res
 
 FR10. Charity creation requirements: [charity-starter-kit.md](./charity-starter-kit.md)
 
-FR11. Observability requirements: [observability.md](./observability.md)
+FR11. Observability requirements: [add-observability.md](./add-observability.md)

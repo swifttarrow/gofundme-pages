@@ -188,7 +188,7 @@ The shipped charity model is review-gated rather than direct self-serve creation
 
 ## Observability
 
-See [docs/observability/README.md](./observability/README.md) (aligned with [docs/requirements/observability.md](./requirements/observability.md)):
+See [docs/observability/README.md](./observability/README.md) (aligned with [docs/requirements/add-observability.md](./requirements/add-observability.md)):
 
 - `/health` — liveness plus Postgres connectivity; includes `service` name.
 - `/metrics` — Prometheus exposition (`prom-client`): HTTP histograms/counters (including `status_class`), in-flight gauge, donation and page-view counters, worker job lifecycle metrics, queue backlog gauges.

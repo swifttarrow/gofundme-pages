@@ -119,6 +119,11 @@ npm run dev --workspace=apps/api    # http://localhost:3001
 | PATCH | `/api/auth/profile` | Update authenticated profile |
 | POST | `/api/auth/logout` | Logout |
 
+## Observability
+
+- Overview: [`docs/observability.md`](./docs/observability.md)
+- Grafana snapshot: [GoSupportMe observability snapshot](https://swifttarrow.grafana.net/dashboard/snapshot/M7ze7aLj9VoeSmNXRysLySbyYTqqtDhO?orgId=0&from=2026-03-20T10:25:18.856Z&to=2026-03-20T16:25:18.856Z&timezone=browser&refresh=30s)
+
 ## Event System
 
 The platform uses an event-driven architecture with idempotent fan-out:
