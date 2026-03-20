@@ -4,7 +4,6 @@
 Close final quality gates and publish the documentation package required for final delivery.
 
 ## Deliverables
-- [ ] `docs/ai-cost-analysis.md` completed with development spend and production projection assumptions
 - [ ] `README.md` updated with setup, architecture summary, run/test commands, and deployed URL
 - [ ] CI and performance/concurrency checks recorded as passing evidence
 

@@ -199,7 +199,7 @@ See [docs/observability/README.md](./observability/README.md) (aligned with [doc
 
 ## AI Status
 
-The current application runtime does not include any production AI endpoints or model-provider integrations. See `docs/ai-cost-analysis.md` for the current cost posture.
+The current application runtime does not include any production AI endpoints or model-provider integrations.
 
 ## Testing Strategy
 

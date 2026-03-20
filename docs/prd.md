@@ -186,36 +186,6 @@ Deep-section performance targets:
 | Badge evaluation worker processing latency | p95 < 10s per batch |
 | Event replay correctness | 100% idempotent reprocessing |
 
-## AI Cost Analysis (Required)
-
-Status note: the current shipped application does not include production AI endpoints. Treat this section as guidance for future optional AI work, not as a description of current runtime behavior.
-
-### Development & Testing Costs
-
-Track the following during development:
-
-- LLM token spend for any future AI-generated content summaries or charity guidance features.
-- Model/API call volume by feature if AI endpoints are introduced.
-- Prompt and completion token sizes by endpoint and success/failure class.
-- Retries/timeouts and fallback frequency when AI calls fail.
-- Synthetic evaluation run costs for prompt changes and regression tests.
-
-### Production Cost Projections
-
-| Cost Category | 100 users | 1K users | 10K users | 100K users |
-| --- | --- | --- | --- | --- |
-| Campaign summary generation | Optional future feature | Optional future feature | Optional future feature | Optional future feature |
-| Charity advice assist | Optional future feature | Optional future feature | Optional future feature | Optional future feature |
-| Optional auto-tag/classification | Optional future feature | Optional future feature | Optional future feature | Optional future feature |
-| Evaluation/test harness usage | Optional future feature | Optional future feature | Optional future feature | Optional future feature |
-| **Estimated total AI spend** | **Currently $0 in shipped runtime** | **Currently $0 in shipped runtime** | **Currently $0 in shipped runtime** | **Currently $0 in shipped runtime** |
-
-Include assumptions:
-
-- Daily active ratio, creation/update rates, and recommendation refresh frequency per user cohort.
-- Average prompt/response token footprint per AI endpoint and cache hit rate, if added.
-- Fallback policy for budget caps (degrade to deterministic summaries/heuristics when limits are hit).
-
 ## Technical Stack
 
 Current implementation choices are listed here rather than the earlier decision matrix options.
@@ -275,7 +245,6 @@ Deadline: Sunday 10:59 PM CT
 | Demo Video (3-5 min) | Show end-to-end flows: discovery -> fundraiser -> donation -> notification -> profile trust signals. |
 | Pre-Search Document | Completed artifact at `docs/pre-search.md` with explicit architecture decisions. |
 | Domain-Specific Docs | Event orchestration notes, API contracts, and notification/badge/recommendation behavior docs. |
-| AI Cost Analysis | Development spend tracking plus production cost projections and assumptions. |
 | Deployed Application | Public URL with working fundraiser, community, and profile experiences. |
 | Social Post | Public post summarizing build and learnings, tagging @GauntletAI. |
 

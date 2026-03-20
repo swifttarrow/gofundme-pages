@@ -70,11 +70,10 @@ This is the project's signature technical challenge. Include:
 - "Implement at least N of the following:" choice list where appropriate
 - Performance targets specific to this section
 
-### 9. AI Cost Analysis (Required)
+### 9. Cost Considerations (Optional)
 
-- Development & Testing Costs: bulleted list of what to track (LLM API costs, tokens, API calls, domain-specific costs)
-- Production Cost Projections: table with 100 / 1K / 10K / 100K users columns
-- "Include assumptions:" with 2-3 domain-specific assumption types
+- If relevant, include expected development/testing costs for external services.
+- Include production cost projection assumptions for scale tiers when those services are used.
 
 ### 10. Technical Stack
 
@@ -100,7 +99,7 @@ If the project involves AI agents, evaluation, or architecture decisions, add a 
 
 Table: Deliverable | Requirements
 
-Always include: GitHub Repository, Demo Video (3-5 min), Pre-Search Document, domain-specific docs, AI Cost Analysis, Deployed Application, Social Post (tag @GauntletAI)
+Always include: GitHub Repository, Demo Video (3-5 min), Pre-Search Document, domain-specific docs, Deployed Application, Social Post (tag @GauntletAI)
 
 ### 14. Interview Preparation (if gate includes interviews)
 

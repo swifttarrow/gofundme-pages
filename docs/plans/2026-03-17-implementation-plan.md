@@ -266,9 +266,6 @@ Harden reliability and operational readiness to satisfy production-oriented requ
 **File**: `docs/runbooks/donation-degradation.md`  
 **Changes**: Incident triage for donation path instability.
 
-**File**: `docs/ai-cost-analysis.md`  
-**Changes**: Document dev spend tracking and production cost projection assumptions.
-
 **File**: `README.md`  
 **Changes**: Add setup, architecture summary, run/test commands, and deployed URL.
 
