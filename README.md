@@ -2,6 +2,8 @@
 
 A GoFundMe-inspired fundraising platform built as a full-stack monorepo.
 
+Live app: [https://gosupportme.up.railway.app/](https://gosupportme.up.railway.app/)
+
 ## Stack
 
 | Layer | Tech |
