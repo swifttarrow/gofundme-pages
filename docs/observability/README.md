@@ -54,10 +54,17 @@ Verify from your laptop:
 curl -sS "https://api-production-4b9f4.up.railway.app/metrics" | head
 ```
 
-Or use the helper script (optional filter prefix, overridable `METRICS_URL`):
+Or use the helper script (optional filter prefix, overridable `METRICS_URL` — this is the **API** `/metrics` endpoint, not the marketing host):
 
 ```bash
 ./docs/observability/scripts/fetch-prod-metrics.sh http_requests_total
+```
+
+**Synthetic traffic (production web app)** — hit `https://gosupportme.up.railway.app` on a loop (rotates a few paths including `/api/health` so API metrics move):
+
+```bash
+./docs/observability/scripts/generate-prod-traffic.sh
+# finite run: INTERVAL=2 COUNT=30 ./docs/observability/scripts/generate-prod-traffic.sh
 ```
 
 Alert rule examples: [prometheus-alerts.yml](./prometheus-alerts.yml).
