@@ -54,6 +54,12 @@ Verify from your laptop:
 curl -sS "https://api-production-4b9f4.up.railway.app/metrics" | head
 ```
 
+Or use the helper script (optional filter prefix, overridable `METRICS_URL`):
+
+```bash
+./docs/observability/scripts/fetch-prod-metrics.sh http_requests_total
+```
+
 Alert rule examples: [prometheus-alerts.yml](./prometheus-alerts.yml).
 
 ## Grafana
