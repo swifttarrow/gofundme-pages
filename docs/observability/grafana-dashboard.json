@@ -8,7 +8,7 @@
   "panels": [
     {
       "collapsed": false,
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "id": 10,
       "panels": [],
@@ -16,7 +16,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "fieldConfig": {
         "defaults": { "decimals": 0, "unit": "short" },
         "overrides": []
@@ -26,7 +26,7 @@
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "sum(http_requests_total)",
           "legendFormat": "total",
           "refId": "A"
@@ -36,7 +36,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "fieldConfig": {
         "defaults": { "decimals": 0, "unit": "short" },
         "overrides": []
@@ -46,7 +46,7 @@
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "count(http_requests_total)",
           "legendFormat": "series",
           "refId": "A"
@@ -56,7 +56,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "fieldConfig": {
         "defaults": { "decimals": 0, "unit": "short" },
         "overrides": []
@@ -66,7 +66,7 @@
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "sum(up)",
           "legendFormat": "up",
           "refId": "A"
@@ -76,7 +76,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "fieldConfig": {
         "defaults": { "decimals": 1, "unit": "decbytes" },
         "overrides": []
@@ -86,7 +86,7 @@
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "process_resident_memory_bytes",
           "legendFormat": "rss",
           "refId": "A"
@@ -96,14 +96,14 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
       "gridPos": { "h": 6, "w": 24, "x": 0, "y": 5 },
       "id": 15,
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "sum(http_requests_total)",
           "legendFormat": "sum",
           "refId": "A"
@@ -113,14 +113,14 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
       "gridPos": { "h": 6, "w": 24, "x": 0, "y": 11 },
       "id": 16,
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "sum(rate(http_requests_total[5m]))",
           "legendFormat": "rps",
           "refId": "A"
@@ -130,14 +130,14 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "fieldConfig": { "defaults": {}, "overrides": [] },
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 17 },
       "id": 17,
       "options": { "showHeader": true, "sortBy": [{ "desc": true, "displayName": "Value" }] },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "topk(50, http_requests_total)",
           "format": "table",
           "instant": true,
@@ -151,14 +151,14 @@
       "type": "table"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "fieldConfig": { "defaults": {}, "overrides": [] },
       "gridPos": { "h": 4, "w": 8, "x": 0, "y": 25 },
       "id": 1,
       "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"] } },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "sum(rate(http_requests_total{status_class=\"5xx\"}[5m])) / clamp_min(sum(rate(http_requests_total[5m])), 0.001)",
           "legendFormat": "5xx rate"
         }
@@ -167,14 +167,14 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "fieldConfig": { "defaults": { "unit": "reqps" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 16, "x": 8, "y": 25 },
       "id": 2,
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "sum by (route) (rate(http_requests_total[5m]))",
           "legendFormat": "{{route}}"
         }
@@ -183,19 +183,19 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 33 },
       "id": 3,
       "options": { "legend": { "displayMode": "table", "placement": "right" } },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "histogram_quantile(0.50, sum by (le, route) (rate(http_request_duration_seconds_bucket[5m])))",
           "legendFormat": "p50 {{route}}"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket[5m])))",
           "legendFormat": "p95 {{route}}"
         }
@@ -204,14 +204,14 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "fieldConfig": { "defaults": { "unit": "percentunit" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 33 },
       "id": 4,
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "sum by (route) (rate(http_request_errors_total[5m])) / clamp_min(sum by (route) (rate(http_requests_total[5m])), 0.001)",
           "legendFormat": "{{route}}"
         }
@@ -220,24 +220,24 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 41 },
       "id": 5,
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "sum(rate(donation_success_total[5m]))",
           "legendFormat": "success"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "sum(rate(donation_fail_total[5m]))",
           "legendFormat": "fail"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "sum(rate(donation_attempts_total[5m]))",
           "legendFormat": "attempts"
         }
@@ -246,19 +246,19 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "fieldConfig": { "defaults": {}, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 41 },
       "id": 6,
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "sum by (page_type) (rate(page_views_total[5m]))",
           "legendFormat": "{{page_type}}"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "sum by (event_type) (rate(platform_events_persisted_total[5m]))",
           "legendFormat": "event {{event_type}}"
         }
@@ -267,19 +267,19 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 49 },
       "id": 7,
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "sum by (processor) (rate(worker_jobs_completed_total[5m]))",
           "legendFormat": "ok {{processor}}"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "sum by (processor) (rate(worker_jobs_failed_total[5m]))",
           "legendFormat": "fail {{processor}}"
         }
@@ -288,14 +288,14 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
       "fieldConfig": { "defaults": {}, "overrides": [] },
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 49 },
       "id": 8,
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "datasource": { "type": "prometheus", "uid": "grafanacloud-swifttarrow-prom" },
           "expr": "sum by (queue, state) (worker_queue_backlog)",
           "legendFormat": "{{queue}} {{state}}"
         }

@@ -72,7 +72,7 @@ You should see series with labels from your Railway scrape job.
 
 1. Grafana Cloud → **Dashboards → New → Import**.
 2. Upload [grafana-dashboard.json](./grafana-dashboard.json).
-3. On import, map datasource **`prometheus`** → your Grafana Cloud Prometheus (e.g. `grafanacloud-swiftarrow-prom`). The JSON uses no **template variables** so **public / external** sharing works.
+3. On import, if Grafana asks for datasource mapping, pick your Cloud Prometheus. The checked-in JSON uses UID **`grafanacloud-swifttarrow-prom`**; change it via find-replace if your stack’s UID differs. No **template variables** so **public / external** sharing works.
 
 If panels are empty:
 

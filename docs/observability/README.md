@@ -71,7 +71,7 @@ Alert rule examples: [prometheus-alerts.yml](./prometheus-alerts.yml).
 
 ## Grafana
 
-Import [grafana-dashboard.json](./grafana-dashboard.json) and map the **`prometheus`** datasource to your Grafana Cloud Prometheus on import. (No template variables — compatible with **public / external** dashboard sharing.) The **Basics** row has simple `http_requests_total` checks.
+Import [grafana-dashboard.json](./grafana-dashboard.json). Panels use datasource UID **`grafanacloud-swifttarrow-prom`** (this repo owner’s Grafana Cloud Prometheus); if yours differs, find-replace that string in the JSON or re-point datasources after import. No template variables — compatible with **public / external** sharing. The **Basics** row has simple `http_requests_total` checks.
 
 ### Grafana Cloud
 
