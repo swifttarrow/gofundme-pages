@@ -99,3 +99,17 @@ Until then, **`remote_write` + self-hosted Prometheus** (section 3) is the relia
 
 - **Never commit** `grafana-cloud-token.txt` or a YAML file containing the raw token (`.gitignore` them if you keep them in the repo directory).
 - **Railway `/metrics`**: public scrape surfaces operational detail; consider restricting by network or auth when you harden prod.
+
+## 7. Troubleshooting
+
+**`remote_write`: `is a directory` for `password_file` / mount path**  
+Docker Desktop often creates an **empty directory** if you `docker run -v .../grafana-cloud-token.txt:...` when that host path **does not exist** yet (same for `prometheus.local.yml`). Prometheus then sees a directory instead of a token file.
+
+Fix: `rm -rf grafana-cloud-token.txt` (only if it’s a directory), then create a **real file** with your token (no extra spaces/newlines if possible):
+
+```bash
+printf '%s\n' 'YOUR_ACCESS_POLICY_TOKEN' > grafana-cloud-token.txt
+chmod 600 grafana-cloud-token.txt
+```
+
+Recreate the container after both `prometheus.local.yml` and `grafana-cloud-token.txt` are normal files.
